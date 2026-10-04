@@ -819,48 +819,6 @@ typedef struct {
 	short refreshMs;	// modder defined number of milliseconds in which the screen is updated while loading
 } s_loadingbar;
 
-typedef struct {
-	Script *animation_script;	//system generated script
-	Script *update_script;	//execute when update_ents
-	Script *think_script;	//execute when entity thinks.
-	Script *takedamage_script;	//execute when taking damage.
-	Script *ondeath_script;	//execute when killed in game.
-	Script *onkill_script;	//execute when removed from play.
-	Script *onpain_script;	//Execute when put in pain animation.
-	Script *onfall_script;	//execute when falling.
-	Script *onblocks_script;	//execute when blocked by screen.
-	Script *onblockw_script;	//execute when blocked by wall.
-	Script *onblocko_script;	//execute when blocked by obstacle.
-	Script *onblockz_script;	//execute when blocked by Z.
-	Script *onblocka_script;	//execute when "hit head".
-	Script *onmovex_script;	//execute when moving along X axis.
-	Script *onmovez_script;	//execute when moving along Z axis.
-	Script *onmovea_script;	//execute when moving along A axis.
-	Script *didhit_script;	//execute when attack hits another.
-	Script *onspawn_script;	//execute when spawned.
-	Script *key_script;	//execute when entity's player presses a key
-	Script *didblock_script;	//execute when blocking attack.
-	Script *ondoattack_script;	//execute when attack passes do_attack checks.
-} s_scripts;
-
-typedef struct {
-	//global script
-	Script level_script;		//execute when level start
-	Script endlevel_script;		//execute when level finished
-	Script update_script;		//execute when ingame update
-	Script updated_script;		//execute when ingame update finished
-	Script key_script_all;		//keyscript for all players
-	Script timetick_script;		//time tick script.
-	//player script
-	Script score_script[4];		//execute when add score, 4 players
-	Script key_script[4];		//key listeners, lol
-	Script join_script[4];		//player join scripts
-	Script respawn_script[4];	//player respawn scripts
-	Script pdie_script[4];		//player death scripts
-} s_game_scripts;
-
-extern s_game_scripts game_scripts;
-
 typedef enum {
 	MF_NONE = 0,
 	MF_ANIMLIST = 1,
@@ -882,6 +840,22 @@ typedef enum {
 	MF_SCRIPTS = 65536,
 } ModelFreetype;
 #define MF_ALL 0x1FFFF
+
+typedef struct {
+    Script level_script;
+    Script endlevel_script;
+    Script update_script;
+    Script updated_script;
+    Script key_script_all;
+    Script timetick_script;
+    Script score_script[4];
+    Script key_script[4];
+    Script join_script[4];
+    Script respawn_script[4];
+    Script pdie_script[4];
+} s_game_scripts;
+
+extern s_game_scripts game_scripts;
 
 typedef struct {
 	int (*special)[MAX_SPECIAL_INPUTS];	// Stores freespecials
@@ -1061,7 +1035,6 @@ typedef struct {
 	char isSubclassed;
 	
 	ModelFreetype freetypes;
-	s_scripts scripts;
 	s_barstatus hpbarstatus;
 	s_edelay edelay;	// Entity level delay adjustment.
 } s_model;
@@ -1169,7 +1142,6 @@ typedef struct entity {
 	unsigned int staydown[3];	// [0] = Extra time before next rise. [1] = Extra time before next rise attack. [3] = Stalltime placeholder for riseattack.
 
 	s_drawmethod drawmethod;
-	s_scripts scripts;
 	s_model modeldata;	// model data copyied here
 	
 	short itemplayer_count;
@@ -1286,12 +1258,10 @@ typedef struct {
 
 typedef struct s_spawn_script_cache_node {
 	char *filename;
-	Script *cached_spawn_script;
 	struct s_spawn_script_cache_node *next;
 } s_spawn_script_cache_node;
 
 typedef struct s_spawn_script_list_node {
-	Script *spawn_script;
 	struct s_spawn_script_list_node *next;
 } s_spawn_script_list_node;
 
@@ -1521,11 +1491,6 @@ typedef struct {
 	float maxtossspeed;
 	float gravity;
 //---------------------scripts-------------------------------
-	Script update_script;
-	Script updated_script;
-	Script key_script;
-	Script level_script;
-	Script endlevel_script;
 	s_spawn_script_cache_node *spawn_script_cache_head;
 	int pos;
 	u32 advancetime;
@@ -1696,7 +1661,7 @@ typedef enum {
 int buffer_pakfile(char *filename, char **pbuffer, size_t * psize);
 int getsyspropertybyindex(ScriptVariant * var, int index);
 int changesyspropertybyindex(int index, ScriptVariant * value);
-int load_script(Script * script, char *path);
+int load_script(char *path);
 void init_scripts();
 void load_scripts();
 void execute_animation_script(entity * ent);
@@ -1747,7 +1712,7 @@ float randf(float max);
 int _makecolour(int r, int g, int b);
 int load_colourmap(s_model * model, char *image1, char *image2);
 int load_palette(unsigned char *pal, char *filename);
-void standard_palette();
+void standard_palette(int immediate);
 void change_system_palette(int palindex);
 void unload_background();
 void lifebar_colors();

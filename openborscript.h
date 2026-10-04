@@ -9,8 +9,8 @@
 #ifndef OPENBORSCRIPT_H
 #define OPENBORSCRIPT_H
 
-#include "Interpreter.h"
-#include "pp_parser.h"
+#include "ScriptVariant.h"
+#include "List.h"
 
 #define MAX_GLOBAL_VAR 2048
 #define MAX_KEY_LEN    24
@@ -22,56 +22,19 @@ typedef struct {
 } s_variantnode;
 
 typedef struct Script {
-	Interpreter *pinterpreter;
-	ScriptVariant *vars;
-	int initialized;	//flag
-	int interpreterowner;	//flag
+    int dummy;
 } Script;
 
 extern s_variantnode **global_var_list;
-extern List theFunctionList;
-extern ScriptVariant *indexed_var_list;
-extern int max_indexed_vars;
 extern int max_entity_vars;
-extern int max_script_vars;
 extern int max_global_vars;
 extern int max_global_var_index;
-extern int global_var_count;
 
 //these functions can be used by openbor.c
-void Script_Global_Init();
-void Script_Global_Clear();
-ScriptVariant *Script_Get_Global_Variant(char *theName);
-int Script_Set_Global_Variant(char *theName, ScriptVariant * var);
-ScriptVariant *Script_Get_Local_Variant(char *theName);
-int Script_Set_Local_Variant(char *theName, ScriptVariant * var);
-void Script_Init(Script * pscript, char *theName, int first);
 Script *alloc_script();
-void Script_Copy(Script * pdest, Script * psrc, int localclear);
-int Script_IsInitialized(Script * pscript);
-void Script_Clear(Script * pscript, int localclear);
-int Script_AppendText(Script * pscript, char *text, char *path);
-int Script_Compile(Script * pscript);
-int Script_Execute(Script * pscript);
+void Script_Copy(Script * pdest, Script * psrc);
+void Script_Clear(Script * pscript);
 
-void Script_LoadSystemFunctions();
-
-#ifndef COMPILED_SCRIPT
-int Script_Call(Script * pscript, char *method, ScriptVariant * pretvar);
-#endif
-
-s32 system_isempty(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_NULL(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_rand(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_maxglobalvarindex(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_getglobalvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_setglobalvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_getlocalvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_setlocalvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_clearlocalvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_clearglobalvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_clearindexedvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 system_free(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_systemvariant(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_changesystemvariant(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_drawstring(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
@@ -136,20 +99,12 @@ s32 openbor_filestreamappend(ScriptVariant ** varlist, ScriptVariant ** pretvar,
 s32 openbor_createfilestream(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_savefilestream(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
-s32 openbor_getindexedvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 openbor_setindexedvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 openbor_getscriptvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 openbor_setscriptvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 openbor_getentityvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 openbor_setentityvar(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-
 s32 openbor_jumptobranch(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
 s32 openbor_changelight(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_changeshadowcolor(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_bindentity(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
-s32 openbor_allocscreen(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_clearscreen(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_setdrawmethod(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_updateframe(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
@@ -158,7 +113,6 @@ s32 openbor_setidle(ScriptVariant ** varlist, ScriptVariant ** pretvar, int para
 s32 openbor_getentity(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
 s32 openbor_loadmodel(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
-s32 openbor_loadsprite(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 s32 openbor_playgif(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
 s32 openbor_strinfirst(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);

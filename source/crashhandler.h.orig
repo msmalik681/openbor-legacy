@@ -1,0 +1,22 @@
+/*
+ * OpenBOR native crash reporting layer.
+ *
+ * The handler is intentionally small. It is intended to leave a useful crash
+ * report on desktop Unix builds without adding runtime overhead to the game.
+ */
+#ifndef OPENBOR_CRASHHANDLER_H
+#define OPENBOR_CRASHHANDLER_H
+
+#if defined(CUSTOM_SIGNAL_HANDLER) || defined(__linux__)
+#include <signal.h>
+
+void bor_install_crash_handler(void);
+void handleFatalSignal(int signal_number, siginfo_t *info, void *context);
+void bor_crash_set_context(const char *context);
+
+#else
+static inline void bor_install_crash_handler(void) {}
+static inline void bor_crash_set_context(const char *context) { (void)context; }
+#endif
+
+#endif

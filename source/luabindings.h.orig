@@ -1,0 +1,7 @@
+#ifndef LUABINDINGS_H
+#define LUABINDINGS_H
+
+// Forward declaration signature
+void openbor_register_lua_api(void);
+
+#endif

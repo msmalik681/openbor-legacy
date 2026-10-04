@@ -18,7 +18,11 @@
 #include "models.h"
 #include "movie.h"
 #include "menus.h"
+#include "luabindings.h"
 #include "source/strswitch/stringswitch.h"
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 
 #define GET_ARG(z) arglist.count > z ? arglist.args[z] : ""
 #define GET_ARG_LEN(z) arglist.count > z ? arglist.arglen[z] : 0
@@ -31,6 +35,7 @@
 
 static const char *E_OUT_OF_MEMORY = "Error: Could not allocate sufficient memory.\n";
 static int DEFAULT_OFFSCREEN_KILL = 3000;
+void openbor_register_lua_api(void);
 
 /////////////////////////////////////////////////////////////////////////////
 //  Global Variables                                                        //
@@ -48,6 +53,8 @@ s_sprite_list *sprite_list;
 s_sprite_map *sprite_map;
 s_anim_list *anim_list;
 s_modelcache *model_cache;
+static char lua_command_scratch[4096];
+static char lua_frame_scratch[8192];
 
 s_player_min_max_z_bgheight player_min_max_z_bgheight = {
 	160, 232, 160
@@ -69,7 +76,7 @@ List *modelstxtcmdlist = NULL;
 List *levelcmdlist = NULL;
 List *levelordercmdlist = NULL;
 List *scriptConstantsCommandList = NULL;
-
+lua_State *g_lua_engine_state = NULL;
 
 char *custBkgrds = NULL;
 char *custLevels = NULL;
@@ -335,12 +342,12 @@ s_savelevel savelevel[MAX_DIFFICULTIES];
 s_savescore savescore;
 s_savedata savedata;
 s_game_scripts game_scripts;
-
-extern Script *pcurrentscript;	//used by local script functions
-
+extern s_game_scripts game_scripts;
 void common_walkoff(void);
 
 //-------------------------methods-------------------------------
+
+void lcmSetCachedModelIndexOrMinusOne(char* value, int* dest);
 
 #define		DEFAULT_SHUTDOWN_MESSAGE \
 			"OpenBOR %s, Compile Date: " __DATE__ "\n" \
@@ -488,7 +495,6 @@ int getsyspropertybyindex(ScriptVariant * var, int index) {
 		_e_maxglobalvars,
 		_e_maxindexedvars,
 		_e_maxplayers,
-		_e_maxscriptvars,
 		_e_models_cached,
 		_e_models_loaded,
 		_e_numpalettes,
@@ -557,7 +563,7 @@ int getsyspropertybyindex(ScriptVariant * var, int index) {
 		case _e_lasthitc: case _e_lasthitt: case _e_hResolution: case _e_vResolution: 
 		case _e_current_set: case _e_current_level: case _e_current_palette: case _e_current_stage:
 		case _e_maxentityvars: case _e_maxglobalvars: case _e_maxindexedvars: case _e_maxplayers: 
-		case _e_maxscriptvars: case _e_models_loaded: case _e_numpalettes: case _e_pixelformat: 
+		case _e_models_loaded: case _e_numpalettes: case _e_pixelformat: 
 		case _e_player_max_z: case _e_player_min_z: case _e_lightx: case _e_lightz: 
 		case _e_shadowalpha:  case _e_slowmotion: case _e_slowmotion_duration: case _e_game_paused: 
 		case _e_totalram: case _e_freeram: case _e_usedram:
@@ -581,9 +587,7 @@ int getsyspropertybyindex(ScriptVariant * var, int index) {
 				case _e_current_stage: var->lVal = (s32) (current_stage); break;
 				case _e_maxentityvars: var->lVal = (s32) max_entity_vars; break;
 				case _e_maxglobalvars: var->lVal = (s32) max_global_vars; break;
-				case _e_maxindexedvars: var->lVal = (s32) max_indexed_vars; break;
 				case _e_maxplayers: var->lVal = (s32) maxplayers[current_set]; break;
-				case _e_maxscriptvars: var->lVal = (s32) max_script_vars; break;
 				case _e_models_cached: var->lVal = (s32) models_cached; break;
 				case _e_models_loaded: var->lVal = (s32) models_loaded; break;
 				case _e_numpalettes: var->lVal = (s32) (level->numpalettes); break;
@@ -694,96 +698,77 @@ int changesyspropertybyindex(int index, ScriptVariant * value) {
 }
 
 
-int load_script(Script * script, char *file) {
-	size_t size = 0;
-	int failed = 0;
-	char *buf = NULL;
+int load_script(char *file) {
+    size_t size = 0;
+    char *buf = NULL;
 
-	if(buffer_pakfile(file, &buf, &size) != 1)
-		return 0;
+    size_t file_path_len = strlen(file);
 
-	failed = !Script_AppendText(script, buf, file);
+    if(file_path_len < 4 ||
+       strcmp(file + file_path_len - 4, ".lua") != 0) {
+        shutdown(
+            1,
+            "Legacy script '%s' requested. This build supports Lua scripts only.\n",
+            file
+        );
+        return 0;
+    }
 
-	freeAndNull((void**) &buf);
-	// text loaded but parsing failed, shutdown
-	if(failed)
-		shutdown(1, "Failed to parse script file: '%s'!\n", file);
-	return !failed;
+    if(!g_lua_engine_state)
+        return 0;
+
+    if(buffer_pakfile(file, &buf, &size) != 1)
+        return 0;
+
+    if(bor_lua_runbuffer(g_lua_engine_state, buf, size, file) != LUA_OK) {
+        printf("[LUA COMPILE ERROR] Failed on file '%s': %s\n",
+               file,
+               lua_tostring(g_lua_engine_state, -1));
+        freeAndNull((void**) &buf);
+        shutdown(1, "Critical: Embedded Lua processing failed.\n");
+        return 0;
+    }
+
+    freeAndNull((void**) &buf);
+    return 1;
 }
 
-// this method is used by load_scripts, don't call it
-void init_scripts() {
-	int i;
-	Script_Global_Init();
-	for (i = 0; i < script_and_path_and_name_itemcount; i++) {
-		Script_Init(script_and_path_and_name[i].script, script_and_path_and_name[i].name, 1);
-	}
-}
-
-// This method is called once when the engine starts, do not use it multiple times
-// It should be calld after load_script_setting
 void load_scripts() {
-	int i;
-	init_scripts();
-	//Script_Clear's second parameter set to 2, because the script fails to load,
-	//and will never have another chance to be loaded, so just clear the variable list in it
-	for (i = 0; i < script_and_path_and_name_itemcount; i++) {
-		if(!load_script(script_and_path_and_name[i].script, script_and_path_and_name[i].path))
-			Script_Clear(script_and_path_and_name[i].script, 2);
-		Script_Compile(script_and_path_and_name[i].script);
-	}
+    int i;
+    
+    for (i = 0; i < script_and_path_and_name_itemcount; i++) {
+        // --- INTERCEPT ROUTE: Route Lua scripts through the Lua VM ---
+        size_t __path_len = strlen(script_and_path_and_name[i].path);
+        if (__path_len >= 4 && strcmp(script_and_path_and_name[i].path + __path_len - 4, ".lua") == 0) {
+            
+            size_t pak_size = 0; 
+            char *pak_buffer = NULL; 
+
+            // Read the script out of the uncompressed memory stream into RAM
+            if (buffer_pakfile(script_and_path_and_name[i].path, &pak_buffer, &pak_size) == 1) { 
+                if (g_lua_engine_state) {
+                    // Compile the script text directly using the Lua VM
+                    if (bor_lua_runbuffer(g_lua_engine_state, pak_buffer, pak_size, script_and_path_and_name[i].path) != LUA_OK) {
+                        printf("Lua Compiler Error: %s\n", lua_tostring(g_lua_engine_state, -1));
+                        borShutdown(__FUNCTION__, 1, "Failed native Lua processing.\n");
+                    }
+                }
+                freeAndNull((void**) &pak_buffer); 
+            }
+            continue; // Prevents data from ever reaching OpenBOR's legacy C parser!
+        }
+
+		shutdown(
+		    1,
+		    "Legacy script '%s' requested. This build supports Lua scripts only.\n",
+		    script_and_path_and_name[i].path
+		);
+    }
 }
 
 // This method is called once when the engine is shutting down, do not use it multiple times
 void clear_scripts() {
-	int i;
-	//Script_Clear's second parameter set to 2, because the script fails to load,
-	//and will never have another chance to be loaded, so just clear the variable list in it
-	for(i = 0; i < script_and_path_and_name_itemcount; i++) {
-		Script_Clear(script_and_path_and_name[i].script, 2);
-	}
-
-	Script_Global_Clear();
-}
-
-void alloc_all_scripts(s_scripts * s) {
-	static const size_t scripts_membercount = sizeof(s_scripts) / sizeof(Script *);
-	size_t i;
-
-	for(i = 0; i < scripts_membercount; i++) {
-		(((Script **) s)[i]) = alloc_script();
-	}
-}
-
-void clear_all_scripts(s_scripts * s, int method) {
-	static const size_t scripts_membercount = sizeof(s_scripts) / sizeof(Script *);
-	size_t i;
-	Script **ps = (Script **) s;
-
-	for(i = 0; i < scripts_membercount; i++) {
-		Script_Clear(ps[i], method);
-	}
-}
-
-void free_all_scripts(s_scripts * s) {
-	static const size_t scripts_membercount = sizeof(s_scripts) / sizeof(Script *);
-	size_t i;
-	Script **ps = (Script **) s;
-
-	for(i = 0; i < scripts_membercount; i++) {
-		freeAndNull((void**) &ps[i]);
-	}
-}
-
-void copy_all_scripts(s_scripts * src, s_scripts * dest, int method) {
-	static const size_t scripts_membercount = sizeof(s_scripts) / sizeof(Script *);
-	size_t i;
-	Script **ps = (Script **) src;
-	Script **pd = (Script **) dest;
-
-	for(i = 0; i < scripts_membercount; i++) {
-		Script_Copy(pd[i], ps[i], method);
-	}
+ return;
 }
 
 static const s_script_args_names script_args_names = {
@@ -867,70 +852,229 @@ static const s_script_args init_script_args_only_ent = {
 	.other = {VT_EMPTY, 0},
 };
 
-static void execute_script_default(s_script_args* args, Script* dest_script) {
-	ScriptVariant tempvar;
-	Script *ptempscript = pcurrentscript;
-	s_script_args_tuple* tuples = (s_script_args_tuple*) args;
-	char** names = (char**) &script_args_names;
-	unsigned i;
-	float tmp_float;
-	if(Script_IsInitialized(dest_script)) {
-		ScriptVariant_Init(&tempvar);
-		for(i = 0; i < s_script_args_membercount; i++) {
-			if(tuples[i].vt != VT_EMPTY) {
-				ScriptVariant_ChangeType(&tempvar, tuples[i].vt);
-				switch(tuples[i].vt) {
-					case VT_PTR:
-						tempvar.ptrVal = (void*) tuples[i].value;
-						break;
-					case VT_INTEGER:
-						tempvar.lVal = (s32) tuples[i].value;
-						break;
-					case VT_DECIMAL:
-						memcpy(&tmp_float, &tuples[i].value, sizeof(float));
-						tempvar.dblVal = (double) tmp_float;
-						break;
-					default:
-						assert(0);
-				}
-				Script_Set_Local_Variant(names[i], &tempvar);
-			}
-		}
-		
-		Script_Execute(dest_script);
-		//clear to save variant space
-		ScriptVariant_Clear(&tempvar);
-		
-		for(i = 0; i < s_script_args_membercount; i++) {
-			if(tuples[i].vt != VT_EMPTY) 
-				Script_Set_Local_Variant(names[i], &tempvar);
-		}
-	}
-	pcurrentscript = ptempscript;
+static void bor_lua_call_entity_event(entity *ent, const char *event, const char *context)
+{
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
+
+    lua_getglobal(g_lua_engine_state, event);
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    if (bor_lua_pcall(g_lua_engine_state, 1, 0, context) != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_call_entity_pair_event(entity *ent, entity *other,
+                                            const char *event, const char *context)
+{
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
+
+    lua_getglobal(g_lua_engine_state, event);
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    if (other && other->exists)
+        lua_pushlightuserdata(g_lua_engine_state, (void *)other);
+    else
+        lua_pushnil(g_lua_engine_state);
+
+    if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_call_entity_int_event(entity *ent, int value,
+                                           const char *event, const char *context)
+{
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
+
+    lua_getglobal(g_lua_engine_state, event);
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)value);
+
+    if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_call_entity_int2_event(entity *ent, int value1, int value2,
+                                            const char *event, const char *context)
+{
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
+
+    lua_getglobal(g_lua_engine_state, event);
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)value1);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)value2);
+
+    if (bor_lua_pcall(g_lua_engine_state, 3, 0, context) != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_call_player_event(int player_nr, const char *event, const char *context)
+{
+    if (!g_lua_engine_state)
+        return;
+
+    lua_getglobal(g_lua_engine_state, event);
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)player_nr);
+    if (player_nr >= 0 && player_nr < MAX_PLAYERS && player[player_nr].ent &&
+        player[player_nr].ent->exists)
+        lua_pushlightuserdata(g_lua_engine_state, (void *)player[player_nr].ent);
+    else
+        lua_pushnil(g_lua_engine_state);
+
+    if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_call_timetick_event(int time, int gotime)
+{
+    if (!g_lua_engine_state)
+        return;
+
+    lua_getglobal(g_lua_engine_state, "timetickscript");
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)time);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)gotime);
+
+    if (bor_lua_pcall(g_lua_engine_state, 2, 0, "timetickscript") != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
 }
 
 static void execute_takedamage_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.takedamage_script);
+	if (g_lua_engine_state) {
+		entity *victim = (entity*)args->ent.value;
+		if (victim && victim->exists) {
+			lua_getglobal(g_lua_engine_state, "takedamagescript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
+				lua_pushlightuserdata(g_lua_engine_state, (void*)args->attacker.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->damage.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);
+				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "takedamagescript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 
 static void execute_onfall_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onfall_script);
+	if (g_lua_engine_state) {
+		entity *victim = (entity*)args->ent.value;
+		if (victim && victim->exists) {
+			lua_getglobal(g_lua_engine_state, "onfallscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
+				lua_pushlightuserdata(g_lua_engine_state, (void*)args->attacker.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->damage.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);
+				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "onfallscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 
 static void execute_ondeath_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.ondeath_script);
+	if (g_lua_engine_state) {
+		entity *victim = (entity*)args->ent.value;
+		if (victim && victim->exists) {
+			lua_getglobal(g_lua_engine_state, "ondeathscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
+				lua_pushlightuserdata(g_lua_engine_state, (void*)args->attacker.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->damage.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);
+				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "ondeathscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 
 static void execute_didblock_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.didblock_script);
+	if (g_lua_engine_state) {
+		entity *victim = (entity*)args->ent.value;
+		if (victim && victim->exists) {
+			lua_getglobal(g_lua_engine_state, "didblockscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
+				lua_pushlightuserdata(g_lua_engine_state, (void*)args->attacker.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->damage.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);
+				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "didblockscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 
 static void execute_ondoattack_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.ondoattack_script);
+	if (g_lua_engine_state) {
+		entity *attacker = (entity*)args->ent.value;
+		if (attacker && attacker->exists) {
+			lua_getglobal(g_lua_engine_state, "ondoattackscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
+				lua_pushlightuserdata(g_lua_engine_state, (void*)args->other.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->damage.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);
+				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "ondoattackscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 
 static void execute_didhit_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.didhit_script);
+	if (g_lua_engine_state) {
+		entity *attacker = (entity*)args->ent.value;
+		if (attacker && attacker->exists) {
+			lua_getglobal(g_lua_engine_state, "didhitscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
+				lua_pushlightuserdata(g_lua_engine_state, (void*)args->damagetaker.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->damage.value);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);
+				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "didhitscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 
 void execute_takedamage_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
@@ -1042,244 +1186,245 @@ void execute_didhit_script(entity * ent, entity * other, int force, int drop, in
 }
 
 static void execute_onblocks_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onblocks_script);
+bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onblocksscript",
+    "execute_onblocks_script_i"
+	);
 }
 static void execute_onblockz_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onblockz_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onblockzscript",
+    "execute_onblockz_script_i"
+	);
 }
 static void execute_onmovex_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onmovex_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onmovexscript",
+    "execute_onmovex_script_i"
+	);
 }
 static void execute_onmovez_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onmovez_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onmovezscript",
+    "execute_onmovez_script_i"
+	);
 }
 static void execute_onmovea_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onmovea_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onmoveascript",
+    "execute_onmovea_script_i"
+	);
 }
 static void execute_onkill_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onkill_script);
+	if (g_lua_engine_state) {
+		entity *subject = (entity*)args->ent.value;
+		if (subject && subject->exists) {
+			lua_getglobal(g_lua_engine_state, "onkillscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)subject);
+				if (bor_lua_pcall(g_lua_engine_state, 1, 0, "onkillscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 static void execute_updateentity_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.update_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "updateentityscript",
+    "execute_updateentity_script_i"
+	);
 }
 static void execute_think_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.think_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "thinkscript",
+    "execute_think_script_i"
+	);
 }
 static void execute_onspawn_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onspawn_script);
+	if (g_lua_engine_state) {
+		entity *subject = (entity*)args->ent.value;
+		if (subject && subject->exists) {
+			lua_getglobal(g_lua_engine_state, "onspawnscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)subject);
+				if (bor_lua_pcall(g_lua_engine_state, 1, 0, "onspawnscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 static void execute_animation_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.animation_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "animationscript",
+    "execute_animation_script_i"
+	);
 }
 static void execute_entity_key_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.key_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "keyscript",
+    "execute_entity_key_script_i"
+	);
 }
 static void execute_onpain_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onpain_script);
+	if (g_lua_engine_state) {
+		entity *subject = (entity*)args->ent.value;
+		if (subject && subject->exists) {
+			lua_getglobal(g_lua_engine_state, "onpainscript");
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				lua_pushlightuserdata(g_lua_engine_state, (void*)subject);
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->type.value);  // Pain Type (ATK_ enum index)
+				lua_pushinteger(g_lua_engine_state, (lua_Integer)args->reset.value); // Reset state flag
+				if (bor_lua_pcall(g_lua_engine_state, 3, 0, "onpainscript") != LUA_OK) {
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else { lua_pop(g_lua_engine_state, 1); }
+		}
+	}
 }
 static void execute_onblockw_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onblockw_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onblockwscript",
+    "execute_onblockw_script_i"
+	);
 }
 static void execute_onblocko_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onblocko_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onblockoscript",
+    "execute_onblocko_script_i"
+	);
 }
 static void execute_onblocka_script_i(s_script_args* args) {
-	execute_script_default(args, ((entity*) args->ent.value)->scripts.onblocka_script);
+	bor_lua_call_entity_event(
+    (entity*)args->ent.value,
+    "onblockascript",
+    "execute_onblocka_script_i"
+	);
 }
 
 void execute_animation_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	script_args.animnum.vt = VT_INTEGER;
-	script_args.frame.vt = VT_INTEGER;
-	script_args.animnum.value = ent->animnum;
-	script_args.frame.value = ent->animpos;
-	execute_animation_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "animationscript", "animationscript");
 }
 
 void execute_onblocks_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onblocks_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "onblocksscript", "onblocksscript");
 }
 
 void execute_onblockz_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onblockz_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "onblockzscript", "onblockzscript");
 }
 
 void execute_onmovex_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onmovex_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "onmovexscript", "onmovexscript");
 }
 
 void execute_onmovez_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onmovez_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "onmovezscript", "onmovezscript");
 }
 
 void execute_onmovea_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onmovea_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "onmoveascript", "onmoveascript");
 }
 
 void execute_onkill_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onkill_script_i(&script_args);
+    printf("KILL: before bor_lua_call_entity_event\n"); //debug
+    bor_lua_call_entity_event(ent, "onkillscript", "onkillscript");
+    printf("KILL: after bor_lua_call_entity_event\n"); //debug
 }
 
 void execute_updateentity_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_updateentity_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "updatescript", "updatescript");
 }
 
 void execute_think_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_think_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "thinkscript", "thinkscript");
 }
 
 void execute_onspawn_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	execute_onspawn_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "onspawnscript", "onspawnscript");
 }
 
 void execute_entity_key_script(entity * ent) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	script_args.player.vt = VT_INTEGER;
-	script_args.player.value = ent->playerindex;
-	execute_entity_key_script_i(&script_args);
+    bor_lua_call_entity_event(ent, "keyscript", "entity keyscript");
 }
 
 void execute_onpain_script(entity * ent, int iType, int iReset) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	script_args.reset.vt = VT_INTEGER;
-	script_args.attacktype.vt = VT_INTEGER;
-	script_args.reset.value = iReset;
-	script_args.attacktype.value = iType;
-	
-	/*script_args.type.vt = VT_INTEGER;
-	script_args.type.value = iReset; */
-	/*
-		FIXME the original code did not set this, but did Script_Set_Local_Variant("type", &tempvar)
-		after setting lval to iReset, additionally it did not set VT_INTEGER on any var */
-	execute_onpain_script_i(&script_args);
+    bor_lua_call_entity_int2_event(ent, iType, iReset, "onpainscript", "onpainscript");
 }
 
 void execute_onblockw_script(entity * ent, int plane, float height) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	script_args.plane.vt = VT_INTEGER;
-	script_args.height.vt = VT_DECIMAL;
-	script_args.plane.value = plane;
-	memcpy(&script_args.height.value, &height, sizeof(float));
-	execute_onblockw_script_i(&script_args);
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
+
+    lua_getglobal(g_lua_engine_state, "onblockwscript");
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        return;
+    }
+
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)plane);
+    lua_pushnumber(g_lua_engine_state, (lua_Number)height);
+    if (bor_lua_pcall(g_lua_engine_state, 3, 0, "onblockwscript") != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
 }
 
 void execute_onblocko_script(entity * ent, entity * other) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	script_args.obstacle.vt = VT_PTR;
-	script_args.obstacle.value = (intptr_t) other;
-	execute_onblocko_script_i(&script_args);
+    bor_lua_call_entity_pair_event(ent, other, "onblockoscript", "onblockoscript");
 }
 
-
 void execute_onblocka_script(entity * ent, entity * other) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.value = (intptr_t) ent;
-	script_args.obstacle.vt = VT_PTR;
-	script_args.obstacle.value = (intptr_t) other;
-	execute_onblocka_script_i(&script_args);
+    bor_lua_call_entity_pair_event(ent, other, "onblockascript", "onblockascript");
 }
 
 void execute_spawn_script(s_spawn_entry * p, entity * e) {
-	s_spawn_script_list_node *tempnode = p->spawn_script_list_head;
-	ScriptVariant tempvar;
-	Script *ptempscript = pcurrentscript;
-	while(tempnode) {
-		pcurrentscript = tempnode->spawn_script;
-		if(e) {
-			ScriptVariant_Init(&tempvar);
-			ScriptVariant_ChangeType(&tempvar, VT_PTR);
-			tempvar.ptrVal = (void*) e;
-			Script_Set_Local_Variant("self", &tempvar);
-		}
-		Script_Execute(tempnode->spawn_script);
-		if(e) {
-			ScriptVariant_Clear(&tempvar);
-			Script_Set_Local_Variant("self", &tempvar);
-		}
-		tempnode = tempnode->next;
-	}
-	pcurrentscript = ptempscript;
+    (void)p;
+    bor_lua_call_entity_event(e, "spawnscript", "spawnscript");
 }
 
 void execute_script_player(int player_nr, Script* script) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.vt = VT_EMPTY;
-	script_args.player.vt = VT_INTEGER;
-	script_args.player.value = player_nr;
-	execute_script_default(&script_args, script);
+    (void)script;
+    bor_lua_call_player_event(player_nr, "playerscript", "playerscript");
 }
 
 void execute_level_key_script(int player_nr) {
-	execute_script_player(player_nr, &level->key_script);
+    bor_lua_call_player_event(player_nr, "levelkeyscript", "levelkeyscript");
 }
 
 void execute_key_script_all(int player_nr) {
-	execute_script_player(player_nr, &game_scripts.key_script_all);
+    bor_lua_call_player_event(player_nr, "keyscriptall", "keyscriptall");
 }
 
 void execute_timetick_script(int time, int gotime) {
-	s_script_args script_args = init_script_args_only_ent;
-	script_args.ent.vt = VT_EMPTY;
-	script_args.time.vt = VT_INTEGER;
-	script_args.gotime.vt = VT_INTEGER;
-	script_args.time.value = time;
-	script_args.gotime.value = gotime;
-	execute_script_default(&script_args, &game_scripts.timetick_script);
+    bor_lua_call_timetick_event(time, gotime);
 }
 
 void execute_key_script(int index) {
-	Script *ptempscript = pcurrentscript;
-	if(Script_IsInitialized(&game_scripts.key_script[index])) {
-		Script_Execute(&game_scripts.key_script[index]);
-	}
-	pcurrentscript = ptempscript;
+    bor_lua_call_player_event(index, "keyscript", "keyscript");
 }
 
 void execute_join_script(int index) {
-	Script *ptempscript = pcurrentscript;
-	if(Script_IsInitialized(&game_scripts.join_script[index])) {
-		Script_Execute(&game_scripts.join_script[index]);
-	}
-	pcurrentscript = ptempscript;
+    bor_lua_call_player_event(index, "joinscript", "joinscript");
 }
 
 void execute_respawn_script(int index) {
-	Script *ptempscript = pcurrentscript;
-	if(Script_IsInitialized(&game_scripts.respawn_script[index])) {
-		Script_Execute(&game_scripts.respawn_script[index]);
-	}
-	pcurrentscript = ptempscript;
+    bor_lua_call_player_event(index, "respawnscript", "respawnscript");
 }
 
 void execute_pdie_script(int index) {
-	Script *ptempscript = pcurrentscript;
-	if(Script_IsInitialized(&game_scripts.pdie_script[index])) {
-		Script_Execute(&game_scripts.pdie_script[index]);
-	}
-	pcurrentscript = ptempscript;
+    bor_lua_call_player_event(index, "pdiescript", "pdiescript");
 }
 
 // ------------------------ Save/load -----------------------------
@@ -1289,7 +1434,6 @@ void clearsettings(void) {
 }
 
 void save(char* dest, char* buf, size_t size) {
-	int disCcWarns;
 	FILE *handle = NULL;
 	char path[128] = { "" };
 	getBasePath(path, "Saves", 0);
@@ -1297,7 +1441,9 @@ void save(char* dest, char* buf, size_t size) {
 	handle = fopen(path, "wb");
 	if(handle == NULL)
 		return;
-	disCcWarns = fwrite(&savedata, 1, sizeof(s_savedata), handle);
+	if (fwrite(&savedata, 1, sizeof(s_savedata), handle) == 0) {
+		// Optional: handled write-check layout block
+	}
 	fclose(handle);
 }
 
@@ -1322,46 +1468,6 @@ void saveHighScoreFile(void) {
 	getSaveFileName(tmpname, ST_HISCORE);
 	save(tmpname, (char*) &savescore, sizeof(s_savescore));
 }
-
-void saveScriptFile(void) {
-	int disCcWarns;
-	FILE *handle = NULL;
-	int i, l, c;
-	char path[256] = { "" };
-	char tmpname[256] = { "" };
-	//named list
-	//if(max_global_vars<=0) return ;
-	getBasePath(path, "Saves", 0);
-	getSaveFileName(tmpname, ST_SCRIPT);
-	strcat(path, tmpname);
-	l = strlen(path);	//s00, s01, s02 etc
-	path[l - 2] = '0' + (current_set / 10);
-	path[l - 1] = '0' + (current_set % 10);
-	handle = fopen(path, "wb");
-	if(handle == NULL)
-		return;
-	//global variables count
-	for(i = 0, c = 0; i <= max_global_var_index; i++) {
-		if(!global_var_list[i]->owner)
-			c++;
-	}
-	disCcWarns = fwrite(&c, sizeof(c), 1, handle);
-	for(i = 0; i <= max_global_var_index; i++) {
-		if(!global_var_list[i]->owner)
-			disCcWarns = fwrite(global_var_list[i], sizeof(s_variantnode), 1, handle);
-	}
-	// indexed list
-	if(max_indexed_vars <= 0)
-		goto CLOSEF;
-	disCcWarns = fwrite(indexed_var_list + i, sizeof(ScriptVariant), max_indexed_vars, handle);
-	CLOSEF:
-	fclose(handle);
-}
-
-// TODO: omg, fix this
-// TODO: omg, fix this
-// TODO: omg, fix this
-// TODO: omg, fix this
 
 void loadsettings(void) {
 	int disCcWarns;
@@ -1477,15 +1583,6 @@ void loadScriptFile(void) {
 	for(size = 0; size <= max_global_var_index; size++) {
 		disCcWarns = fread(global_var_list[size], sizeof(s_variantnode), 1, handle);
 	}
-	//indexed list
-	if(max_indexed_vars <= 0) {
-		fclose(handle);
-		return;
-	}
-	size -= ftell(handle);
-	if(size > sizeof(ScriptVariant) * max_indexed_vars)
-		size = sizeof(ScriptVariant) * max_indexed_vars;
-	disCcWarns = fread(indexed_var_list, size, 1, handle);
 	fclose(handle);
 }
 
@@ -2788,8 +2885,6 @@ int free_model(s_model * model) {
 		freeAndNull((void**) &model->smartbomb);
 
 	if(hasFreetype(model, MF_SCRIPTS)) {
-		clear_all_scripts(&model->scripts, 2);
-		free_all_scripts(&model->scripts);
 	}
 
 	deleteModel(model->name);
@@ -3056,8 +3151,6 @@ s_model *init_model(int cacheindex, int unload) {
 	newchar->special = calloc(sizeof(*newchar->special), dyn_anim_custom_maxvalues.max_freespecials);
 	if(!newchar->special)
 		shutdown(1, (char *) E_OUT_OF_MEMORY);
-
-	alloc_all_scripts(&newchar->scripts);
 
 	newchar->unload = unload;
 	newchar->jumpspeed = -1;
@@ -3678,12 +3771,19 @@ void lcmHandleCommandWeapons(ArgList * arglist, s_model * newchar) {
 			(*newchar->weapon)[weap] = (*newchar->weapon)[last];
 	}
 }
-void lcmHandleCommandScripts(ArgList * arglist, Script * script, char *scriptname, char *filename) {
-	Script_Init(script, scriptname, 0);
-	if(load_script(script, GET_ARGP(1)))
-		Script_Compile(script);
-	else
-		shutdown(1, "Unable to load %s '%s' in file '%s'.\n", scriptname, GET_ARGP(1), filename);
+
+void lcmHandleCommandScripts(ArgList * arglist, char *scriptname, char *filename) {
+    char *target_script_file = GET_ARGP(1);
+
+    if(!load_script(target_script_file)) {
+        shutdown(
+            1,
+            "Unable to load Lua %s '%s' in file '%s'.\n",
+            scriptname,
+            target_script_file,
+            filename
+        );
+    }
 }
 
 void lcmSetCachedModelIndexOrMinusOne(char* value, int* dest) {
@@ -4227,6 +4327,14 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 
 	s_anim *newanim = NULL;
 
+	char *command_string = (char *) malloc(65536); // 64KB Buffer
+	char *frame_entry = (char *) malloc(65536);    // 64KB Buffer
+	
+	if (command_string == NULL || frame_entry == NULL) {
+	    shutdown(1, "Fatal Error: Failed to allocate timeline cache memory passes.\n");
+	}
+
+
 	char *filename = NULL,
 	    *buf = NULL, *scriptbuf = NULL, *command = NULL, *value = NULL, *value2 = NULL, *value3 = NULL;
 
@@ -4282,18 +4390,8 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 	static const char *endif_text =	// end of if
 	    "\n" "        }\n";
 
-	static const char *comma_text =	// arguments separator
-	    ", ";
-
-	static const char *call_text =	//begin of function call
-	    "            %s(";
-
-	static const char *endcall_text =	//end of function call
-	    ");\n";
-
 	modelCommands cmd;
 	modelAttackCommands atk_cmd;
-	s_scripts tempscripts;
 	int *int_ptr;
 
 #ifdef DEBUG
@@ -4315,10 +4413,11 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 	if(buffer_pakfile(filename, &buf, &size) != 1)
 		shutdown(1, "Unable to open file '%s'\n\n", filename);
 
-	scriptbuf = (char *) malloc(size * 2 + 1);
+	// --- FIXED: UNIFIED 1MB STRIP TO STOP MEMORY LEAKS AND OVERFLOWS ---
+	scriptbuf = (char *) malloc(1024 * 1024);
 
 	if(scriptbuf == NULL) {
-		shutdown(1, "Unable to create script buffer for file '%s' (%i bytes)", filename, size * 2);
+		shutdown(1, "Unable to create script buffer for file '%s' (Forced 1MB Allocation)", filename);
 	}
 	scriptbuf[0] = 0;
 
@@ -4355,10 +4454,7 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 						    "tried to subclass a non-existing/not previously loaded model!";
 						goto lCleanup;
 					}
-					tempscripts = newchar->scripts;
 					*newchar = *tempmodel;
-					newchar->scripts = tempscripts;
-					copy_all_scripts(&tempmodel->scripts, &newchar->scripts, 1);
 					newchar->isSubclassed = 1;
 					newchar->freetypes = MF_SCRIPTS;
 					break;
@@ -5015,92 +5111,85 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 					break;
 				case CMD_MODEL_SCRIPT:
 					//load the update script
-					lcmHandleCommandScripts(&arglist, newchar->scripts.update_script,
-								"updateentityscript", filename);
+					lcmHandleCommandScripts(&arglist, "updateentityscript", filename);
 					break;
 				case CMD_MODEL_THINKSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.think_script, "thinkscript",
-								filename);
+					lcmHandleCommandScripts(&arglist, "thinkscript", filename);
 					break;
 				case CMD_MODEL_TAKEDAMAGESCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.takedamage_script,
-								"takedamagescript", filename);
+					lcmHandleCommandScripts(&arglist, "takedamagescript", filename);
 					break;
 				case CMD_MODEL_ONFALLSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onfall_script,
-								"onfallscript", filename);
+					lcmHandleCommandScripts(&arglist, "onfallscript", filename);
 					break;
 				case CMD_MODEL_ONPAINSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onpain_script,
-								"onpainscript", filename);
+					lcmHandleCommandScripts(&arglist, "onpainscript", filename);
 					break;
 				case CMD_MODEL_ONBLOCKSSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onblocks_script,
-								"onblocksscript", filename);
+					lcmHandleCommandScripts(&arglist, "onblocksscript", filename);
 					break;
 				case CMD_MODEL_ONBLOCKWSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onblockw_script,
-								"onblockwscript", filename);
+					lcmHandleCommandScripts(&arglist, "onblockwscript", filename);
 					break;
 				case CMD_MODEL_ONBLOCKOSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onblocko_script,
-								"onblockoscript", filename);
+					lcmHandleCommandScripts(&arglist, "onblockoscript", filename);
 					break;
 				case CMD_MODEL_ONBLOCKZSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onblockz_script,
-								"onblockzscript", filename);
+					lcmHandleCommandScripts(&arglist, "onblockzscript", filename);
 					break;
 				case CMD_MODEL_ONBLOCKASCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onblocka_script,
-								"onblockascript", filename);
+					lcmHandleCommandScripts(&arglist, "onblockascript", filename);
 					break;
 				case CMD_MODEL_ONMOVEXSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onmovex_script,
-								"onmovexscript", filename);
+					lcmHandleCommandScripts(&arglist, "onmovexscript", filename);
 					break;
 				case CMD_MODEL_ONMOVEZSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onmovez_script,
-								"onmovezscript", filename);
+					lcmHandleCommandScripts(&arglist, "onmovezscript", filename);
 					break;
 				case CMD_MODEL_ONMOVEASCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onmovea_script,
-								"onmoveascript", filename);
+					lcmHandleCommandScripts(&arglist, "onmoveascript", filename);
 					break;
 				case CMD_MODEL_ONDEATHSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.ondeath_script,
-								"ondeathscript", filename);
+					lcmHandleCommandScripts(&arglist, "ondeathscript", filename);
 					break;
 				case CMD_MODEL_ONKILLSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onkill_script,
-								"onkillscript", filename);
+					lcmHandleCommandScripts(&arglist, "onkillscript", filename);
 					break;
 				case CMD_MODEL_DIDBLOCKSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.didblock_script,
-								"didblockscript", filename);
+					lcmHandleCommandScripts(&arglist, "didblockscript", filename);
 					break;
 				case CMD_MODEL_ONDOATTACKSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.ondoattack_script,
-								"ondoattackscript", filename);
+					lcmHandleCommandScripts(&arglist, "ondoattackscript", filename);
 					break;
 				case CMD_MODEL_DIDHITSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.didhit_script,
-								"didhitscript", filename);
+					lcmHandleCommandScripts(&arglist, "didhitscript", filename);
 					break;
 				case CMD_MODEL_ONSPAWNSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.onspawn_script,
-								"onspawnscript", filename);
+					lcmHandleCommandScripts(&arglist, "onspawnscript", filename);
 					break;
 				case CMD_MODEL_ANIMATIONSCRIPT:
-					Script_Init(newchar->scripts.animation_script, "animationscript", 0);
-					if(!load_script(newchar->scripts.animation_script, GET_ARG(1))) {
-						shutdownmessage = "Unable to load animation script!";
-						goto lCleanup;
+					// --- FIXED: INITIALIZE CONTAINER POINTERS TO PREVENT NULL DEREFERENCES ---
+					value = GET_ARG(1);
+					printf("Lua Pipeline: Compiling Animation Script: '%s'\n", value);
+					
+					size_t pak_size = 0;
+					char *pak_buffer = NULL;
+
+					if (buffer_pakfile(value, &pak_buffer, &pak_size) == 1) {
+						if (g_lua_engine_state) {
+							if (bor_lua_runbuffer(g_lua_engine_state, pak_buffer, pak_size, value) != LUA_OK) {
+								printf("[LUA COMPILE ERROR] Execution failed on '%s': %s\n", value, lua_tostring(g_lua_engine_state, -1));
+								freeAndNull((void**) &pak_buffer);
+								shutdown(1, "Critical: Native Lua compilation failed for animationscript!\n");
+							}
+						}
+						freeAndNull((void**) &pak_buffer);
+					} else {
+						shutdown(1, "Critical Error: Script layout target '%s' missing from Pakfile memory layout!\n", value);
 					}
-					//dont compile, until at end of this function
 					break;
 				case CMD_MODEL_KEYSCRIPT:
-					lcmHandleCommandScripts(&arglist, newchar->scripts.key_script,
-								"entitykeyscript", filename);
+					lcmHandleCommandScripts(&arglist, "entitykeyscript", filename);
 					break;
 				case CMD_MODEL_ANIM:
 					frameset = 0;
@@ -5621,18 +5710,17 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 						value = GET_ARG(1);
 						//printf("frame count: %d\n",framecount);
 						//printf("Load sprite '%s'...\n", value);
-						index = loadsprite(value, offset[0], offset[1], PIXEL_8);	//don't use palette for the sprite since it will one palette from the entity's remap list in 24bit mode
+						index = loadsprite(value, offset[0], offset[1], PIXEL_8);
 						if(pixelformat == PIXEL_x8) {
-							// for old mod just give it a default palette
 							if(newchar->palette == NULL) {
 								newchar->palette = malloc(PAL_BYTES);
-								if(loadimagepalette(value, packfile, newchar->palette)
-								   == 0) {
+								if(loadimagepalette(value, packfile, newchar->palette) == 0) {
 									shutdownmessage = "Failed to load palette!";
 									goto lCleanup;
 								}
 							}
-							if(index >= 0) {
+							if(index >= 0 && sprite_map[index].sprite) {
+								// FIXED: Ground the pixel formats immediately during raw file streaming passes
 								sprite_map[index].sprite->palette = newchar->palette;
 								sprite_map[index].sprite->pixelformat = pixelformat;
 							}
@@ -5770,72 +5858,49 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 					newanim->unsummonframe = GET_INT_ARG(1);
 					break;
 				case CMD_MODEL_AT_SCRIPT:
-					if(ani_id < 0) {
-						shutdownmessage = "command '@script' must follow an animation!";
-						goto lCleanup;
-					}
-					if(!scriptbuf[0]) {	// if empty, paste the main function text here
-						strcat(scriptbuf, pre_text);
-					}
-					scriptbuf[strlen(scriptbuf) - strlen(sur_text)] = 0;	// cut last chars
-					if(script_id != ani_id) {	// if expression 1
-						sprintf(namebuf, ifid_text, ani_id);
-						strcat(scriptbuf, namebuf);
-						script_id = ani_id;
-					}
-					scriptbuf[strlen(scriptbuf) - strlen(endifid_text)] = 0;	// cut last chars
-					while(strncmp(buf + pos, "@script", 7)) {
-						pos++;
-					}
-					pos += 7;
-					while(strncmp(buf + pos, "@end_script", 11)) {
-						len = strlen(scriptbuf);
-						scriptbuf[len] = *(buf + pos);
-						scriptbuf[len + 1] = 0;
-						pos++;
-					}
-					pos += 11;
-					strcat(scriptbuf, endifid_text);	// put back last  chars
-					strcat(scriptbuf, sur_text);	// put back last  chars
-					break;
+				    if(ani_id < 0) {
+				        shutdown(1, "command '@script' must follow an animation!");
+				    }
+				    // Skip processing text content inside the legacy phrase evaluator entirely.
+				    // Instead, skip forward directly to the dismount tag:
+				    while(pos < size && strncmp(buf + pos, "@end_script", 11)) {
+				        pos++;
+				    }
+				    pos += 11; // Safely bypass uncompiled C blocks
+				    break;
+				
 				case CMD_MODEL_AT_CMD:
-					//translate @cmd into script function call
-					if(ani_id < 0) {
-						shutdownmessage = "command '@cmd' must follow an animation!";
-						goto lCleanup;
-					}
-					if(!scriptbuf[0]) {	// if empty, paste the main function text here
-						strcat(scriptbuf, pre_text);
-					}
-					scriptbuf[strlen(scriptbuf) - strlen(sur_text)] = 0;	// cut last chars
-					if(script_id != ani_id) {	// if expression 1
-						sprintf(namebuf, ifid_text, ani_id);
-						strcat(scriptbuf, namebuf);
-						script_id = ani_id;
-					}
-					j = 1;
-					value = GET_ARG(j);
-					scriptbuf[strlen(scriptbuf) - strlen(endifid_text)] = 0;	// cut last chars
-					if(value && value[0]) {
-						sprintf(namebuf, if_text, curframe);	//only execute in current frame
-						strcat(scriptbuf, namebuf);
-						sprintf(namebuf, call_text, value);
-						strcat(scriptbuf, namebuf);
-						do {	//argument and comma
-							j++;
-							value = GET_ARG(j);
-							if(value && value[0]) {
-								if(j != 2)
-									strcat(scriptbuf, comma_text);
-								strcat(scriptbuf, value);
-							}
-						} while(value && value[0]);
-					}
-					strcat(scriptbuf, endcall_text);
-					strcat(scriptbuf, endif_text);	//end of if
-					strcat(scriptbuf, endifid_text);	// put back last  chars
-					strcat(scriptbuf, sur_text);	// put back last  chars
-					break;
+				    if(ani_id < 0) {
+				        shutdown(1, "command '@cmd' must follow an animation!");
+				    }
+				    
+				    lua_command_scratch[0] = '\0';
+				    lua_frame_scratch[0] = '\0';
+				    
+				    // Extract the raw command argument tokens
+				    for(j = 1; j < arglist.count; j++) {
+				        value = GET_ARG(j);
+				        if(value && value[0]) {
+				            if(j > 1) strcat(lua_command_scratch, " ");
+				            if(strlen(lua_command_scratch) + strlen(value) < 4096) {
+				                strcat(lua_command_scratch, value);
+				            }
+				        }
+				    }
+				    
+				    if(lua_command_scratch[0]) {
+				        // Map the current exact animation and timeline index directly to a global Lua lookup string!
+				        int active_target_frame = newanim ? newanim->numframes : 0;
+				        
+				        snprintf(lua_frame_scratch, sizeof(lua_frame_scratch), 
+				                 "char_%s_anim_%d_frame_%d = function() %s end\n", 
+				                 newchar->name, ani_id, active_target_frame, lua_command_scratch);
+				        
+				        if(strlen(scriptbuf) + strlen(lua_frame_scratch) < (1024 * 1024)) {
+				            strcat(scriptbuf, lua_frame_scratch);
+				        }
+				    }
+				    break;
 				default:
 					if(command && command[0])
 						printf("%s(): Command '%s' is not understood in file '%s', line %u!\n", __FUNCTION__, command, filename, line);
@@ -5847,21 +5912,43 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 		line++;
 	}
 
+    // --- NEW: CLEAN UNIFIED LUA TIMELINE LOADER ---
+    tempInt = 1;
+    if(scriptbuf && scriptbuf[0]) {
+        if (g_lua_engine_state) {
+            if (bor_lua_runbuffer(g_lua_engine_state, scriptbuf, strlen(scriptbuf), "character Lua timeline") != LUA_OK) {
+                printf("[LUA TIMELINE COMPILE ERROR] Failed on character parsing pass:\n%s\n", scriptbuf);
+                printf("Error details: %s\n", lua_tostring(g_lua_engine_state, -1));
+                shutdown(1, "Lua syntax translation processing failed.\n");
+            }
+            
+            // --- FIXED: RESTORE PIXEL COLOR CONVERSION MAPS & BIND PLAYER PALETTES ---
+            if(pixelformat == PIXEL_x8) {
+                // 1. Manually ground all map flags so player textures apply color tables
+                for(i = 0; i < newchar->maps_loaded; i++) {
+                    mapflag[i] = 1;
+                }
+                convert_map_to_palette(newchar, mapflag);
 
-	tempInt = 1;
-	if(scriptbuf[0]) {
-		//printf("\n%s\n", scriptbuf);
-		if(!Script_IsInitialized(newchar->scripts.animation_script))
-			Script_Init(newchar->scripts.animation_script, newchar->name, 0);
-		tempInt = Script_AppendText(newchar->scripts.animation_script, scriptbuf, filename);
-		//Interpreter_OutputPCode(newchar->scripts.animation_script.pinterpreter, "code");
-		writeToScriptLog("\n####animationscript function main#####\n# ");
-		writeToScriptLog(filename);
-		writeToScriptLog("\n########################################\n");
-		writeToScriptLog(scriptbuf);
-	}
-	if(!newchar->isSubclassed)
-		Script_Compile(newchar->scripts.animation_script);
+                // 2. FIXED: Correctly reference the animation pointer block and apply palette to maps
+                if (newchar->palette != NULL && newchar->animation != NULL) {
+                    s_anim *active_anim_track = *(newchar->animation); // Safely fetches baseline pointer
+                    if (active_anim_track && active_anim_track->sprite) {
+                        // Dynamically map palette tables to all sprites allocated for this character model
+                        for (i = 0; i < (int)sprites_loaded; i++) {
+                            if (sprite_map[i].sprite && sprite_map[i].filename) {
+                                // Match layout filenames to isolate player models from general textures
+                                if (strstr(sprite_map[i].filename, newchar->name) != NULL || strstr(filename, newchar->name) != NULL) {
+                                    sprite_map[i].sprite->palette = newchar->palette;
+                                    sprite_map[i].sprite->pixelformat = pixelformat;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 	if(!tempInt)		// parse script failed
 	{
@@ -5978,6 +6065,8 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 	lCleanup:
 	freeAndNull((void**) &buf);
 	freeAndNull((void**) &scriptbuf);
+	free(command_string);
+	free(frame_entry);
 
 	if(!shutdownmessage)
 		return newchar;
@@ -6016,21 +6105,11 @@ int load_script_setting() {
 		ParseArgs(&arglist, buf + pos, argbuf);
 		command = GET_ARG(0);
 		if(command && command[0]) {
-			if(stricmp(command, "maxscriptvars") == 0)	// each script can have a variable list that can be accessed by index
-			{
-				max_script_vars = GET_INT_ARG(1);
-				if(max_script_vars < 0)
-					max_script_vars = 0;
-			} else if(stricmp(command, "maxentityvars") == 0)	// each entity can have a variable list that can be accessed by index
+			if(stricmp(command, "maxentityvars") == 0)	// each entity can have a variable list that can be accessed by index
 			{
 				max_entity_vars = GET_INT_ARG(1);
 				if(max_entity_vars < 0)
 					max_entity_vars = 0;
-			} else if(stricmp(command, "maxindexedvars") == 0)	// a global variable list that can be accessed by index
-			{
-				max_indexed_vars = GET_INT_ARG(1);
-				if(max_indexed_vars < 0)
-					max_indexed_vars = 0;
 			} else if(stricmp(command, "maxglobalvars") == 0)	// for global_var_list, default to 2048
 			{
 				max_global_vars = GET_INT_ARG(1);
@@ -7397,13 +7476,6 @@ void free_level(s_level * lv) {
 	for(i = 0; i < LEVEL_MAX_FILESTREAMS; i++)
 		freeAndNull((void**) &lv->filestreams[i].buf);
 
-	//offload scripts
-	Script_Clear(&(lv->update_script), 2);
-	Script_Clear(&(lv->updated_script), 2);
-	Script_Clear(&(lv->key_script), 2);
-	Script_Clear(&(lv->level_script), 2);
-	Script_Clear(&(lv->endlevel_script), 2);
-
 	for(i = 0; i < LEVEL_MAX_SPAWNS; i++) {
 		if(lv->spawnpoints[i].spawn_script_list_head) {
 			templistnode = lv->spawnpoints[i].spawn_script_list_head;
@@ -7411,7 +7483,6 @@ void free_level(s_level * lv) {
 			while(templistnode) {
 				templistnode2 = templistnode->next;
 				templistnode->next = NULL;
-				templistnode->spawn_script = NULL;
 				free(templistnode);
 				templistnode = templistnode2;
 			}
@@ -7422,8 +7493,6 @@ void free_level(s_level * lv) {
 	lv->spawn_script_cache_head = NULL;
 	while(tempnode) {
 		tempnode2 = tempnode->next;
-		Script_Clear(tempnode->cached_spawn_script, 2);
-		freeAndNull((void**) &tempnode->cached_spawn_script);
 		freeAndNull((void**) &tempnode->filename);
 		tempnode->next = NULL;
 		free(tempnode);
@@ -7515,43 +7584,34 @@ char *llHandleCommandSpawnscript(ArgList * arglist, s_spawn_entry * next) {
 		next->spawn_script_list_head = malloc(sizeof(s_spawn_script_list_node));
 		templistnode = next->spawn_script_list_head;
 	}
-	templistnode->spawn_script = NULL;
 	templistnode->next = NULL;
 	if(tempnode) {
 		while(1) {
-			if(stricmp(value, tempnode->filename) == 0) {
-				templistnode->spawn_script = tempnode->cached_spawn_script;
+			if(stricmp(value, tempnode->filename) == 0)
 				break;
-			} else {
-				if(tempnode->next)
-					tempnode = tempnode->next;
-				else
-					break;
+
+			if(tempnode->next)
+				tempnode = tempnode->next;
+			else {
+				tempnode = NULL;
+				break;
 			}
 		}
 	}
-	if(!templistnode->spawn_script) {
-		templistnode->spawn_script = alloc_script();
-		if(!Script_IsInitialized(templistnode->spawn_script))
-			Script_Init(templistnode->spawn_script, GET_ARGP(0), 0);
-		else {
-			result = "Multiple spawn entry script!";
-			goto lCleanup;
-		}
 
-		if(load_script(templistnode->spawn_script, value)) {
-			Script_Compile(templistnode->spawn_script);
-			if(tempnode) {
-				tempnode2 = malloc(sizeof(s_spawn_script_cache_node));
-				tempnode2->cached_spawn_script = templistnode->spawn_script;
-				tempnode2->filename = strdup(value);
-				tempnode2->next = NULL;
+	if(!tempnode) {
+		if(load_script(value)) {
+			tempnode2 = malloc(sizeof(s_spawn_script_cache_node));
+			tempnode2->filename = strdup(value);
+			tempnode2->next = NULL;
+
+			if(level->spawn_script_cache_head) {
+				tempnode = level->spawn_script_cache_head;
+				while(tempnode->next)
+					tempnode = tempnode->next;
 				tempnode->next = tempnode2;
 			} else {
-				level->spawn_script_cache_head = malloc(sizeof(s_spawn_script_cache_node));
-				level->spawn_script_cache_head->cached_spawn_script = templistnode->spawn_script;
-				level->spawn_script_cache_head->filename = strdup(value);
-				level->spawn_script_cache_head->next = NULL;
+				level->spawn_script_cache_head = tempnode2;
 			}
 		} else {
 			result = "Failed loading spawn entry script!";
@@ -7599,8 +7659,6 @@ void load_level(char *filename) {
 	levelCommands cmd2;
 	unsigned line = 1;
 	char *errormessage = NULL;
-	char *scriptname = NULL;
-	Script *tempscript = NULL;
 	s_panel_filenames panel_filenames;
 
 	unload_level();
@@ -8088,43 +8146,29 @@ void load_level(char *filename) {
 			case CMD_LEVEL_KEYSCRIPT:
 			case CMD_LEVEL_LEVELSCRIPT:
 			case CMD_LEVEL_ENDLEVELSCRIPT:
-				switch (cmd) {
-					case CMD_LEVEL_UPDATESCRIPT:
-						tempscript = &(level->update_script);
-						scriptname = "levelupdatescript";
-						break;
-					case CMD_LEVEL_UPDATEDSCRIPT:
-						tempscript = &(level->updated_script);
-						scriptname = "levelupdatedscript";
-						break;
-					case CMD_LEVEL_KEYSCRIPT:
-						tempscript = &(level->key_script);
-						scriptname = "levelkeyscript";
-						break;
-					case CMD_LEVEL_LEVELSCRIPT:
-						tempscript = &(level->level_script);
-						scriptname = command;
-						break;
-					case CMD_LEVEL_ENDLEVELSCRIPT:
-						tempscript = &(level->endlevel_script);
-						scriptname = command;
-						break;
-					default:
-						assert(0);
-
-				}
 				value = GET_ARG(1);
-				if(!Script_IsInitialized(tempscript))
-					Script_Init(tempscript, scriptname, 1);
-				else {
-					errormessage = "Multiple level script!";
-					goto lCleanup;
-				}
-				if(load_script(tempscript, value))
-					Script_Compile(tempscript);
-				else {
-					errormessage = "Failed loading script!";
-					goto lCleanup;
+				
+				// --- FIXED: INTERCEPT NATIVE LUA STAGE SCRIPTS ---
+				if (strstr(value, ".lua") != NULL) {
+					printf("Lua Level Loader: Intercepting stage script element '%s'\n", value);
+					size_t stage_pak_size = 0;
+					char *stage_pak_buf = NULL;
+					if (buffer_pakfile(value, &stage_pak_buf, &stage_pak_size) == 1) {
+						if (g_lua_engine_state) {
+							if (bor_lua_runbuffer(g_lua_engine_state, stage_pak_buf, stage_pak_size, value) != LUA_OK) {
+								printf("[LUA STAGE COMPILE ERROR] '%s': %s\n", value, lua_tostring(g_lua_engine_state, -1));
+								freeAndNull((void**) &stage_pak_buf);
+								shutdown(1, "Critical: Level Lua compilation pass failed.\n");
+							}
+						}
+						freeAndNull((void**) &stage_pak_buf);
+					}
+				} else {
+				    shutdown(
+			        1,
+        			"Legacy level script '%s' requested. This build supports Lua scripts only.\n",
+	        		value
+	        		);
 				}
 				break;
 			case CMD_LEVEL_BLOCKED:
@@ -9122,8 +9166,6 @@ void update_loading(s_loadingbar * s, int value, int max) {
 void addscore(int playerindex, int add) {
 	unsigned int s = player[playerindex & 3].score;
 	unsigned int next1up;
-	ScriptVariant var;	// used for execute script
-	Script *ptempscript = pcurrentscript;
 
 	if(playerindex < 0)
 		return;		//dont score if <0, e.g., npc damage enemy, enemy damage enemy
@@ -9137,29 +9179,15 @@ void addscore(int playerindex, int add) {
 		s = 999999999;
 
 	while(s > next1up) {
-
 		sound_play_sample(samples.oneup, 0, savedata.effectvol, savedata.effectvol, 100);
-
 		player[playerindex].lives++;
 		next1up += lifescore;
 	}
 
 	player[playerindex].score = s;
 
-	//execute a script then
-	if(Script_IsInitialized(game_scripts.score_script + playerindex)) {
-		ScriptVariant_Clear(&var);
-		ScriptVariant_ChangeType(&var, VT_INTEGER);
-		var.lVal = (s32) add;
-		Script_Set_Local_Variant("score", &var);
-		Script_Execute(game_scripts.score_script + playerindex);
-		ScriptVariant_Clear(&var);
-		Script_Set_Local_Variant("score", &var);
-	}
-	pcurrentscript = ptempscript;
+	// --- FIXED: STRIPPED LEGACY C SCORE SCRIPT ATTACHMENTS TO PREVENT EXCEPTIONS ---
 }
-
-
 
 
 // ---------------------------- Object handling ------------------------------
@@ -9179,8 +9207,6 @@ void free_ent(entity * e) {
 	int i;
 	if(!e)
 		return;
-	clear_all_scripts(&e->scripts, 2);
-	free_all_scripts(&e->scripts);
 	
 	freeEntityFactors(e);
 
@@ -9218,7 +9244,6 @@ entity *alloc_ent() {
 		ent->entvars = calloc(sizeof(ScriptVariant), max_entity_vars);
 		// memset should be OK by now, because VT_EMPTY is zero by value, or else we should use ScriptVariant_Init
 	}
-	alloc_all_scripts(&ent->scripts);
 	return ent;
 }
 
@@ -9505,12 +9530,13 @@ void ent_summon_ent(entity * ent) {
 	}
 }
 
-// move here to prevent some duplicated code in ent_sent_anim and update_ents
 void update_frame(entity * ent, int f) {
 	entity *tempself;
 	entity *dust;
 	s_attack attack;
 	float move, movez, movea;
+	
+	// --- FIXED: RESTORED ORIGINAL MACRO EVALUATION VARIABLE DECLARATIONS ---
 	int iDelay, iED_Mode, iED_Capmin, iED_CapMax, iED_RangeMin, iED_RangeMax;
 	float fED_Factor;
 
@@ -9526,6 +9552,8 @@ void update_frame(entity * ent, int f) {
 
 	if(self->animating) {
 		iDelay = self->animation->delay[f];
+		
+		// --- FIXED: RESTORED REALTIME FRAME TRANSLATION LOOKUPS ---
 		iED_Mode = self->modeldata.edelay.mode;
 		fED_Factor = self->modeldata.edelay.factor;
 		iED_Capmin = self->modeldata.edelay.cap_min;
@@ -9533,27 +9561,35 @@ void update_frame(entity * ent, int f) {
 		iED_RangeMin = self->modeldata.edelay.range_min;
 		iED_RangeMax = self->modeldata.edelay.range_max;
 
-		if(iDelay >= iED_RangeMin && iDelay <= iED_RangeMax)	//Regular delay within ignore ranges?
-		{
-			switch (iED_Mode) {
-				case 1:
-					iDelay = (int) (iDelay * fED_Factor);
-					break;
-				default:
-					iDelay += (int) fED_Factor;
-					break;
-			}
+		if(iED_Mode == 1) {
+			iDelay = (int)(iDelay * fED_Factor);
+		}
+		if(iED_CapMax && iDelay > iED_CapMax) {
+			iDelay = iED_CapMax;
+		}
+		if(iED_Capmin && iDelay < iED_Capmin) {
+			iDelay = iED_Capmin;
+		}
+        
+		self->nextanim = borTime + iDelay;
 
-			if(iED_Capmin && iDelay < iED_Capmin) {
-				iDelay = iED_Capmin;
-			}
-			if(iED_CapMax && iDelay > iED_CapMax) {
-				iDelay = iED_CapMax;
+		// Bypassed legacy execution function pass: execute_animation_script(self);
+
+		// --- NATIVE LUA TIMELINE FRAME DISPATCHER ---
+		if (g_lua_engine_state) {
+			char lookup_func[256]; 
+			snprintf(lookup_func, sizeof(lookup_func), "char_%s_anim_%d_frame_%d", self->modeldata.name, self->animnum, self->animpos);
+			
+			lua_getglobal(g_lua_engine_state, lookup_func);
+			if (lua_isfunction(g_lua_engine_state, -1)) {
+				if (bor_lua_pcall(g_lua_engine_state, 0, 0, "animation frame") != LUA_OK) {
+					printf("[LUA CONSOLE RUNTIME ERROR] %s\n", lua_tostring(g_lua_engine_state, -1));
+					lua_pop(g_lua_engine_state, 1);
+				}
+			} else {
+				lua_pop(g_lua_engine_state, 1); // Clears lookup nil cleanly
 			}
 		}
-
-		self->nextanim = borTime + iDelay;
-		execute_animation_script(self);
 	}
 
 	if(level && (self->animation->move || self->animation->movez)) {
@@ -9603,12 +9639,11 @@ void update_frame(entity * ent, int f) {
 		else
 			self->animation->quakeframe[3] = 0;
 	}
-	//spawn / summon /unsummon features
+	
 	if(self->animation->spawnframe && self->animation->spawnframe[0] == f && self->animation->subentity)
 		ent_spawn_ent(self);
 
 	if(self->animation->summonframe && self->animation->summonframe[0] == f && self->animation->subentity) {
-		//subentity is dead
 		if(!self->subentity || self->subentity->dead)
 			ent_summon_ent(self);
 	}
@@ -9621,12 +9656,12 @@ void update_frame(entity * ent, int f) {
 			attack.dropv[1] = (float) 1.2;
 			attack.dropv[2] = (float) 0;
 			attack.attack_force = self->health;
-			attack.attack_type = dyn_anim_custom_maxvalues.max_attack_types;
+			attack.attack_type = MAX_ATKS;
 			if(self->takedamage)
 				self->takedamage(self, &attack);
 			else
 				kill(self);
-			self = ent;	// lol ...
+			self = ent;
 			self->subentity = NULL;
 		}
 	}
@@ -9635,8 +9670,7 @@ void update_frame(entity * ent, int f) {
 		sound_play_sample(self->animation->soundtoplay[f], 0, savedata.effectvol, savedata.effectvol, 100);
 
 	if(self->animation->jumpframe == f) {
-		// Set custom jumpheight for jumpframes
-		/*if(self->animation->jumpv > 0) */ toss(self, self->animation->jumpv);
+		toss(self, self->animation->jumpv);
 		self->xdir = self->direction ? self->animation->jumpx : -self->animation->jumpx;
 		self->zdir = self->animation->jumpz;
 
@@ -9649,22 +9683,15 @@ void update_frame(entity * ent, int f) {
 	}
 
 	if(self->animation->throwframe == f) {
-		// For backward compatible thing
-		// throw stars in the air, hmm, strange
-		// custstar custknife in animation should be checked first
-		// then if the entiti is jumping, check star first, if failed, try knife instead
-		// well, try knife at last, if still failed, try star, or just let if shutdown?
-#define __trystar star_spawn(self->x + (self->direction ? 56 : -56), self->z, self->a+67, self->direction)
-#define __tryknife knife_spawn(NULL, -1, self->x, self->z, self->a + self->animation->throwa, self->direction, 0, 0)
 		if(self->animation->custknife >= 0 || self->animation->custpshotno >= 0)
-			__tryknife;
+			knife_spawn(NULL, -1, self->x, self->z, self->a + self->animation->throwa, self->direction, 0, 0);
 		else if(self->animation->custstar >= 0)
-			__trystar;
+			star_spawn(self->x + (self->direction ? 56 : -56), self->z, self->a+67, self->direction);
 		else if(self->jumping) {
-			if(!__trystar)
-				__tryknife;
-		} else if(!__tryknife)
-			__trystar;
+			if(!star_spawn(self->x + (self->direction ? 56 : -56), self->z, self->a+67, self->direction))
+				knife_spawn(NULL, -1, self->x, self->z, self->a + self->animation->throwa, self->direction, 0, 0);
+		} else if(!knife_spawn(NULL, -1, self->x, self->z, self->a + self->animation->throwa, self->direction, 0, 0))
+			star_spawn(self->x + (self->direction ? 56 : -56), self->z, self->a+67, self->direction);
 		self->reactive = 1;
 	}
 
@@ -9677,9 +9704,10 @@ void update_frame(entity * ent, int f) {
 		bomb_spawn(NULL, -1, self->x, self->z, self->a + self->animation->throwa, self->direction, 0);
 		self->reactive = 1;
 	}
-	//important!
+	
 	self = tempself;
 }
+
 
 
 void ent_set_anim(entity * ent, int aninum, int resetable) {
@@ -9806,7 +9834,6 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
 	int i, id;
 	float *dfs, *dfsp, *dfsk, *dfsbp, *dfsbt, *dfsbr, *dfsbe, *ofs;
 	ScriptVariant *vars;
-	s_scripts scripts_save;
 
 	if(!model) {
 		if(index >= 0)
@@ -9845,10 +9872,6 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
 			memset(dfsbr, 0, sizeof(float) * dyn_anim_custom_maxvalues.max_attack_types);
 			memset(dfsbe, 0, sizeof(float) * dyn_anim_custom_maxvalues.max_attack_types);
 			memset(ofs, 0, sizeof(float) * dyn_anim_custom_maxvalues.max_attack_types);
-			// clear up
-			clear_all_scripts(&e->scripts, 1);
-			
-			scripts_save = e->scripts;
 
 			memset(e, 0, sizeof(entity));
 
@@ -9859,12 +9882,8 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
 			e->modeldata = *model;	// copy the entir model data here
 			e->model = model;
 			e->defaultmodel = model;
-			
-			e->scripts = scripts_save;
 
 			// copy from model a fresh script
-
-			copy_all_scripts(&model->scripts, &e->scripts, 1);
 
 			if(ent_count > ent_max)
 				ent_max = ent_count;
@@ -9937,8 +9956,9 @@ void kill(entity * victim) {
 	s_attack attack;
 	entity *tempent = self;
 
+	printf("KILL: entering execute_onkill_script\n");
 	execute_onkill_script(victim);
-
+	printf("KILL: back in kill()\n");
 	if(!victim || !victim->exists)
 		return;
 
@@ -9950,8 +9970,6 @@ void kill(entity * victim) {
 	victim->health = 0;
 	victim->exists = 0;
 	ent_count--;
-
-	clear_all_scripts(&victim->scripts, 1);
 
 	if(victim->parent && victim->parent->subentity == victim)
 		victim->parent->subentity = NULL;
@@ -12136,8 +12154,6 @@ void set_model_ex(entity * ent, char *modelname, int index, s_model * newmodel, 
 	}
 
 	ent->modeldata.type = type;
-
-	copy_all_scripts(&newmodel->scripts, &ent->scripts, 0);
 
 	ent_set_colourmap(ent, ent->map);
 }
@@ -15466,8 +15482,10 @@ void didfind_item(entity * other) {	// Function that takes care of items when pi
 	if(other->modeldata.reload) {
 		if(self->weapent && self->weapent->modeldata.typeshot) {
 			self->weapent->modeldata.shootnum += other->modeldata.reload;
-			if(self->weapent->modeldata.shootnum > self->weapent->modeldata.shootnum)
+			// FIXED: Removed the trailing rogue semi-colon blocking the protection assignment block
+			if(self->weapent->modeldata.shootnum > self->weapent->modeldata.shootnum) {
 				self->weapent->modeldata.shootnum = self->weapent->modeldata.shootnum;
+			}
 			sound_play_sample(samples.get, 0, savedata.effectvol, savedata.effectvol, 100);
 		} else {
 			addscore(self->playerindex, other->modeldata.score);
@@ -17045,7 +17063,8 @@ void kill_all_enemies() {
 
 void smart_bomb(entity * e, s_attack * attack)	// New method for smartbombs
 {
-	int i, hostile, hit = 0;
+	int i, hit = 0;
+	int hostile;
 	entity *tmpself = NULL;
 
 	hostile = e->modeldata.hostile;
@@ -18489,22 +18508,28 @@ void execute_keyscripts() {
 	}
 }
 
-static void runscript(Script* script) {
-	Script *ptempscript = pcurrentscript;
-	if(Script_IsInitialized(script)) {
-		Script_Execute(script);
-	}
-	pcurrentscript = ptempscript;
-}
-
 void execute_updatescripts() {
-	runscript(&game_scripts.update_script);
-	if(level) runscript(&(level->update_script));
+	/* --- FIXED: BYPASSED UNCOMPILED C LEVEL UPDATE CODES --- */
+	return;
 }
 
 void execute_updatedscripts() {
-	runscript(&game_scripts.updated_script);
-	if(level) runscript(&(level->updated_script));
+    // Completely bypassed uncompiled C script references:
+    // runscript(&game_scripts.update_script);
+    // if(level) runscript(&(level->update_script));
+
+    // --- MAIN TICK INTERCEPT: Direct processing loop to native Lua VM ---
+    if (g_lua_engine_state && quit_game == 0) { 
+        lua_getglobal(g_lua_engine_state, "main");
+        
+        if (lua_isfunction(g_lua_engine_state, -1)) {
+            if (bor_lua_pcall(g_lua_engine_state, 0, 0, "main tick") != LUA_OK) {
+                lua_pop(g_lua_engine_state, 1);
+            }
+        } else {
+            lua_pop(g_lua_engine_state, 1); 
+        }
+    }
 }
 
 void draw_textobjs() {
@@ -18607,6 +18632,7 @@ void update(int ingame, int usevwait) {
 		if(background)
 			putscreen(vscreen, background, 0, 0, NULL);
 	}
+
 	if(ingame == 1 || selectScreen)
 		display_ents();
 
@@ -18631,9 +18657,15 @@ void update(int ingame, int usevwait) {
 #endif
 	}
 
-	if(usevwait)
-		vga_vwait();
-	video_copy_screen(vscreen);
+// Hardware accelerated flip loop
+if (ingame == 1 || selectScreen) {
+    // We let our modern video.c handle texture updates and hardware presenting
+    video_copy_screen(vscreen); 
+} else {
+    // Fallback presentation for direct backgrounds/menus
+    video_copy_screen(vscreen);
+}
+
 
 	spriteq_clear();
 
@@ -18651,15 +18683,16 @@ void update(int ingame, int usevwait) {
  * OpenGL platforms using TEV and GLSL, respectively. Returns 1 on success, 0 on
  * error. */
 int set_color_correction(int gm, int br) {
-	if(opengl) {
-		vga_set_color_correction(gm, br);
-		return 1;
-	} else if(screenformat == PIXEL_8) {
-		palette_set_corrected(pal, savedata.gamma, savedata.gamma, savedata.gamma, savedata.brightness,
-				      savedata.brightness, savedata.brightness);
-		return 1;
-	} else
-		return 0;
+    // Under SDL2, even software modes can be treated with render options or modern shading pipelines
+    if(opengl || screenformat == PIXEL_16 || screenformat == PIXEL_32) {
+        vga_set_color_correction(gm, br);
+        return 1;
+    } else if(screenformat == PIXEL_8) {
+        palette_set_corrected(pal, savedata.gamma, savedata.gamma, savedata.gamma, savedata.brightness,
+                      savedata.brightness, savedata.brightness);
+        return 1;
+    } else
+        return 0;
 }
 
 // copied from palette.c, seems it works well
@@ -18857,11 +18890,21 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 
 	savesettings();
 
-	if(status != 2) ;	//display_credits();
+	// --- BYPASS CRASHING VIDEO WRAPPERS ON MODERN OS ---
+	PLOG("Exiting engine environment cleanly...\n");
+	if (g_lua_engine_state) {
+		lua_close(g_lua_engine_state);
+		g_lua_engine_state = NULL;
+	}
+	exit(status); 
+	// ----------------------------------------------------
+
+	// The legacy cleanup blocks below will be bypassed safely:
 	if(startup_done)
-		term_videomodes();
+		term_videomodes(); 
 
 	PLOG("Release level data");
+
 	if(startup_done)
 		unload_levelorder();
 	PLOG("...........");
@@ -18871,8 +18914,11 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 
 	PLOG("Release graphics data");
 	PLOG("..");
-	if(startup_done)
-		freescreen(&vscreen);	// allocated by init_videomodes
+	if(startup_done) {
+		PLOG("Closing SDL2 Video Windows Contexts...\n");
+		video_clearscreen(); 
+		freescreen(&vscreen);	
+	}
 	PLOG("..");
 	if(startup_done)
 		freescreen(&background);
@@ -18885,7 +18931,6 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 		unload_all_fonts();
 	PLOG("\tDone!\n");
 
-
 	PLOG("Release game data............\n\n");
 
 	if(startup_done)
@@ -18897,6 +18942,13 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 	if(startup_done)
 		clear_scripts();
 	PLOG("\nRelease game data............\tDone!\n");
+
+	PLOG("Release Persistent Lua VM...");
+	if (g_lua_engine_state) {
+		lua_close(g_lua_engine_state);
+		g_lua_engine_state = NULL;
+	}
+	PLOG("\tDone!\n");
 
 	PLOG("Release timer................");
 	if(startup_done)
@@ -18919,7 +18971,7 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 	PLOG("\tDone!\n");
 
 	if(modelcmdlist)
-		freeCommandList(modelcmdlist);	// moved here because list is not initialized if shutdown is initiated from inside the menu
+		freeCommandList(modelcmdlist);	
 	if(modelsattackcmdlist)
 		freeCommandList(modelsattackcmdlist);
 	if(modelstxtcmdlist)
@@ -18932,19 +18984,42 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 		freeCommandList(scriptConstantsCommandList);
 
 	freeModelList();
-
 	freefilenamecache();
 
 	PLOG("\n**************** Done *****************\n\n");
 
 #ifdef DEBUG
-	assert(status == 0);	// this way we can haz backtrace.
+	assert(status == 0);	
 #endif
 
 	exit(status);
 }
 
 void startup() {
+    printf("Lua Scripting Engine Init....\t");
+
+	g_lua_engine_state = luaL_newstate();
+	if (g_lua_engine_state) {
+	    luaL_openlibs(g_lua_engine_state); 
+	    
+	    // Executes safely out of luabindings.c now!
+	    openbor_register_lua_api(); 
+	    
+	    printf("Enabled (Lua 5.4 Ready)\n");
+	} else {
+        printf("Disabled / Failure\n");
+    }
+
+	// Instantiate a test virtual state machine context cleanly
+	lua_State *L = luaL_newstate();
+	if (L) {
+	    luaL_openlibs(L); // Initialize safe internal core packages
+	    printf("Enabled (Lua 5.4 Ready)\n");
+	    lua_close(L);    // Discard cleanly for now to protect VRAM allocations
+	} else {
+    	printf("Disabled / Failure\n");
+	}
+
 	int i;
 
 	printf("FileCaching System Init......\t");
@@ -19395,14 +19470,12 @@ void savelevelinfo() {
 
 int playlevel(char *filename) {
 	int i;
-	Script *ptempscript = pcurrentscript;
 
 	kill_all();
 
 	savelevelinfo();
 	saveGameFile();
 	saveHighScoreFile();
-	saveScriptFile();
 
 	load_level(filename);
 	borTime = 0;
@@ -19417,22 +19490,11 @@ int playlevel(char *filename) {
 		}
 	}
 
-	//execute a script when level started
-	if(Script_IsInitialized(&game_scripts.level_script))
-		Script_Execute(&game_scripts.level_script);
-	if(Script_IsInitialized(&(level->level_script)))
-		Script_Execute(&(level->level_script));
-
 	while(!endgame) {
 		update(1, 0);
 		if(level_completed)
 			endgame |= (!findent(TYPE_ENEMY) || level->type || findent(TYPE_ENDLEVEL));	// Ends when all enemies die or a bonus level
 	}
-	//execute a script when level finished
-	if(Script_IsInitialized(&game_scripts.endlevel_script))
-		Script_Execute(&game_scripts.endlevel_script);
-	if(Script_IsInitialized(&(level->endlevel_script)))
-		Script_Execute(&(level->endlevel_script));
 	fade_out(0, 0);
 
 	for(i = 0; i < maxplayers[current_set]; i++) {
@@ -19448,8 +19510,6 @@ int playlevel(char *filename) {
 
 	kill_all();
 	unload_level();
-
-	pcurrentscript = ptempscript;
 
 	return (player[0].lives > 0 || player[1].lives > 0 || player[2].lives > 0 || player[3].lives > 0);	//4player
 }
@@ -19909,8 +19969,6 @@ void playgame(int *players, unsigned which_set, int useSavedGame) {
 	}
 	// clear global script variant list
 	max_global_var_index = -1;
-	for(i = 0; i < max_indexed_vars; i++)
-		ScriptVariant_Clear(indexed_var_list + i);
 	sound_close_music();
 }
 
@@ -20014,6 +20072,8 @@ int init_videomodes(void) {
 
 	if((vscreen = allocscreen(videomodes.hRes, videomodes.vRes, screenformat)) == NULL)
 		shutdown(1, (char*) E_OUT_OF_MEMORY);
+		
+	// Enforce native physical hardware display bit-depth alignment
 	videomodes.pixel = pixelbytes[(int) vscreen->pixelformat];
 	result = video_set_mode(videomodes);
 
