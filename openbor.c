@@ -460,244 +460,6 @@ int buffer_pakfile(char *filename, char **pbuffer, size_t * psize) {
 	return 1;
 }
 
-//this method is used by script engine, we move it here
-// it will get a system property, put it in the ScriptVariant
-// if failed return 0, otherwise return 1
-int getsyspropertybyindex(ScriptVariant * var, int index) {
-	enum nameenum {
-		_e_branchname,
-		_e_count_enemies,
-		_e_count_entities,
-		_e_count_npcs,
-		_e_count_players,
-		_e_current_level,
-		_e_current_palette,
-		_e_current_set,
-		_e_current_stage,
-		_e_elapsed_time,
-		_e_ent_max,
-		_e_game_paused,
-		_e_game_speed,
-		_e_gfx_y_offset,
-		_e_hResolution,
-		_e_in_level,
-		_e_in_selectscreen,
-		_e_lasthita,
-		_e_lasthitc,
-		_e_lasthitt,
-		_e_lasthitx,
-		_e_lasthitz,
-		_e_levelheight,
-		_e_levelwidth,
-		_e_lightx,
-		_e_lightz,
-		_e_maxentityvars,
-		_e_maxglobalvars,
-		_e_maxindexedvars,
-		_e_maxplayers,
-		_e_models_cached,
-		_e_models_loaded,
-		_e_numpalettes,
-		_e_pixelformat,
-		_e_player,
-		_e_player1,
-		_e_player2,
-		_e_player3,
-		_e_player4,
-		_e_player_max_z,
-		_e_player_min_z,
-		_e_shadowalpha,
-		_e_shadowcolor,
-		_e_slowmotion,
-		_e_slowmotion_duration,
-		_e_totalram,
-		_e_freeram,
-		_e_usedram,
-		_e_vResolution,
-		_e_xpos,
-		_e_ypos,
-		_e_the_end,
-	};
-
-	if(!var)
-		return 0;
-
-	switch (index) {
-		
-		case _e_lasthita: case _e_lasthitx: case _e_lasthitz:
-		case _e_xpos: case _e_ypos:
-			ScriptVariant_ChangeType(var, VT_DECIMAL);
-			switch(index) {
-				case _e_xpos: case _e_ypos:
-					if(!level)
-						return 0;
-					if(index == _e_xpos)
-						var->dblVal = (double) advancex;
-					else
-						var->dblVal = (double) advancey;
-					break;
-				case _e_lasthita: var->dblVal = (double) (lasthita); break;
-				case _e_lasthitx: var->dblVal = (double) (lasthitx); break;
-				case _e_lasthitz: var->dblVal = (double) (lasthitz); break;
-				default:
-					assert(0);
-			}
-			break;
-		case _e_branchname:
-			ScriptVariant_ChangeType(var, VT_STR);
-			strcpy(StrCache_Get(var->strVal), branch_name);
-			break;
-		case _e_player: case _e_player1: case _e_player2:
-		case _e_player3: case _e_player4:
-			ScriptVariant_ChangeType(var, VT_PTR);
-			switch(index) {
-				case _e_player: case _e_player1: var->ptrVal = (void*) player; break;
-				case _e_player2: var->ptrVal = (void*) (player + 1); break;
-				case _e_player3: var->ptrVal = (void*) (player + 2); break;
-				case _e_player4: var->ptrVal = (void*) (player + 3); break;
-				default: assert (0);
-			}
-			break;
-		case _e_count_enemies: case _e_count_players: case _e_count_npcs: case _e_count_entities:
-		case _e_ent_max: case _e_in_level: case _e_elapsed_time: case _e_in_selectscreen: 
-		case _e_lasthitc: case _e_lasthitt: case _e_hResolution: case _e_vResolution: 
-		case _e_current_set: case _e_current_level: case _e_current_palette: case _e_current_stage:
-		case _e_maxentityvars: case _e_maxglobalvars: case _e_maxindexedvars: case _e_maxplayers: 
-		case _e_models_loaded: case _e_numpalettes: case _e_pixelformat: 
-		case _e_player_max_z: case _e_player_min_z: case _e_lightx: case _e_lightz: 
-		case _e_shadowalpha:  case _e_slowmotion: case _e_slowmotion_duration: case _e_game_paused: 
-		case _e_totalram: case _e_freeram: case _e_usedram:
-			ScriptVariant_ChangeType(var, VT_INTEGER);
-			switch (index) {
-				case _e_count_enemies: var->lVal = (s32) count_ents(TYPE_ENEMY); break;
-				case _e_count_players: var->lVal = (s32) count_ents(TYPE_PLAYER); break;
-				case _e_count_npcs: var->lVal = (s32) count_ents(TYPE_NPC); break;
-				case _e_count_entities: var->lVal = (s32) ent_count; break;
-				case _e_ent_max: var->lVal = (s32) ent_max; break;
-				case _e_in_level: var->lVal = (s32) (level == NULL); break;
-				case _e_elapsed_time: var->lVal = (s32) borTime; break;
-				case _e_in_selectscreen: var->lVal = (s32) (selectScreen); break;
-				case _e_lasthitc: var->lVal = (s32) (lasthitc); break;
-				case _e_lasthitt: var->lVal = (s32) (lasthitt); break;
-				case _e_hResolution: var->lVal = (s32) videomodes.hRes; break;
-				case _e_vResolution: var->lVal = (s32) videomodes.vRes; break;
-				case _e_current_set: var->lVal = (s32) (current_set); break;
-				case _e_current_level: var->lVal = (s32) (current_level); break;
-				case _e_current_palette: var->lVal = (s32) (current_palette); break;
-				case _e_current_stage: var->lVal = (s32) (current_stage); break;
-				case _e_maxentityvars: var->lVal = (s32) max_entity_vars; break;
-				case _e_maxglobalvars: var->lVal = (s32) max_global_vars; break;
-				case _e_maxplayers: var->lVal = (s32) maxplayers[current_set]; break;
-				case _e_models_cached: var->lVal = (s32) models_cached; break;
-				case _e_models_loaded: var->lVal = (s32) models_loaded; break;
-				case _e_numpalettes: var->lVal = (s32) (level->numpalettes); break;
-				case _e_pixelformat: var->lVal = (s32) pixelformat; break;			
-				case _e_player_max_z: var->lVal = (s32) (PLAYER_MAX_Z); break;
-				case _e_player_min_z: var->lVal = (s32) (PLAYER_MIN_Z); break;
-				case _e_lightx: var->lVal = (s32) (light[0]); break;
-				case _e_lightz: var->lVal = (s32) (light[1]); break;
-				case _e_shadowalpha: var->lVal = (s32) shadowalpha; break;
-				case _e_shadowcolor: var->lVal = (s32) colors.shadow; break;
-				case _e_slowmotion: var->lVal = (s32) slowmotion[0]; break;
-				case _e_slowmotion_duration: var->lVal = (s32) slowmotion[1]; break;
-				case _e_game_paused: var->lVal = (s32) pause; break;
-				case _e_totalram: var->lVal = 64 * 1024; break;
-				case _e_freeram: var->lVal = 63 * 1024; break;
-				case _e_usedram: var->lVal = 1024; break;
-				default:
-					assert (0); break; 
-			}
-			break;
-		
-		case _e_game_speed: case _e_gfx_y_offset: case _e_levelwidth: case _e_levelheight:
-			if(!level)
-				return 0;
-			ScriptVariant_ChangeType(var, VT_INTEGER);
-			switch (index) {
-				case _e_game_speed: var->lVal = (s32) GAME_SPEED; break;
-				case _e_gfx_y_offset: var->lVal = (s32) gfx_y_offset; break;
-				case _e_levelwidth: var->lVal = (s32) (level->width); break;
-				case _e_levelheight: var->lVal = (s32) (panel_height); break;
-				default: assert(0); break;
-			}
-			break;
-		default:
-			// We use indices now, but players/modders don't need to be exposed
-			// to that implementation detail, so we write "name" and not "index".
-			printf("Unknown system property name.\n");
-			return 0;
-	}
-	return 1;
-}
-
-// change a system variant, used by script
-int changesyspropertybyindex(int index, ScriptVariant * value) {
-	//char* tempstr = NULL;
-	s32 ltemp;
-	//double dbltemp;
-
-	// This enum is replicated in mapstrings_changesystemvariant in
-	// openborscript.c. If you change one, you must change the other as well!!!!
-	enum changesystemvariant_enum {
-		_csv_blockade,
-		_csv_elapsed_time,
-		_csv_lasthita,
-		_csv_lasthitc,
-		_csv_lasthitt,
-		_csv_lasthitx,
-		_csv_lasthitz,
-		_csv_levelpos,
-		_csv_scrollmaxz,
-		_csv_scrollminz,
-		_csv_slowmotion,
-		_csv_slowmotion_duration,
-		_csv_smartbomber,
-		_csv_textbox,
-		_csv_xpos,
-		_csv_ypos,
-		_csv_the_end,
-	};
-
-	switch (index) {
-		case _csv_elapsed_time: case _csv_levelpos: case _csv_xpos:
-		case _csv_ypos: case _csv_scrollminz: case _csv_scrollmaxz:
-		case _csv_blockade: case _csv_slowmotion: case _csv_slowmotion_duration:
-		case _csv_lasthitx: case _csv_lasthita: case _csv_lasthitc:
-		case _csv_lasthitz: case _csv_lasthitt:
-			if(SUCCEEDED(ScriptVariant_IntegerValue(value, &ltemp))) {
-				switch(index) {
-					case _csv_elapsed_time: borTime = (int) ltemp; break;
-					case _csv_levelpos: level->pos = (int) ltemp; break;
-					case _csv_xpos: advancex = (float) ltemp; break;
-					case _csv_ypos: advancey = (float) ltemp; break;
-					case _csv_scrollminz: scrollminz = (float) ltemp; break;
-					case _csv_scrollmaxz: scrollmaxz = (float) ltemp; break;
-					case _csv_blockade: blockade = (float) ltemp; break;
-					case _csv_slowmotion: slowmotion[0] = (unsigned char) ltemp; break;
-					case _csv_slowmotion_duration: slowmotion[1] = (unsigned char) ltemp; break;
-					case _csv_lasthitx: lasthitx = (float) ltemp; break;
-					case _csv_lasthita: lasthita = (float) ltemp; break;
-					case _csv_lasthitc: lasthitc = (int) ltemp; break;
-					case _csv_lasthitz: lasthitz = (float) ltemp; break;
-					case _csv_lasthitt: lasthitt = (int) ltemp; break;
-					default: assert(0);
-				}
-			}
-			break;
-		case _csv_smartbomber:
-			smartbomber = (entity *) value;
-			break;
-		case _csv_textbox:
-			textbox = (entity *) value;
-			break;
-		default:
-			return 0;
-	}
-
-	return 1;
-}
-
-
 int load_script(char *file) {
     size_t size = 0;
     char *buf = NULL;
@@ -6105,12 +5867,7 @@ int load_script_setting() {
 		ParseArgs(&arglist, buf + pos, argbuf);
 		command = GET_ARG(0);
 		if(command && command[0]) {
-			if(stricmp(command, "maxentityvars") == 0)	// each entity can have a variable list that can be accessed by index
-			{
-				max_entity_vars = GET_INT_ARG(1);
-				if(max_entity_vars < 0)
-					max_entity_vars = 0;
-			} else if(stricmp(command, "maxglobalvars") == 0)	// for global_var_list, default to 2048
+			if(stricmp(command, "maxglobalvars") == 0)	// for global_var_list, default to 2048
 			{
 				max_global_vars = GET_INT_ARG(1);
 				if(max_global_vars < 0)
@@ -9209,15 +8966,6 @@ void free_ent(entity * e) {
 		return;
 	
 	freeEntityFactors(e);
-
-	if(e->entvars) {
-		// Although free_ent will be only called once when the engine is shutting down,
-		// just clear those in case we forget something
-		for(i = 0; i < max_entity_vars; i++) {
-			ScriptVariant_Clear(e->entvars + i);
-		}
-		freeAndNull((void**) &e->entvars);
-	}
 	freeAndNull((void**) &e);
 }
 
@@ -9240,10 +8988,6 @@ entity *alloc_ent() {
 	ent->defense_blocktype = calloc(sizeof(float), dyn_anim_custom_maxvalues.max_attack_types);
 	ent->offense_factors = calloc(sizeof(float), dyn_anim_custom_maxvalues.max_attack_types);
 	
-	if(max_entity_vars > 0) {
-		ent->entvars = calloc(sizeof(ScriptVariant), max_entity_vars);
-		// memset should be OK by now, because VT_EMPTY is zero by value, or else we should use ScriptVariant_Init
-	}
 	return ent;
 }
 
@@ -9833,7 +9577,6 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
 	entity *e = NULL;
 	int i, id;
 	float *dfs, *dfsp, *dfsk, *dfsbp, *dfsbt, *dfsbr, *dfsbe, *ofs;
-	ScriptVariant *vars;
 
 	if(!model) {
 		if(index >= 0)
@@ -9863,7 +9606,6 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
 			dfsbr = e->defense_blockratio;
 			dfsbe = e->defense_blocktype;
 			ofs = e->offense_factors;
-			vars = e->entvars;
 			memset(dfs, 0, sizeof(float) * dyn_anim_custom_maxvalues.max_attack_types);
 			memset(dfsp, 0, sizeof(float) * dyn_anim_custom_maxvalues.max_attack_types);
 			memset(dfsk, 0, sizeof(float) * dyn_anim_custom_maxvalues.max_attack_types);
@@ -9917,7 +9659,6 @@ entity *spawn(float x, float z, float a, int direction, char *name, int index, s
 			e->defense_blockratio = dfsbr;
 			e->defense_blocktype = dfsbe;
 			e->offense_factors = ofs;
-			e->entvars = vars;
 
 			ent_default_init(e);
 			return e;

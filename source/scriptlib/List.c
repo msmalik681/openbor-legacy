@@ -267,15 +267,6 @@ Node *List_GetCurrentNode(List * list) {
 	return list == NULL ? NULL : list->current;
 }
 
-void List_SetCurrent(List * list, Node * current) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	if(list)
-		list->current = current;
-}
-
-
 void Node_Clear(Node * node) {
 	if(!node)
 		return;
@@ -301,98 +292,6 @@ void List_Init(List * list) {
 	list->initdone = 1;
 #endif
 	list->no_strdup = 0;
-}
-
-int List_GetNodeIndex(List * list, Node * node) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	int i;
-	Node *n;
-#ifdef USE_INDEX
-	unsigned char h;
-	if(list->mindices) {
-		h = ptrhash(node->value);
-		assert(list->mindices[h]);
-		for(i = 0; i < list->mindices[h]->used; i++) {
-			//assert(list->mindices[h]->nodes[i]); gets overwritten by update with NULL
-			if(list->mindices[h]->nodes[i] && list->mindices[h]->nodes[i] == node)
-				return list->mindices[h]->indices[i];
-		}
-		return -1;
-	} else
-#endif
-	{
-		n = list->first;
-		i = 0;
-		while(n) {
-			if(n == node)
-				return i;
-			i++;
-			n = n->next;
-		}
-		return -1;
-	}
-}
-
-int List_GetIndex(List * list) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	return List_GetNodeIndex(list, list->current);
-}
-
-void List_Copy(List * listdest, const List * listsrc) {
-#ifdef DEBUG
-	chklist((List *) listsrc);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_Copy %p %p\n", listsrc, listdest);
-#endif
-	Node *lptr = listsrc->first;
-	Node *nptr;
-	int i = 0, curr = -1;
-
-	List_Init(listdest);
-	if(!lptr)
-		return;
-	//create the first Node
-	nptr = (Node *) malloc(sizeof(Node));
-	if(!nptr)
-		return;
-	nptr->value = lptr->value;
-	nptr->name = (listdest->no_strdup) ? lptr->name : NAME(lptr->name);
-	nptr->prev = NULL;
-	nptr->next = NULL;
-
-	listdest->current = nptr;
-	listdest->first = nptr;
-	listdest->last = nptr;
-	listdest->size = 1;
-
-	if(listsrc->current == lptr)
-		curr = i;
-	while((lptr = lptr->next) != NULL) {
-		i++;
-		if(listsrc->current == lptr)
-			curr = i;
-		List_InsertAfter(listdest, lptr->value, lptr->name);
-
-	}
-	assert(curr != -1);
-	List_GotoFirst(listdest);
-	for(i = 0; i < curr; i++)
-		List_GotoNext(listdest);	//setting current to the right value
-
-#ifdef USE_INDEX
-	if(listsrc->mindices)
-		List_CreateIndices(listdest);
-#endif
-
-#ifdef USE_STRING_HASHES
-	List_CreateHashes(listdest);
-#endif
-
 }
 
 void List_Clear(List * list) {
@@ -587,46 +486,12 @@ int List_GotoNext(List * list) {
 	return 1;
 }
 
-int List_GotoPrevious(List * list) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_Prev %p\n", list);
-#endif
-	if(list->current->prev)
-		list->current = list->current->prev;
-	else
-		return 0;
-	return 1;
-}
-
 void *List_Retrieve(const List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
 #endif
 	if(list->current)
 		return list->current->value;
-	else
-		return NULL;
-}
-
-void *List_GetFirst(const List * list) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	if(list->first)
-		return list->first->value;
-	else
-		return NULL;
-}
-
-void *List_GetLast(const List * list) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	if(list->last)
-		return list->last->value;
 	else
 		return NULL;
 }

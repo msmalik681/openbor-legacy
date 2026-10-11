@@ -28,10 +28,6 @@
 // it will always be used, so memory usage will be slightly increased.
 #define USE_STRING_HASHES
 
-#ifndef UNIT_TEST
-#include "depends.h"
-#endif
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,22 +98,16 @@ typedef struct List {
 } List;
 
 void List_Set_UseStrdup(List* list, int use);
-void List_SetCurrent(List * list, Node * current);
 void Node_Clear(Node * node);
 void List_Init(List * list);
-int List_GetIndex(List * list);
-void List_Copy(List * listdest, const List * listsrc);
 void List_Clear(List * list);
 void List_InsertBefore(List * list, void *e, char *theName);
 void List_InsertAfter(List * list, void *e, char *theName);
 void List_Remove(List * list);
 int List_GotoNext(List * list);
-int List_GotoPrevious(List * list);
 int List_GotoLast(List * list);
 int List_GotoFirst(List * list);
 void *List_Retrieve(const List * list);
-void *List_GetFirst(const List * list);
-void *List_GetLast(const List * list);
 void List_Update(List * list, void *e);
 int List_Includes(List * list, void *e);
 int List_FindByName(List * list, char *name);
@@ -128,7 +118,6 @@ int List_GetSize(const List * list);
 Node *List_GetNodeByName(List * list, char *Name);
 Node *List_GetNodeByValue(List * list, void *e);
 Node *List_GetCurrentNode(List * list);
-int List_GetNodeIndex(List * list, Node * node);
 #ifdef USE_INDEX
 void List_AddIndex(List * list, Node * node, size_t index);
 void List_RemoveLastIndex(List * list);

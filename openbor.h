@@ -15,7 +15,6 @@
 #ifndef OPENBOR_H
 #define OPENBOR_H
 
-
 /////////////////////////////////////////////////////////////////////////////
 
 #include	"types.h"
@@ -40,6 +39,7 @@
 #include    "openborscript.h"
 #include    "globals.h"
 #include    "version.h"
+#include	"List.h"
 
 #ifdef SDL
 #include    "gfx.h"
@@ -1069,8 +1069,6 @@ typedef struct entity {
 	int (*trymove) (float, float);
 	
 	unsigned char *colourmap;
-	
-	ScriptVariant *entvars;
 
 	s_model *defaultmodel;	// this is the default model
 	s_model *model;		// current model
@@ -1659,8 +1657,6 @@ typedef enum {
 } control_buttons;
 
 int buffer_pakfile(char *filename, char **pbuffer, size_t * psize);
-int getsyspropertybyindex(ScriptVariant * var, int index);
-int changesyspropertybyindex(int index, ScriptVariant * value);
 int load_script(char *path);
 void init_scripts();
 void load_scripts();
