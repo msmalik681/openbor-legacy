@@ -28,7 +28,7 @@ void chklist(List * list) {
 #endif
 
 #ifdef USE_STRING_HASHES
-unsigned char strhash(char *s) {
+static unsigned char strhash(char *s) {
 	ptrdiff_t tmp = 0;
 	char *p = s;
 	while(*p) {
@@ -74,8 +74,7 @@ void List_AddHash(List * list, Node * node) {
 	list->buckets[h]->used++;
 }
 
-/* removes the last element from the index list
-only use on fully indexed list */
+/* Remove a node from the string-hash bucket. */
 void List_RemoveHash(List * list, Node * node) {
 #ifdef DEBUG
 	chklist((List *) list);
@@ -115,19 +114,6 @@ void List_FreeHashes(List * list) {
 	list->buckets = NULL;
 }
 
-/* build hashes for entire list
-this is only required when doing a list copy.
-*/
-void List_CreateHashes(List * list) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	Node *n = list->first;
-	while(n) {
-		List_AddHash(list, n);
-		n = n->next;
-	}
-}
 #endif
 
 int List_GotoLast(List * list) {
