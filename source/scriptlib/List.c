@@ -42,8 +42,6 @@ static void List_AddHash(List *list, Node *node) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	unsigned char h;
-
 	assert(node);
 	if(!node->name)
 		return;
@@ -51,7 +49,7 @@ static void List_AddHash(List *list, Node *node) {
 	if(!list->buckets)
 		list->buckets = calloc(1, sizeof *list->buckets * 256);
 
-	h = strhash(node->name);
+	unsigned char h = strhash(node->name);
 	if(!list->buckets[h]) {
 		list->buckets[h] = calloc(1, sizeof *list->buckets[h]);
 		list->buckets[h]->nodes = calloc(1, sizeof *list->buckets[h]->nodes * BUCKET_INIT_NODES_ALLOC);
@@ -74,10 +72,9 @@ static void List_RemoveHash(List *list, Node *node) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	unsigned char h;
 	if(!node->name)
 		return;
-	h = strhash(node->name);
+	unsigned char h = strhash(node->name);
 	assert(list->buckets[h]);
 	assert(list->buckets[h]->used > 0);
 	for(size_t i = 0; i < list->buckets[h]->used; i++) {
