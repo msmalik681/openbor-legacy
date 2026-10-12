@@ -263,9 +263,9 @@ Node *List_GetNodeByName(List *list, const char *name) {
 	if(!bucket)
 		return NULL;
 	for(size_t i = 0; i < bucket->used; i++) {
-		Node *nptr = bucket->nodes[i];
-		if(nptr && strcmp(name, nptr->name) == 0)
-			return nptr;
+		Node *node = bucket->nodes[i];
+		if(node && strcmp(name, node->name) == 0)
+			return node;
 	}
 	return NULL;
 }
