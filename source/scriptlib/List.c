@@ -258,8 +258,8 @@ Node *List_GetNodeByName(List *list, const char *name) {
 	if(!name || !list->buckets)
 		return NULL;
 
-	unsigned char h = strhash(name);
-	const Bucket *bucket = list->buckets[h];
+	unsigned char bucket_index = strhash(name);
+	const Bucket *bucket = list->buckets[bucket_index];
 	if(!bucket)
 		return NULL;
 	for(size_t i = 0; i < bucket->used; i++) {
