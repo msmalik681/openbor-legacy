@@ -189,7 +189,7 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 	} else {
 		nptr->next = list->current->next;
 		nptr->prev = list->current;
-		if(list->current->next != NULL)
+		if(list->current->next)
 			list->current->next->prev = nptr;
 		list->current->next = nptr;
 		if(list->current == list->last)
