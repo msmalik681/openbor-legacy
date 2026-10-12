@@ -24,10 +24,10 @@
 #include <stdio.h>
 
 typedef struct Node {
-	struct Node *prev;	//pointer to previous Node
-	struct Node *next;	//pointer to next Node
-	void *value;		//data stored in a Node
-	char *name;		//optional name of the Node
+	struct Node *prev;
+	struct Node *next;
+	void *value;
+	char *name;
 } Node;
 
 typedef struct Bucket {
@@ -37,7 +37,6 @@ typedef struct Bucket {
 } Bucket;
 
 typedef struct List {
-	//Data members
 	Node *first;
 	Node *current;
 	Node *last;
@@ -63,7 +62,7 @@ int List_FindByName(List * list, const char *name);
 void List_Reset(List * list);
 int List_GetSize(const List * list);
 
-Node *List_GetNodeByName(List * list, const char *Name);
+Node *List_GetNodeByName(List * list, const char *name);
 Node *List_GetCurrentNode(List * list);
 
 #endif
