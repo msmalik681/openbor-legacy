@@ -92,15 +92,11 @@ int List_GotoNext(List * list);
 int List_GotoLast(List * list);
 int List_GotoFirst(List * list);
 void *List_Retrieve(const List * list);
-void List_Update(List * list, void *e);
-int List_Includes(List * list, void *e);
 int List_FindByName(List * list, char *name);
-char *List_GetName(const List * list);
 void List_Reset(List * list);
 int List_GetSize(const List * list);
 
 Node *List_GetNodeByName(List * list, char *Name);
-Node *List_GetNodeByValue(List * list, void *e);
 Node *List_GetCurrentNode(List * list);
 #ifdef USE_INDEX
 void List_AddIndex(List * list, Node * node, size_t index);

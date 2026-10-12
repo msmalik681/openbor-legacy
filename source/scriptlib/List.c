@@ -434,78 +434,6 @@ void *List_Retrieve(const List * list) {
 		return NULL;
 }
 
-void List_Update(List * list, void *e) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-#ifdef USE_INDEX
-	unsigned char h;
-	ptrdiff_t save, i;
-	if(list->mindices) {
-		h = ptrhash(list->current->value);
-		assert(list->mindices[h]);
-		for(i = 0; i < list->mindices[h]->used; i++) {
-			if(list->mindices[h]->nodes[i] == list->current) {
-				list->mindices[h]->nodes[i] = NULL;
-				save = list->mindices[h]->indices[i];
-				list->mindices[h]->indices[i] = -1;
-				list->current->value = e;
-				List_AddIndex(list, list->current, save);
-				break;
-			}
-		}
-	} else
-#endif
-	if(list->size != 0)
-		list->current->value = e;
-}
-
-/* returns the node that contains e, or NULL, if not found */
-Node *List_GetNodeByValue(List * list, void *e) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	Node *n;
-#ifdef USE_INDEX
-	unsigned char h;
-	ptrdiff_t i;
-	if(list->mindices) {
-		h = ptrhash(e);
-		if(!list->mindices[h])
-			return NULL;
-		for(i = 0; i < list->mindices[h]->used; i++) {
-			//assert(list->indices[h]->nodes[i]); gets overwritten by update with NULL
-			if(list->mindices[h]->nodes[i] && list->mindices[h]->nodes[i]->value == e) {
-				//gotcha
-				return list->mindices[h]->nodes[i];
-			}
-		}
-		return NULL;
-	} else
-#endif
-	{
-		n = list->first;
-		while(n && (n->value != e))
-			n = n->next;
-		return n;
-	}
-}
-
-
-/* SIDE EFFECT: Moves list->current to found entity.
-use List_Contains if you dont like that.
-*/
-int List_Includes(List * list, void *e) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	Node *n = List_GetNodeByValue(list, e);
-	if(n) {
-		list->current = n;
-		return 1;
-	}
-	return 0;
-}
 
 /* returns the first node of which name is equal to theName */
 Node *List_GetNodeByName(List * list, char *name) {
@@ -555,16 +483,6 @@ int List_FindByName(List * list, char *name) {
 		return 1;
 	}
 	return 0;
-}
-
-char *List_GetName(const List * list) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-	if(list->size != 0)
-		return list->current->name;
-	else
-		return NULL;
 }
 
 void List_Reset(List * list) {
