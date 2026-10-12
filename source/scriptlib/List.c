@@ -254,6 +254,8 @@ int List_GotoNext(List *list) {
 #endif
 	if(list->current == list->last)
 		return 0;
+	assert(list->current);
+	assert(list->current->next);
 	list->current = list->current->next;
 	return 1;
 }
