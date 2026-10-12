@@ -70,7 +70,7 @@ static void List_AddHash(List *list, Node *node) {
 	bucket->nodes[bucket->used++] = node;
 }
 
-static void List_RemoveHash(List *list, Node *node) {
+static void List_RemoveHash(List *list, const Node *node) {
 #ifdef DEBUG
 	chklist(list);
 #endif
