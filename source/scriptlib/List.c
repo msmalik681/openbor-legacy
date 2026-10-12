@@ -168,7 +168,7 @@ void List_InsertAfter(List *list, void *e, char *theName) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *nptr = malloc(sizeof(Node));
+	Node *nptr = malloc(sizeof *nptr);
 	Node *current = list->current;
 
 	assert(nptr);
