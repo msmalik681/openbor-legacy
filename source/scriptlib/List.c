@@ -162,13 +162,13 @@ void List_Clear(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *node = list->first;
-	while(node) {
-		Node *next = node->next;
+	Node *current_node = list->first;
+	while(current_node) {
+		Node *next_node = current_node->next;
 		if(!list->no_strdup)
-			Node_Clear(node);
-		free(node);
-		node = next;
+			Node_Clear(current_node);
+		free(current_node);
+		current_node = next_node;
 	}
 	List_FreeHashes(list);
 	List_Init(list);
