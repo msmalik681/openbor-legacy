@@ -211,12 +211,11 @@ void List_Remove(List *list) {
 	} else {
 		int was_last = current == list->last;
 		int was_first = current == list->first;
-		Node *nptr;
 		if(current->prev)
 			current->prev->next = current->next;
 		if(current->next)
 			current->next->prev = current->prev;
-		nptr = was_last ? current->prev : current->next;
+		Node *nptr = was_last ? current->prev : current->next;
 
 		List_RemoveHash(list, current);
 
