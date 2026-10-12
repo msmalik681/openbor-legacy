@@ -121,7 +121,7 @@ int List_GotoFirst(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(!list->size)
+	if(list->size == 0)
 		return 0;
 	list->current = list->first;
 	return 1;
