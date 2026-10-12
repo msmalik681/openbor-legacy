@@ -37,7 +37,7 @@ static unsigned char strhash(const char *s) {
 	return (size_t) tmp % 256;
 }
 
-#define BUCKET_INIT_NODES_ALLOC 2
+#define BUCKET_INIT_NODES_ALLOC ((size_t) 2)
 static void List_AddHash(List *list, Node *node) {
 #ifdef DEBUG
 	chklist(list);
