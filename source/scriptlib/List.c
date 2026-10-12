@@ -170,6 +170,7 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 	chklist(list);
 #endif
 	Node *nptr = malloc(sizeof(Node));
+	Node *current = list->current;
 
 	assert(nptr != NULL);
 	nptr->value = e;
@@ -182,12 +183,12 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 		nptr->next = NULL;
 		list->current = list->first = list->last = nptr;
 	} else {
-		nptr->next = list->current->next;
-		nptr->prev = list->current;
-		if(list->current->next)
-			list->current->next->prev = nptr;
-		list->current->next = nptr;
-		if(list->current == list->last)
+		nptr->next = current->next;
+		nptr->prev = current;
+		if(current->next)
+			current->next->prev = nptr;
+		current->next = nptr;
+		if(current == list->last)
 			list->last = nptr;
 		list->current = nptr;
 	}
