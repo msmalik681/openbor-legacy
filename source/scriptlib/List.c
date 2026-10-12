@@ -318,32 +318,3 @@ int List_GetSize(const List *list) {
 	return list->size;
 }
 
-			return node;
-	}
-	return NULL;
-}
-
-int List_FindByName(List *list, const char *name) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	Node *node = List_GetNodeByName(list, name);
-	if(!node)
-		return 0;
-	list->current = node;
-	return 1;
-}
-
-void List_Reset(List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	list->current = list->first;
-}
-
-int List_GetSize(const List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	return list->size;
-}
