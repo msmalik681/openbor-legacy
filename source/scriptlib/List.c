@@ -212,7 +212,7 @@ void List_Remove(List * list) {
 		free(list->current);
 		list->first = list->current = list->last = NULL;
 	} else {
-		if(list->current->prev != NULL)
+		if(list->current->prev)
 			list->current->prev->next = list->current->next;
 		if(list->current->next)
 			list->current->next->prev = list->current->prev;
