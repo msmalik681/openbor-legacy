@@ -131,6 +131,7 @@ int List_GotoFirst(List *list) {
 #endif
 	if(!list->size)
 		return 0;
+	assert(list->first);
 	list->current = list->first;
 	return 1;
 }
