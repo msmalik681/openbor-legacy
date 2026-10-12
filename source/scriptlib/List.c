@@ -55,7 +55,7 @@ static void List_AddHash(List *list, Node *node) {
 	if(!list->buckets[h]) {
 		list->buckets[h] = calloc(1, sizeof(Bucket));
 		list->buckets[h]->nodes = calloc(1, sizeof(Node *) * BUCKET_INIT_NODES_ALLOC);
-		assert(list->buckets[h]->nodes != NULL);
+		assert(list->buckets[h]->nodes);
 		list->buckets[h]->size = BUCKET_INIT_NODES_ALLOC;
 	}
 
@@ -63,7 +63,7 @@ static void List_AddHash(List *list, Node *node) {
 	assert(list->buckets[h]->used <= save);
 	if(list->buckets[h]->used == save) {
 		list->buckets[h]->nodes = realloc(list->buckets[h]->nodes, sizeof(Node *) * (save * 2));
-		assert(list->buckets[h]->nodes != NULL);
+		assert(list->buckets[h]->nodes);
 		list->buckets[h]->size = save * 2;
 	}
 
@@ -171,7 +171,7 @@ void List_InsertAfter(List *list, void *e, char *theName) {
 	Node *nptr = malloc(sizeof(Node));
 	Node *current = list->current;
 
-	assert(nptr != NULL);
+	assert(nptr);
 	nptr->value = e;
 	nptr->name = list->no_strdup ? theName : strdup(theName);
 
