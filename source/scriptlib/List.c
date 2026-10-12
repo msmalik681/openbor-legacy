@@ -29,6 +29,8 @@ void chklist(const List *list) {
 }
 #endif
 
+#define HASH_BUCKET_COUNT 256
+
 static unsigned char strhash(const char *s) {
 	ptrdiff_t tmp = 0;
 	const char *p = s;
