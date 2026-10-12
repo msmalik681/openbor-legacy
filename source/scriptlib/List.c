@@ -80,12 +80,11 @@ static void List_RemoveHash(List *list, Node *node) {
 	Bucket *bucket = list->buckets[h];
 	assert(bucket);
 	assert(bucket->used > 0);
-	for(size_t i = 0; i < bucket->used; i++) {
-		if(node == bucket->nodes[i]) {
-			bucket->nodes[i] = NULL;
-			break;
-		}
-	}
+	size_t i = 0;
+	while(i < bucket->used && node != bucket->nodes[i])
+		i++;
+	if(i < bucket->used)
+		bucket->nodes[i] = NULL;
 }
 
 static void List_FreeHashes(List *list) {
