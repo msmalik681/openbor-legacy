@@ -21,7 +21,7 @@ void List_Set_UseStrdup(List* list, int use) {
 }
 
 #ifdef DEBUG
-void chklist(List * list) {
+void chklist(const List *list) {
 	assert(list);
 	assert(list->initdone == 1);
 }
@@ -138,10 +138,8 @@ Node *List_GetCurrentNode(List * list) {
 void Node_Clear(Node * node) {
 	if(!node)
 		return;
-	if(node->name) {
-		free(node->name);
-		node->name = NULL;
-	}
+	free(node->name);
+	node->name = NULL;
 }
 
 void List_Init(List * list) {
@@ -250,7 +248,7 @@ int List_GotoNext(List * list) {
 
 void *List_Retrieve(const List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	return list->current ? list->current->value : NULL;
 }
@@ -281,11 +279,10 @@ int List_FindByName(List * list, const char *name) {
 #endif
 
 	Node *n = List_GetNodeByName(list, name);
-	if(n) {
-		list->current = n;
-		return 1;
-	}
-	return 0;
+	if(!n)
+		return 0;
+	list->current = n;
+	return 1;
 }
 
 void List_Reset(List * list) {
@@ -297,7 +294,7 @@ void List_Reset(List * list) {
 
 int List_GetSize(const List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	return list->size;
 }
