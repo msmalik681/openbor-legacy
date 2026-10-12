@@ -168,28 +168,28 @@ void List_InsertAfter(List *list, void *e, char *theName) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *nptr = malloc(sizeof *nptr);
+	Node *node = malloc(sizeof *node);
 	Node *current = list->current;
 
-	assert(nptr);
-	nptr->value = e;
-	nptr->name = list->no_strdup ? theName : strdup(theName);
+	assert(node);
+	node->value = e;
+	node->name = list->no_strdup ? theName : strdup(theName);
 
-	List_AddHash(list, nptr);
+	List_AddHash(list, node);
 
 	if(list->size == 0) {
-		nptr->prev = NULL;
-		nptr->next = NULL;
-		list->current = list->first = list->last = nptr;
+		node->prev = NULL;
+		node->next = NULL;
+		list->current = list->first = list->last = node;
 	} else {
-		nptr->next = current->next;
-		nptr->prev = current;
+		node->next = current->next;
+		node->prev = current;
 		if(current->next)
-			current->next->prev = nptr;
-		current->next = nptr;
+			current->next->prev = node;
+		current->next = node;
 		if(current == list->last)
-			list->last = nptr;
-		list->current = nptr;
+			list->last = node;
+		list->current = node;
 	}
 	list->size++;
 }
