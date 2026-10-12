@@ -27,7 +27,6 @@ void chklist(List * list) {
 }
 #endif
 
-#ifdef USE_STRING_HASHES
 static unsigned char strhash(const char *s) {
 	ptrdiff_t tmp = 0;
 	const char *p = s;
@@ -38,7 +37,6 @@ static unsigned char strhash(const char *s) {
 	return (size_t) tmp % 256;
 }
 
-/* add a single node to the hash list */
 #define BUCKET_INIT_NODES_ALLOC 2
 static void List_AddHash(List * list, Node * node) {
 #ifdef DEBUG
@@ -74,7 +72,6 @@ static void List_AddHash(List * list, Node * node) {
 	list->buckets[h]->used++;
 }
 
-/* Remove a node from the string-hash bucket. */
 static void List_RemoveHash(List * list, Node * node) {
 #ifdef DEBUG
 	chklist(list);
@@ -94,9 +91,6 @@ static void List_RemoveHash(List * list, Node * node) {
 	}
 }
 
-/* free everything related to the string hash list
-usually you dont have to do it manually, since its called by List_Clear
-but it won't hurt either */
 static void List_FreeHashes(List * list) {
 #ifdef DEBUG
 	chklist(list);
@@ -114,16 +108,13 @@ static void List_FreeHashes(List * list) {
 	list->buckets = NULL;
 }
 
-#endif
-
 int List_GotoLast(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(list->size)
-		list->current = list->last;
-	else
+	if(!list->size)
 		return 0;
+	list->current = list->last;
 	return 1;
 }
 
@@ -131,10 +122,9 @@ int List_GotoFirst(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(list->size)
-		list->current = list->first;
-	else
+	if(!list->size)
 		return 0;
+	list->current = list->first;
 	return 1;
 }
 
@@ -157,9 +147,7 @@ void Node_Clear(Node * node) {
 void List_Init(List * list) {
 	list->first = list->current = list->last = NULL;
 	list->size = 0;
-#ifdef USE_STRING_HASHES
 	list->buckets = NULL;
-#endif
 #ifdef DEBUG
 	list->initdone = 1;
 #endif
@@ -182,28 +170,21 @@ void List_Clear(List * list) {
 		nptr = list->current;
 	}
 
-
-#ifdef USE_STRING_HASHES
 	List_FreeHashes(list);
-#endif
-
 	List_Init(list);
 }
-// Insertion function.
+
 void List_InsertAfter(List * list, void *e, char *theName) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-//Construct a new Node and fill it with the appropriate value
 	Node *nptr = malloc(sizeof(Node));
 
 	assert(nptr != NULL);
 	nptr->value = e;
 	nptr->name = (list->no_strdup) ? theName : strdup(theName);
 
-#ifdef USE_STRING_HASHES
 	List_AddHash(list, nptr);
-#endif
 
 	if(list->size == 0) {
 		nptr->prev = NULL;
@@ -232,9 +213,7 @@ void List_Remove(List * list) {
 		//OutputDebugString("Attempted to remove from empty list.\n");
 		return;
 	} else if(list->size == 1) {
-#ifdef USE_STRING_HASHES
 		List_RemoveHash(list, list->current);
-#endif
 		if(!list->no_strdup) Node_Clear(list->current);
 		free(list->current);
 		list->first = list->current = list->last = NULL;
@@ -248,9 +227,7 @@ void List_Remove(List * list) {
 		else
 			nptr = list->current->next;
 
-#ifdef USE_STRING_HASHES
 		List_RemoveHash(list, list->current);
-#endif
 
 		if(!list->no_strdup) Node_Clear(list->current);
 		free(list->current);
@@ -268,10 +245,9 @@ int List_GotoNext(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(list->current != list->last)
-		list->current = list->current->next;
-	else
+	if(list->current == list->last)
 		return 0;
+	list->current = list->current->next;
 	return 1;
 }
 
@@ -282,7 +258,6 @@ void *List_Retrieve(const List * list) {
 	return list->current ? list->current->value : NULL;
 }
 
-
 /* returns the first node of which name is equal to theName */
 Node *List_GetNodeByName(List * list, const char *name) {
 #ifdef DEBUG
@@ -291,7 +266,6 @@ Node *List_GetNodeByName(List * list, const char *name) {
 	if(!name)
 		return NULL;
 
-#ifdef USE_STRING_HASHES
 	size_t i;
 	unsigned char h = strhash(name);
 	if(!list->buckets || !list->buckets[h])
@@ -303,8 +277,6 @@ Node *List_GetNodeByName(List * list, const char *name) {
 		}
 	}
 	return NULL;
-#endif
-
 }
 
 /* SIDE EFFECTS: sets list->current to the first found node */
