@@ -256,10 +256,11 @@ Node *List_GetNodeByName(List * list, const char *name) {
 
 	size_t i;
 	unsigned char h = strhash(name);
-	if(!list->buckets[h])
+	Bucket *bucket = list->buckets[h];
+	if(!bucket)
 		return NULL;
-	for(i = 0; i < list->buckets[h]->used; i++) {
-		Node *nptr = list->buckets[h]->nodes[i];
+	for(i = 0; i < bucket->used; i++) {
+		Node *nptr = bucket->nodes[i];
 		if(nptr && strcmp(name, nptr->name) == 0)
 			return nptr;
 	}
