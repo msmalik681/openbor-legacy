@@ -68,8 +68,7 @@ static void List_AddHash(List * list, Node * node) {
 		list->buckets[h]->size = save * 2;
 	}
 
-	list->buckets[h]->nodes[list->buckets[h]->used] = node;
-	list->buckets[h]->used++;
+	list->buckets[h]->nodes[list->buckets[h]->used++] = node;
 }
 
 static void List_RemoveHash(List * list, Node * node) {
