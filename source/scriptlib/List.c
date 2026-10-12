@@ -263,7 +263,7 @@ void *List_Retrieve(const List *list) {
 	return list->current ? list->current->value : NULL;
 }
 
-Node *List_GetNodeByName(List *list, const char *name) {
+Node *List_GetNodeByName(const List *list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
