@@ -76,13 +76,12 @@ static void List_RemoveHash(List *list, Node *node) {
 	chklist(list);
 #endif
 	unsigned char h;
-	size_t i;
 	if(!node->name)
 		return;
 	h = strhash(node->name);
 	assert(list->buckets[h]);
 	assert(list->buckets[h]->used > 0);
-	for(i = 0; i < list->buckets[h]->used; i++) {
+	for(size_t i = 0; i < list->buckets[h]->used; i++) {
 		if(node == list->buckets[h]->nodes[i]) {
 			list->buckets[h]->nodes[i] = NULL;
 			break;
@@ -94,10 +93,9 @@ static void List_FreeHashes(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	size_t i;
 	if(!list->buckets)
 		return;
-	for(i = 0; i < 256; i++) {
+	for(size_t i = 0; i < 256; i++) {
 		if(list->buckets[i]) {
 			free(list->buckets[i]->nodes);
 			free(list->buckets[i]);
@@ -259,12 +257,11 @@ Node *List_GetNodeByName(List *list, const char *name) {
 	if(!name || !list->buckets)
 		return NULL;
 
-	size_t i;
 	unsigned char h = strhash(name);
 	Bucket *bucket = list->buckets[h];
 	if(!bucket)
 		return NULL;
-	for(i = 0; i < bucket->used; i++) {
+	for(size_t i = 0; i < bucket->used; i++) {
 		Node *nptr = bucket->nodes[i];
 		if(nptr && strcmp(name, nptr->name) == 0)
 			return nptr;
