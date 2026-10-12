@@ -203,9 +203,9 @@ void List_Remove(List * list) {
 	chklist(list);
 #endif
 	Node *nptr;
-	if(list->size == 0) {
+	if(list->size == 0)
 		return;
-	} else if(list->size == 1) {
+	if(list->size == 1) {
 		List_RemoveHash(list, list->current);
 		if(!list->no_strdup) Node_Clear(list->current);
 		free(list->current);
