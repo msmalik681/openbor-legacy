@@ -206,8 +206,9 @@ void List_Remove(List *list) {
 		free(current);
 		list->first = list->current = list->last = NULL;
 	} else {
-		was_last = current == list->last;
-		was_first = current == list->first;
+		int was_last = current == list->last;
+		int was_first = current == list->first;
+		Node *nptr;
 		if(current->prev)
 			current->prev->next = current->next;
 		if(current->next)
