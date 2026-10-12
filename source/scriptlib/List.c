@@ -33,9 +33,8 @@ void chklist(const List *list) {
 
 static unsigned char strhash(const char *s) {
 	ptrdiff_t tmp = 0;
-	const char *p = s;
-	while(*p)
-		tmp += *p++ - 'A';
+	while(*s)
+		tmp += *s++ - 'A';
 	return (size_t) tmp % HASH_BUCKET_COUNT;
 }
 
