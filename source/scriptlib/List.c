@@ -119,7 +119,7 @@ int List_GotoFirst(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(list->size == 0)
+	if(!list->size)
 		return 0;
 	list->current = list->first;
 	return 1;
@@ -153,7 +153,6 @@ void List_Clear(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-
 	Node *nptr = list->first;
 	while(nptr) {
 		Node *next = nptr->next;
@@ -162,7 +161,6 @@ void List_Clear(List * list) {
 		free(nptr);
 		nptr = next;
 	}
-
 	List_FreeHashes(list);
 	List_Init(list);
 }
