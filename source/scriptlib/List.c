@@ -251,12 +251,12 @@ Node *List_GetNodeByName(List * list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(!name)
+	if(!name || !list->buckets)
 		return NULL;
 
 	size_t i;
 	unsigned char h = strhash(name);
-	if(!list->buckets || !list->buckets[h])
+	if(!list->buckets[h])
 		return NULL;
 	for(i = 0; i < list->buckets[h]->used; i++) {
 		Node *nptr = list->buckets[h]->nodes[i];
