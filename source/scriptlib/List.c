@@ -30,10 +30,8 @@ void chklist(const List *list) {
 static unsigned char strhash(const char *s) {
 	ptrdiff_t tmp = 0;
 	const char *p = s;
-	while(*p) {
-		tmp += *p - 'A';
-		p++;
-	}
+	while(*p)
+		tmp += *p++ - 'A';
 	return (size_t) tmp % 256;
 }
 
