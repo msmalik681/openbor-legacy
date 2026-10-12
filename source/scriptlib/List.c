@@ -23,7 +23,7 @@ void List_Set_UseStrdup(List* list, int use) {
 #ifdef DEBUG
 void chklist(List * list) {
 	assert(list);
-	assert(list->initdone == 1);	// method called on uninitialised list
+	assert(list->initdone == 1);
 }
 #endif
 
@@ -159,7 +159,6 @@ void List_Clear(List * list) {
 	chklist(list);
 #endif
 
-	//Delete all the Nodes in the list.
 	Node *nptr = list->first;
 	list->current = list->first;
 
@@ -203,14 +202,12 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 	list->size++;
 }
 
-//removes the current node and sets current to next, if applicable
 void List_Remove(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
 	Node *nptr;
 	if(list->size == 0) {
-		//OutputDebugString("Attempted to remove from empty list.\n");
 		return;
 	} else if(list->size == 1) {
 		List_RemoveHash(list, list->current);
@@ -258,7 +255,6 @@ void *List_Retrieve(const List * list) {
 	return list->current ? list->current->value : NULL;
 }
 
-/* returns the first node of which name is equal to theName */
 Node *List_GetNodeByName(List * list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
@@ -279,7 +275,6 @@ Node *List_GetNodeByName(List * list, const char *name) {
 	return NULL;
 }
 
-/* SIDE EFFECTS: sets list->current to the first found node */
 int List_FindByName(List * list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
