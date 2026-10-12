@@ -40,7 +40,7 @@ static unsigned char strhash(char *s) {
 
 /* add a single node to the hash list */
 #define BUCKET_INIT_NODES_ALLOC 2
-void List_AddHash(List * list, Node * node) {
+static void List_AddHash(List * list, Node * node) {
 #ifdef DEBUG
 	chklist((List *) list);
 #endif
@@ -75,7 +75,7 @@ void List_AddHash(List * list, Node * node) {
 }
 
 /* Remove a node from the string-hash bucket. */
-void List_RemoveHash(List * list, Node * node) {
+static void List_RemoveHash(List * list, Node * node) {
 #ifdef DEBUG
 	chklist((List *) list);
 #endif
@@ -97,7 +97,7 @@ void List_RemoveHash(List * list, Node * node) {
 /* free everything related to the string hash list
 usually you dont have to do it manually, since its called by List_Clear
 but it won't hurt either */
-void List_FreeHashes(List * list) {
+static void List_FreeHashes(List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
 #endif
