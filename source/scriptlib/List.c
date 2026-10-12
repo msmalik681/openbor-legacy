@@ -158,13 +158,12 @@ void List_Clear(List * list) {
 #endif
 
 	Node *nptr = list->first;
-	list->current = list->first;
-
-	while(list->current) {
-		list->current = list->current->next;
-		if(!list->no_strdup) Node_Clear(nptr);
+	while(nptr) {
+		Node *next = nptr->next;
+		if(!list->no_strdup)
+			Node_Clear(nptr);
 		free(nptr);
-		nptr = list->current;
+		nptr = next;
 	}
 
 	List_FreeHashes(list);
