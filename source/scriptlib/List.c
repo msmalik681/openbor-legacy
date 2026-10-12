@@ -210,32 +210,32 @@ void List_Remove(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *current = list->current;
+	Node *current_node = list->current;
 	if(!list->size)
 		return;
-	assert(current);
+	assert(current_node);
 	if(list->size == 1) {
-		List_RemoveHash(list, current);
+		List_RemoveHash(list, current_node);
 		if(!list->no_strdup) {
-			Node_Clear(current);
+			Node_Clear(current_node);
 		}
-		free(current);
+		free(current_node);
 		list->first = list->current = list->last = NULL;
 	} else {
-		const int was_last = current == list->last;
-		const int was_first = current == list->first;
-		if(current->prev)
-			current->prev->next = current->next;
-		if(current->next)
-			current->next->prev = current->prev;
-		Node *next_current = was_last ? current->prev : current->next;
+		const int was_last = current_node == list->last;
+		const int was_first = current_node == list->first;
+		if(current_node->prev)
+			current_node->prev->next = current_node->next;
+		if(current_node->next)
+			current_node->next->prev = current_node->prev;
+		Node *next_current = was_last ? current_node->prev : current_node->next;
 
-		List_RemoveHash(list, current);
+		List_RemoveHash(list, current_node);
 
 		if(!list->no_strdup) {
-			Node_Clear(current);
+			Node_Clear(current_node);
 		}
-		free(current);
+		free(current_node);
 
 		if(was_last)
 			list->last = next_current;
