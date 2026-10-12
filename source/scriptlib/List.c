@@ -128,7 +128,7 @@ Node *List_GetCurrentNode(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	return list == NULL ? NULL : list->current;
+	return list ? list->current : NULL;
 }
 
 void Node_Clear(Node *node) {
