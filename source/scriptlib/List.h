@@ -24,8 +24,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define NAME(s) ((s)?(strdup(s)):NULL)
-
 typedef struct Node {
 	struct Node *prev;	//pointer to previous Node
 	struct Node *next;	//pointer to next Node
