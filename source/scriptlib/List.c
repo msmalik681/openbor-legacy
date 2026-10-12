@@ -36,7 +36,7 @@ static unsigned char strhash(const char *s) {
 	const char *p = s;
 	while(*p)
 		tmp += *p++ - 'A';
-	return (size_t) tmp % 256;
+	return (size_t) tmp % HASH_BUCKET_COUNT;
 }
 
 #define BUCKET_INIT_NODES_ALLOC ((size_t) 2)
