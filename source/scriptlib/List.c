@@ -199,31 +199,32 @@ void List_Remove(List * list) {
 	chklist(list);
 #endif
 	Node *nptr;
+	Node *current = list->current;
 	if(!list->size)
 		return;
 	if(list->size == 1) {
-		List_RemoveHash(list, list->current);
-		if(!list->no_strdup) Node_Clear(list->current);
-		free(list->current);
+		List_RemoveHash(list, current);
+		if(!list->no_strdup) Node_Clear(current);
+		free(current);
 		list->first = list->current = list->last = NULL;
 	} else {
-		if(list->current->prev)
-			list->current->prev->next = list->current->next;
-		if(list->current->next)
-			list->current->next->prev = list->current->prev;
-		if(list->current == list->last)
-			nptr = list->current->prev;
+		if(current->prev)
+			current->prev->next = current->next;
+		if(current->next)
+			current->next->prev = current->prev;
+		if(current == list->last)
+			nptr = current->prev;
 		else
-			nptr = list->current->next;
+			nptr = current->next;
 
-		List_RemoveHash(list, list->current);
+		List_RemoveHash(list, current);
 
-		if(!list->no_strdup) Node_Clear(list->current);
-		free(list->current);
+		if(!list->no_strdup) Node_Clear(current);
+		free(current);
 
-		if(list->current == list->last)
+		if(current == list->last)
 			list->last = nptr;
-		if(list->current == list->first)
+		if(current == list->first)
 			list->first = nptr;
 		list->current = nptr;
 	}
