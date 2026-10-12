@@ -203,7 +203,9 @@ void List_Remove(List *list) {
 		return;
 	if(list->size == 1) {
 		List_RemoveHash(list, current);
-		if(!list->no_strdup) Node_Clear(current);
+		if(!list->no_strdup) {
+			Node_Clear(current);
+		}
 		free(current);
 		list->first = list->current = list->last = NULL;
 	} else {
