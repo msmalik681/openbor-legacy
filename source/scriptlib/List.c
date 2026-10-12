@@ -199,7 +199,7 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 
 	assert(nptr != NULL);
 	nptr->value = e;
-	nptr->name = (list->no_strdup) ? theName : NAME(theName);
+	nptr->name = (list->no_strdup) ? theName : strdup(theName);
 
 #ifdef USE_STRING_HASHES
 	List_AddHash(list, nptr);
@@ -305,17 +305,6 @@ Node *List_GetNodeByName(List * list, char *name) {
 		if(nptr && strcmp(name, nptr->name) == 0) {
 			return list->buckets[h]->nodes[i];
 		}
-	}
-	return NULL;
-#else
-	nptr = list->first;
-
-	while(nptr) {
-		if(nptr->name) {
-			if(strcmp(nptr->name, name) == 0)
-				return nptr;
-		}
-		nptr = nptr->next;
 	}
 	return NULL;
 #endif
