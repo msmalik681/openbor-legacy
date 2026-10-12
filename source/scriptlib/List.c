@@ -59,12 +59,12 @@ static void List_AddHash(List *list, Node *node) {
 		bucket->size = BUCKET_INIT_NODES_ALLOC;
 	}
 
-	size_t save = bucket->size;
-	assert(bucket->used <= save);
-	if(bucket->used == save) {
-		bucket->nodes = realloc(bucket->nodes, sizeof *bucket->nodes * (save * 2));
+	size_t capacity = bucket->size;
+	assert(bucket->used <= capacity);
+	if(bucket->used == capacity) {
+		bucket->nodes = realloc(bucket->nodes, sizeof *bucket->nodes * (capacity * 2));
 		assert(bucket->nodes);
-		bucket->size = save * 2;
+		bucket->size = capacity * 2;
 	}
 
 	bucket->nodes[bucket->used++] = node;
