@@ -9,7 +9,7 @@
  * 
  * the whole smart stuff going on here was written by anallyst.
  * at the time anallyst touched this code, this was a very simple single linked list.
- * double linked list functionality, index hash and string hash functionality is (C) anallyst.
+ * double linked list functionality is (C) anallyst.
  * 
  */
 
@@ -236,9 +236,6 @@ int List_GotoLast(List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
 #endif
-#ifdef LIST_DEBUG
-	printf("List_Last %p\n", list);
-#endif
 	if(list->size)
 		list->current = list->last;
 	else
@@ -249,9 +246,6 @@ int List_GotoLast(List * list) {
 int List_GotoFirst(List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_First %p\n", list);
 #endif
 	if(list->size)
 		list->current = list->first;
@@ -277,11 +271,8 @@ void Node_Clear(Node * node) {
 }
 
 void List_Init(List * list) {
-#ifdef LIST_DEBUG
-	printf("List_Init %p\n", list);
-#endif
 	list->first = list->current = list->last = NULL;
-	list->size = list->index = 0;
+	list->size = 0;
 #ifdef USE_INDEX
 	list->mindices = NULL;
 #endif
@@ -297,9 +288,6 @@ void List_Init(List * list) {
 void List_Clear(List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_clear %p \n", list);
 #endif
 
 	//Delete all the Nodes in the list.
@@ -324,54 +312,10 @@ void List_Clear(List * list) {
 
 	List_Init(list);
 }
-
-//Insertion functions
-void List_InsertBefore(List * list, void *e, char *theName) {
-#ifdef DEBUG
-	chklist((List *) list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_InsertBefore %p %s\n", list, theName ? theName : "no-name");
-#endif
-#ifdef USE_INDEX
-	if(list->mindices)
-		List_FreeIndices(list);	// inserting something before something else destroys our indices list.
-#endif
-
-	//Construct a new Node
-	Node *nptr = (Node *) malloc(sizeof(Node));
-	assert(nptr != NULL);
-
-	nptr->value = e;
-	nptr->name = (list->no_strdup) ? theName : NAME(theName);
-
-#ifdef USE_STRING_HASHES
-	List_AddHash(list, nptr);
-#endif
-
-	if(list->size == 0) {
-		nptr->next = NULL;
-		nptr->prev = NULL;
-		list->current = list->first = list->last = nptr;
-	} else {
-		nptr->next = list->current;
-		nptr->prev = list->current->prev;
-		if(list->current->prev != NULL)
-			list->current->prev->next = nptr;
-		list->current->prev = nptr;
-		if(list->current == list->first)
-			list->first = nptr;
-		list->current = nptr;
-	}
-	list->size++;
-}
-
+// Insertion function.
 void List_InsertAfter(List * list, void *e, char *theName) {
 #ifdef DEBUG
 	chklist((List *) list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_InsertAfter %p %s\n", list, theName ? theName : "no-name");
 #endif
 #ifdef USE_INDEX
 	int doIndex = 0;
@@ -421,9 +365,6 @@ void List_Remove(List * list) {
 	chklist((List *) list);
 #endif
 	Node *nptr;
-#ifdef LIST_DEBUG
-	printf("List_Remove %p\n", list);
-#endif
 	if(list->size == 0) {
 		//OutputDebugString("Attempted to remove from empty list.\n");
 		return;
@@ -475,9 +416,6 @@ void List_Remove(List * list) {
 int List_GotoNext(List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_Next %p\n", list);
 #endif
 	if(list->current != list->last)
 		list->current = list->current->next;
@@ -632,9 +570,6 @@ char *List_GetName(const List * list) {
 void List_Reset(List * list) {
 #ifdef DEBUG
 	chklist(list);
-#endif
-#ifdef LIST_DEBUG
-	printf("List_Reset %p\n", list);
 #endif
 	list->current = list->first;
 }

@@ -9,23 +9,17 @@
  * 
  * the whole smart stuff going on here was written by anallyst.
  * at the time anallyst touched this code, this was a very simple single linked list.
- * double linked list functionality, index hash and string hash functionality is (C) anallyst.
+ * double linked list functionality is (C) anallyst.
  * 
  */
 
 #ifndef LIST_H
 #define LIST_H
 
-// this switch enables the capability to create a hashmap for quick index lookups
-// speeds up search for "contains" and "getindex" type of queries.
-// it only consumes more ram if CreateIndices is actually called
-// but it can be disabled to reduce binary size and mem usage. however the mentioned
-// methods will be much slower.
+// Optional index lookup support.
 #define USE_INDEX
 
-// this switch enables the capability to create a hashmap for quick string searches
-// speeds up search for "findByname" type of queries.
-// it will always be used, so memory usage will be slightly increased.
+// Optional string lookup support.
 #define USE_STRING_HASHES
 
 #include <stddef.h>
@@ -43,14 +37,6 @@
 	  } \
    }
 
-#define PFOREACH( x, y ) {\
-   size = List_GetSize(x); \
-   List_Reset(x); \
-   for (i = 0; i < size; i++){ \
-		 y \
-		 List_GotoNext(x); \
-	  } \
-   }
 
 #define NAME(s) ((s)?(strdup(s)):NULL)
 
@@ -83,7 +69,6 @@ typedef struct List {
 	Node *first;
 	Node *current;
 	Node *last;
-	ptrdiff_t index;
 	size_t size;
 #ifdef USE_INDEX
 	LIndex **mindices;
@@ -101,7 +86,6 @@ void List_Set_UseStrdup(List* list, int use);
 void Node_Clear(Node * node);
 void List_Init(List * list);
 void List_Clear(List * list);
-void List_InsertBefore(List * list, void *e, char *theName);
 void List_InsertAfter(List * list, void *e, char *theName);
 void List_Remove(List * list);
 int List_GotoNext(List * list);
