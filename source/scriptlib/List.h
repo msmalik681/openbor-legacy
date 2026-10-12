@@ -16,9 +16,6 @@
 #ifndef LIST_H
 #define LIST_H
 
-// Optional index lookup support.
-#define USE_INDEX
-
 // Optional string lookup support.
 #define USE_STRING_HASHES
 
@@ -47,15 +44,6 @@ typedef struct Node {
 	char *name;		//optional name of the Node
 } Node;
 
-#ifdef USE_INDEX
-typedef struct LIndex {
-	size_t size;
-	size_t used;
-	Node **nodes;
-	ptrdiff_t *indices;
-} LIndex;
-#endif
-
 #ifdef USE_STRING_HASHES
 typedef struct Bucket {
 	size_t size;
@@ -70,9 +58,6 @@ typedef struct List {
 	Node *current;
 	Node *last;
 	size_t size;
-#ifdef USE_INDEX
-	LIndex **mindices;
-#endif
 #ifdef USE_STRING_HASHES
 	Bucket **buckets;
 #endif
@@ -98,12 +83,5 @@ int List_GetSize(const List * list);
 
 Node *List_GetNodeByName(List * list, char *Name);
 Node *List_GetCurrentNode(List * list);
-#ifdef USE_INDEX
-void List_AddIndex(List * list, Node * node, size_t index);
-void List_RemoveLastIndex(List * list);
-void List_CreateIndices(List * list);
-void List_FreeIndices(List * list);
-unsigned char ptrhash(void *value);	// need to export that as well for unittest.
-#endif
 
 #endif
