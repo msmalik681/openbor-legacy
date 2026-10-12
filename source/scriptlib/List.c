@@ -32,10 +32,10 @@ void chklist(const List *list) {
 #define HASH_BUCKET_COUNT 256
 
 static unsigned char strhash(const char *s) {
-	ptrdiff_t tmp = 0;
+	ptrdiff_t hash = 0;
 	while(*s)
-		tmp += *s++ - 'A';
-	return (size_t) tmp % HASH_BUCKET_COUNT;
+		hash += *s++ - 'A';
+	return (size_t) hash % HASH_BUCKET_COUNT;
 }
 
 #define BUCKET_INIT_NODES_ALLOC ((size_t) 2)
