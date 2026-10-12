@@ -38,7 +38,7 @@ static unsigned char strhash(const char *s) {
 }
 
 #define BUCKET_INIT_NODES_ALLOC 2
-static void List_AddHash(List * list, Node * node) {
+static void List_AddHash(List *list, Node *node) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -71,7 +71,7 @@ static void List_AddHash(List * list, Node * node) {
 	list->buckets[h]->nodes[list->buckets[h]->used++] = node;
 }
 
-static void List_RemoveHash(List * list, Node * node) {
+static void List_RemoveHash(List *list, Node *node) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -90,7 +90,7 @@ static void List_RemoveHash(List * list, Node * node) {
 	}
 }
 
-static void List_FreeHashes(List * list) {
+static void List_FreeHashes(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -107,7 +107,7 @@ static void List_FreeHashes(List * list) {
 	list->buckets = NULL;
 }
 
-int List_GotoLast(List * list) {
+int List_GotoLast(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -117,7 +117,7 @@ int List_GotoLast(List * list) {
 	return 1;
 }
 
-int List_GotoFirst(List * list) {
+int List_GotoFirst(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -127,7 +127,7 @@ int List_GotoFirst(List * list) {
 	return 1;
 }
 
-Node *List_GetCurrentNode(List * list) {
+Node *List_GetCurrentNode(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -141,7 +141,7 @@ void Node_Clear(Node *node) {
 	node->name = NULL;
 }
 
-void List_Init(List * list) {
+void List_Init(List *list) {
 	list->first = list->current = list->last = NULL;
 	list->size = 0;
 	list->buckets = NULL;
@@ -151,7 +151,7 @@ void List_Init(List * list) {
 	list->no_strdup = 0;
 }
 
-void List_Clear(List * list) {
+void List_Clear(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -167,7 +167,7 @@ void List_Clear(List * list) {
 	List_Init(list);
 }
 
-void List_InsertAfter(List * list, void *e, char *theName) {
+void List_InsertAfter(List *list, void *e, char *theName) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -197,7 +197,7 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 	list->size++;
 }
 
-void List_Remove(List * list) {
+void List_Remove(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -235,7 +235,7 @@ void List_Remove(List * list) {
 	list->size--;
 }
 
-int List_GotoNext(List * list) {
+int List_GotoNext(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -245,14 +245,14 @@ int List_GotoNext(List * list) {
 	return 1;
 }
 
-void *List_Retrieve(const List * list) {
+void *List_Retrieve(const List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
 	return list->current ? list->current->value : NULL;
 }
 
-Node *List_GetNodeByName(List * list, const char *name) {
+Node *List_GetNodeByName(List *list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -272,7 +272,7 @@ Node *List_GetNodeByName(List * list, const char *name) {
 	return NULL;
 }
 
-int List_FindByName(List * list, const char *name) {
+int List_FindByName(List *list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -283,14 +283,14 @@ int List_FindByName(List * list, const char *name) {
 	return 1;
 }
 
-void List_Reset(List * list) {
+void List_Reset(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
 	list->current = list->first;
 }
 
-int List_GetSize(const List * list) {
+int List_GetSize(const List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
