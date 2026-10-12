@@ -18,8 +18,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-void List_Set_UseStrdup(List *list, int use) {
-	list->no_strdup = !use;
+void List_Set_UseStrdup(List *list, int use_strdup) {
+	list->no_strdup = !use_strdup;
 }
 
 #ifdef DEBUG
