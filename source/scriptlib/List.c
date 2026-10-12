@@ -270,7 +270,6 @@ int List_FindByName(List * list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-
 	Node *n = List_GetNodeByName(list, name);
 	if(!n)
 		return 0;
