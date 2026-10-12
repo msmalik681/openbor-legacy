@@ -19,9 +19,6 @@
 #define USE_STRING_HASHES
 
 #include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 
 typedef struct Node {
 	struct Node *prev;
