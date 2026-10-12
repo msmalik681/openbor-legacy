@@ -45,21 +45,21 @@ typedef struct List {
 	int no_strdup:1;
 } List;
 
-void List_Set_UseStrdup(List* list, int use);
-void Node_Clear(Node * node);
-void List_Init(List * list);
-void List_Clear(List * list);
-void List_InsertAfter(List * list, void *e, char *theName);
-void List_Remove(List * list);
-int List_GotoNext(List * list);
-int List_GotoLast(List * list);
-int List_GotoFirst(List * list);
-void *List_Retrieve(const List * list);
-int List_FindByName(List * list, const char *name);
-void List_Reset(List * list);
-int List_GetSize(const List * list);
+void List_Set_UseStrdup(List *list, int use);
+void Node_Clear(Node *node);
+void List_Init(List *list);
+void List_Clear(List *list);
+void List_InsertAfter(List *list, void *e, char *theName);
+void List_Remove(List *list);
+int List_GotoNext(List *list);
+int List_GotoLast(List *list);
+int List_GotoFirst(List *list);
+void *List_Retrieve(const List *list);
+int List_FindByName(List *list, const char *name);
+void List_Reset(List *list);
+int List_GetSize(const List *list);
 
-Node *List_GetNodeByName(List * list, const char *name);
-Node *List_GetCurrentNode(List * list);
+Node *List_GetNodeByName(List *list, const char *name);
+Node *List_GetCurrentNode(List *list);
 
 #endif
