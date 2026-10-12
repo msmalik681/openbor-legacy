@@ -237,7 +237,7 @@ int List_GotoNext(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	if(list->current == list->last)
+	if(list->size == 0 || list->current == list->last)
 		return 0;
 	list->current = list->current->next;
 	return 1;
