@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void List_Set_UseStrdup(List* list, int use) {
+void List_Set_UseStrdup(List *list, int use) {
 	list->no_strdup = !use;
 }
 
@@ -134,7 +134,7 @@ Node *List_GetCurrentNode(List * list) {
 	return list == NULL ? NULL : list->current;
 }
 
-void Node_Clear(Node * node) {
+void Node_Clear(Node *node) {
 	if(!node)
 		return;
 	free(node->name);
