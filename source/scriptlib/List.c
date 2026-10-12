@@ -75,11 +75,12 @@ static void List_RemoveHash(List *list, Node *node) {
 	if(!node->name)
 		return;
 	unsigned char h = strhash(node->name);
-	assert(list->buckets[h]);
-	assert(list->buckets[h]->used > 0);
-	for(size_t i = 0; i < list->buckets[h]->used; i++) {
-		if(node == list->buckets[h]->nodes[i]) {
-			list->buckets[h]->nodes[i] = NULL;
+	Bucket *bucket = list->buckets[h];
+	assert(bucket);
+	assert(bucket->used > 0);
+	for(size_t i = 0; i < bucket->used; i++) {
+		if(node == bucket->nodes[i]) {
+			bucket->nodes[i] = NULL;
 			break;
 		}
 	}
