@@ -49,7 +49,7 @@ static void List_AddHash(List *list, Node *node) {
 		return;
 
 	if(!list->buckets)
-		list->buckets = calloc(256, sizeof *list->buckets);
+		list->buckets = calloc(HASH_BUCKET_COUNT, sizeof *list->buckets);
 
 	unsigned char h = strhash(node->name);
 	Bucket *bucket = list->buckets[h];
