@@ -63,7 +63,7 @@ static void List_AddHash(List *list, Node *node) {
 		bucket->size = BUCKET_INIT_NODES_ALLOC;
 	}
 
-	size_t capacity = bucket->size;
+	const size_t capacity = bucket->size;
 	assert(capacity > 0);
 	assert(bucket->used <= capacity);
 	if(bucket->used == capacity) {
