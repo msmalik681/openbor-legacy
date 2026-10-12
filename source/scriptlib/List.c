@@ -92,7 +92,7 @@ static void List_FreeHashes(List * list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	int i;
+	size_t i;
 	if(!list->buckets)
 		return;
 	for(i = 0; i < 256; i++) {
