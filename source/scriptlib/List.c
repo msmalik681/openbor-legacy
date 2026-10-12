@@ -222,8 +222,8 @@ void List_Remove(List *list) {
 		free(current);
 		list->first = list->current = list->last = NULL;
 	} else {
-		int was_last = current == list->last;
-		int was_first = current == list->first;
+		const int was_last = current == list->last;
+		const int was_first = current == list->first;
 		if(current->prev)
 			current->prev->next = current->next;
 		if(current->next)
