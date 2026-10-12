@@ -279,10 +279,7 @@ void *List_Retrieve(const List * list) {
 #ifdef DEBUG
 	chklist((List *) list);
 #endif
-	if(list->current)
-		return list->current->value;
-	else
-		return NULL;
+	return list->current ? list->current->value : NULL;
 }
 
 
