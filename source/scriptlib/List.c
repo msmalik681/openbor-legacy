@@ -49,12 +49,12 @@ static void List_AddHash(List *list, Node *node) {
 		return;
 
 	if(!list->buckets)
-		list->buckets = calloc(1, sizeof(Bucket *) * 256);
+		list->buckets = calloc(1, sizeof *list->buckets * 256);
 
 	h = strhash(node->name);
 	if(!list->buckets[h]) {
-		list->buckets[h] = calloc(1, sizeof(Bucket));
-		list->buckets[h]->nodes = calloc(1, sizeof(Node *) * BUCKET_INIT_NODES_ALLOC);
+		list->buckets[h] = calloc(1, sizeof *list->buckets[h]);
+		list->buckets[h]->nodes = calloc(1, sizeof *list->buckets[h]->nodes * BUCKET_INIT_NODES_ALLOC);
 		assert(list->buckets[h]->nodes);
 		list->buckets[h]->size = BUCKET_INIT_NODES_ALLOC;
 	}
@@ -62,7 +62,7 @@ static void List_AddHash(List *list, Node *node) {
 	size_t save = list->buckets[h]->size;
 	assert(list->buckets[h]->used <= save);
 	if(list->buckets[h]->used == save) {
-		list->buckets[h]->nodes = realloc(list->buckets[h]->nodes, sizeof(Node *) * (save * 2));
+		list->buckets[h]->nodes = realloc(list->buckets[h]->nodes, sizeof *list->buckets[h]->nodes * (save * 2));
 		assert(list->buckets[h]->nodes);
 		list->buckets[h]->size = save * 2;
 	}
