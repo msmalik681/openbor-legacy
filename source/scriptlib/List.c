@@ -166,7 +166,7 @@ void List_Clear(List *list) {
 	List_Init(list);
 }
 
-void List_InsertAfter(List *list, void *e, char *theName) {
+void List_InsertAfter(List *list, void *value, char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
@@ -174,8 +174,8 @@ void List_InsertAfter(List *list, void *e, char *theName) {
 	Node *current = list->current;
 
 	assert(node);
-	node->value = e;
-	node->name = list->no_strdup ? theName : strdup(theName);
+	node->value = value;
+	node->name = list->no_strdup ? name : strdup(name);
 
 	List_AddHash(list, node);
 
