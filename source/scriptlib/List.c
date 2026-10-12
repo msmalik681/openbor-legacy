@@ -262,9 +262,8 @@ Node *List_GetNodeByName(List * list, const char *name) {
 		return NULL;
 	for(i = 0; i < list->buckets[h]->used; i++) {
 		Node *nptr = list->buckets[h]->nodes[i];
-		if(nptr && strcmp(name, nptr->name) == 0) {
+		if(nptr && strcmp(name, nptr->name) == 0)
 			return nptr;
-		}
 	}
 	return NULL;
 }
