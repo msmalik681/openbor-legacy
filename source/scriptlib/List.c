@@ -54,7 +54,7 @@ static void List_AddHash(List *list, Node *node) {
 	Bucket *bucket = list->buckets[bucket_index];
 	if(!bucket) {
 		bucket = calloc(1, sizeof *bucket);
-		list->buckets[h] = bucket;
+		list->buckets[bucket_index] = bucket;
 		bucket->nodes = calloc(BUCKET_INIT_NODES_ALLOC, sizeof *bucket->nodes);
 		assert(bucket->nodes);
 		bucket->size = BUCKET_INIT_NODES_ALLOC;
