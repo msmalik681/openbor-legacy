@@ -178,7 +178,7 @@ void List_InsertAfter(List *list, void *value, char *name) {
 
 	List_AddHash(list, node);
 
-	if(list->size == 0) {
+	if(!list->size) {
 		node->prev = NULL;
 		node->next = NULL;
 		list->current = list->first = list->last = node;
