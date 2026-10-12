@@ -52,7 +52,7 @@ static void List_AddHash(List *list, Node *node) {
 		assert(list->buckets);
 	}
 
-	unsigned char bucket_index = strhash(node->name);
+	const unsigned char bucket_index = strhash(node->name);
 	Bucket *bucket = list->buckets[bucket_index];
 	if(!bucket) {
 		bucket = calloc(1, sizeof *bucket);
