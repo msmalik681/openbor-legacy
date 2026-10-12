@@ -88,11 +88,12 @@ static void List_RemoveHash(List *list, const Node *node) {
 	Bucket *bucket = list->buckets[bucket_index];
 	assert(bucket);
 	assert(bucket->used > 0);
-	size_t node_index = 0;
-	while(node_index < bucket->used && node != bucket->nodes[node_index])
-		node_index++;
-	if(node_index < bucket->used)
-		bucket->nodes[node_index] = NULL;
+	for(size_t node_index = 0; node_index < bucket->used; node_index++) {
+		if(node == bucket->nodes[node_index]) {
+			bucket->nodes[node_index] = NULL;
+			break;
+		}
+	}
 }
 
 static void List_FreeHashes(List *list) {
