@@ -262,8 +262,8 @@ Node *List_GetNodeByName(List *list, const char *name) {
 	const Bucket *bucket = list->buckets[bucket_index];
 	if(!bucket)
 		return NULL;
-	for(size_t i = 0; i < bucket->used; i++) {
-		Node *node = bucket->nodes[i];
+	for(size_t node_index = 0; node_index < bucket->used; node_index++) {
+		Node *node = bucket->nodes[node_index];
 		if(node && strcmp(name, node->name) == 0)
 			return node;
 	}
