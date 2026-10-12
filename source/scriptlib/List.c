@@ -43,7 +43,6 @@ static void List_AddHash(List *list, Node *node) {
 	chklist(list);
 #endif
 	unsigned char h;
-	size_t save;
 
 	assert(node);
 	if(!node->name)
@@ -60,7 +59,7 @@ static void List_AddHash(List *list, Node *node) {
 		list->buckets[h]->size = BUCKET_INIT_NODES_ALLOC;
 	}
 
-	save = list->buckets[h]->size;
+	size_t save = list->buckets[h]->size;
 	assert(list->buckets[h]->used <= save);
 	if(list->buckets[h]->used == save) {
 		list->buckets[h]->nodes = realloc(list->buckets[h]->nodes, sizeof(Node *) * (save * 2));
