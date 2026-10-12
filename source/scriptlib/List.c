@@ -184,7 +184,7 @@ void List_InsertAfter(List *list, void *value, char *name) {
 	if(list->size)
 		assert(current);
 	node->value = value;
-	node->name = list->no_strdup ? name : strdup(name);
+	node->name = !name || list->no_strdup ? name : strdup(name);
 
 	List_AddHash(list, node);
 
