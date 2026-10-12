@@ -199,7 +199,7 @@ void List_Remove(List * list) {
 	chklist(list);
 #endif
 	Node *nptr;
-	if(list->size == 0)
+	if(!list->size)
 		return;
 	if(list->size == 1) {
 		List_RemoveHash(list, list->current);
