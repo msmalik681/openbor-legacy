@@ -282,7 +282,40 @@ Node *List_GetNodeByName(const List *list, const char *name) {
 	assert(bucket->nodes);
 	for(size_t node_index = 0; node_index < bucket->used; node_index++) {
 		Node *node = bucket->nodes[node_index];
-		if(node && strcmp(name, node->name) == 0)
+		if(node) {
+			assert(node->name);
+			if(strcmp(name, node->name) == 0)
+				return node;
+		}
+	}
+	return NULL;
+}
+
+int List_FindByName(List *list, const char *name) {
+#ifdef DEBUG
+	chklist(list);
+#endif
+	Node *node = List_GetNodeByName(list, name);
+	if(!node)
+		return 0;
+	list->current = node;
+	return 1;
+}
+
+void List_Reset(List *list) {
+#ifdef DEBUG
+	chklist(list);
+#endif
+	list->current = list->first;
+}
+
+int List_GetSize(const List *list) {
+#ifdef DEBUG
+	chklist(list);
+#endif
+	return list->size;
+}
+
 			return node;
 	}
 	return NULL;
