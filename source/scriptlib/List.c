@@ -176,7 +176,7 @@ void List_InsertAfter(List *list, void *e, char *theName) {
 
 	assert(nptr != NULL);
 	nptr->value = e;
-	nptr->name = (list->no_strdup) ? theName : strdup(theName);
+	nptr->name = list->no_strdup ? theName : strdup(theName);
 
 	List_AddHash(list, nptr);
 
