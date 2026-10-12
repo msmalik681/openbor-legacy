@@ -93,9 +93,10 @@ static void List_FreeHashes(List *list) {
 	if(!list->buckets)
 		return;
 	for(size_t i = 0; i < 256; i++) {
-		if(list->buckets[i]) {
-			free(list->buckets[i]->nodes);
-			free(list->buckets[i]);
+		Bucket *bucket = list->buckets[i];
+		if(bucket) {
+			free(bucket->nodes);
+			free(bucket);
 		}
 	}
 	free(list->buckets);
