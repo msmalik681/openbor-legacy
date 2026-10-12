@@ -73,6 +73,7 @@ static void List_AddHash(List *list, Node *node) {
 		bucket->size = capacity * 2;
 	}
 
+	assert(bucket->used < bucket->size);
 	bucket->nodes[bucket->used++] = node;
 }
 
