@@ -273,10 +273,10 @@ int List_FindByName(List *list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *n = List_GetNodeByName(list, name);
-	if(!n)
+	Node *node = List_GetNodeByName(list, name);
+	if(!node)
 		return 0;
-	list->current = n;
+	list->current = node;
 	return 1;
 }
 
