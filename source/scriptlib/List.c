@@ -195,7 +195,7 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 	chklist(list);
 #endif
 //Construct a new Node and fill it with the appropriate value
-	Node *nptr = (Node *) malloc(sizeof(Node));
+	Node *nptr = malloc(sizeof(Node));
 
 	assert(nptr != NULL);
 	nptr->value = e;
@@ -291,7 +291,6 @@ Node *List_GetNodeByName(List * list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *nptr;
 	if(!name)
 		return NULL;
 
@@ -301,7 +300,7 @@ Node *List_GetNodeByName(List * list, const char *name) {
 	if(!list->buckets || !list->buckets[h])
 		return NULL;
 	for(i = 0; i < list->buckets[h]->used; i++) {
-		nptr = list->buckets[h]->nodes[i];
+		Node *nptr = list->buckets[h]->nodes[i];
 		if(nptr && strcmp(name, nptr->name) == 0) {
 			return nptr;
 		}
