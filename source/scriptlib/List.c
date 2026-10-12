@@ -216,6 +216,8 @@ void List_Remove(List *list) {
 	if(!list->size)
 		return;
 	assert(current_node);
+	assert(list->first);
+	assert(list->last);
 	if(list->size == 1) {
 		List_RemoveHash(list, current_node);
 		if(!list->no_strdup) {
