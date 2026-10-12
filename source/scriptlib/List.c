@@ -149,7 +149,7 @@ void Node_Clear(Node * node) {
 	if(!node)
 		return;
 	if(node->name) {
-		free((void *) node->name);
+		free(node->name);
 		node->name = NULL;
 	}
 }
@@ -303,7 +303,7 @@ Node *List_GetNodeByName(List * list, const char *name) {
 	for(i = 0; i < list->buckets[h]->used; i++) {
 		nptr = list->buckets[h]->nodes[i];
 		if(nptr && strcmp(name, nptr->name) == 0) {
-			return list->buckets[h]->nodes[i];
+			return nptr;
 		}
 	}
 	return NULL;
