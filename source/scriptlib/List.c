@@ -199,7 +199,7 @@ void List_Remove(List *list) {
 	Node *current = list->current;
 	int was_last;
 	int was_first;
-	if(!list->size)
+	if(list->size == 0)
 		return;
 	if(list->size == 1) {
 		List_RemoveHash(list, current);
