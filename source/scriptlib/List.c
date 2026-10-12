@@ -217,7 +217,7 @@ void List_Remove(List *list) {
 			current->prev->next = current->next;
 		if(current->next)
 			current->next->prev = current->prev;
-		Node *nptr = was_last ? current->prev : current->next;
+		Node *next_current = was_last ? current->prev : current->next;
 
 		List_RemoveHash(list, current);
 
@@ -227,10 +227,10 @@ void List_Remove(List *list) {
 		free(current);
 
 		if(was_last)
-			list->last = nptr;
+			list->last = next_current;
 		if(was_first)
-			list->first = nptr;
-		list->current = nptr;
+			list->first = next_current;
+		list->current = next_current;
 	}
 	list->size--;
 }
