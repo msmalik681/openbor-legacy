@@ -120,6 +120,7 @@ int List_GotoLast(List *list) {
 #endif
 	if(!list->size)
 		return 0;
+	assert(list->last);
 	list->current = list->last;
 	return 1;
 }
