@@ -28,9 +28,9 @@ void chklist(List * list) {
 #endif
 
 #ifdef USE_STRING_HASHES
-static unsigned char strhash(char *s) {
+static unsigned char strhash(const char *s) {
 	ptrdiff_t tmp = 0;
-	char *p = s;
+	const char *p = s;
 	while(*p) {
 		tmp += *p - 'A';
 		p++;
@@ -42,7 +42,7 @@ static unsigned char strhash(char *s) {
 #define BUCKET_INIT_NODES_ALLOC 2
 static void List_AddHash(List * list, Node * node) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	unsigned char h;
 	size_t save;
@@ -54,7 +54,7 @@ static void List_AddHash(List * list, Node * node) {
 	if(!list->buckets)
 		list->buckets = calloc(1, sizeof(Bucket *) * 256);
 
-	h = strhash((char *) node->name);
+	h = strhash(node->name);
 	if(!list->buckets[h]) {
 		list->buckets[h] = calloc(1, sizeof(Bucket));
 		list->buckets[h]->nodes = calloc(1, sizeof(Node *) * BUCKET_INIT_NODES_ALLOC);
@@ -77,13 +77,13 @@ static void List_AddHash(List * list, Node * node) {
 /* Remove a node from the string-hash bucket. */
 static void List_RemoveHash(List * list, Node * node) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	unsigned char h;
 	size_t i;
 	if(!node->name)
 		return;
-	h = strhash((char *) node->name);
+	h = strhash(node->name);
 	assert(list->buckets[h]);
 	assert(list->buckets[h]->used > 0);
 	for(i = 0; i < list->buckets[h]->used; i++) {
@@ -99,7 +99,7 @@ usually you dont have to do it manually, since its called by List_Clear
 but it won't hurt either */
 static void List_FreeHashes(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	int i;
 	if(!list->buckets)
@@ -118,7 +118,7 @@ static void List_FreeHashes(List * list) {
 
 int List_GotoLast(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	if(list->size)
 		list->current = list->last;
@@ -129,7 +129,7 @@ int List_GotoLast(List * list) {
 
 int List_GotoFirst(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	if(list->size)
 		list->current = list->first;
@@ -140,7 +140,7 @@ int List_GotoFirst(List * list) {
 
 Node *List_GetCurrentNode(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	return list == NULL ? NULL : list->current;
 }
@@ -168,7 +168,7 @@ void List_Init(List * list) {
 
 void List_Clear(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 
 	//Delete all the Nodes in the list.
@@ -192,7 +192,7 @@ void List_Clear(List * list) {
 // Insertion function.
 void List_InsertAfter(List * list, void *e, char *theName) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 //Construct a new Node and fill it with the appropriate value
 	Node *nptr = (Node *) malloc(sizeof(Node));
@@ -225,7 +225,7 @@ void List_InsertAfter(List * list, void *e, char *theName) {
 //removes the current node and sets current to next, if applicable
 void List_Remove(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	Node *nptr;
 	if(list->size == 0) {
@@ -266,7 +266,7 @@ void List_Remove(List * list) {
 
 int List_GotoNext(List * list) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	if(list->current != list->last)
 		list->current = list->current->next;
@@ -287,9 +287,9 @@ void *List_Retrieve(const List * list) {
 
 
 /* returns the first node of which name is equal to theName */
-Node *List_GetNodeByName(List * list, char *name) {
+Node *List_GetNodeByName(List * list, const char *name) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 	Node *nptr;
 	if(!name)
@@ -299,7 +299,7 @@ Node *List_GetNodeByName(List * list, char *name) {
 	size_t i;
 	unsigned char h = strhash(name);
 	if(!list->buckets || !list->buckets[h])
-		return 0;
+		return NULL;
 	for(i = 0; i < list->buckets[h]->used; i++) {
 		nptr = list->buckets[h]->nodes[i];
 		if(nptr && strcmp(name, nptr->name) == 0) {
@@ -312,9 +312,9 @@ Node *List_GetNodeByName(List * list, char *name) {
 }
 
 /* SIDE EFFECTS: sets list->current to the first found node */
-int List_FindByName(List * list, char *name) {
+int List_FindByName(List * list, const char *name) {
 #ifdef DEBUG
-	chklist((List *) list);
+	chklist(list);
 #endif
 
 	Node *n = List_GetNodeByName(list, name);
