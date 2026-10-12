@@ -50,22 +50,24 @@ static void List_AddHash(List *list, Node *node) {
 		list->buckets = calloc(1, sizeof *list->buckets * 256);
 
 	unsigned char h = strhash(node->name);
-	if(!list->buckets[h]) {
-		list->buckets[h] = calloc(1, sizeof *list->buckets[h]);
-		list->buckets[h]->nodes = calloc(1, sizeof *list->buckets[h]->nodes * BUCKET_INIT_NODES_ALLOC);
-		assert(list->buckets[h]->nodes);
-		list->buckets[h]->size = BUCKET_INIT_NODES_ALLOC;
+	Bucket *bucket = list->buckets[h];
+	if(!bucket) {
+		bucket = calloc(1, sizeof *bucket);
+		list->buckets[h] = bucket;
+		bucket->nodes = calloc(1, sizeof *bucket->nodes * BUCKET_INIT_NODES_ALLOC);
+		assert(bucket->nodes);
+		bucket->size = BUCKET_INIT_NODES_ALLOC;
 	}
 
-	size_t save = list->buckets[h]->size;
-	assert(list->buckets[h]->used <= save);
-	if(list->buckets[h]->used == save) {
-		list->buckets[h]->nodes = realloc(list->buckets[h]->nodes, sizeof *list->buckets[h]->nodes * (save * 2));
-		assert(list->buckets[h]->nodes);
-		list->buckets[h]->size = save * 2;
+	size_t save = bucket->size;
+	assert(bucket->used <= save);
+	if(bucket->used == save) {
+		bucket->nodes = realloc(bucket->nodes, sizeof *bucket->nodes * (save * 2));
+		assert(bucket->nodes);
+		bucket->size = save * 2;
 	}
 
-	list->buckets[h]->nodes[list->buckets[h]->used++] = node;
+	bucket->nodes[bucket->used++] = node;
 }
 
 static void List_RemoveHash(List *list, Node *node) {
