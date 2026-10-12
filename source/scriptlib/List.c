@@ -200,6 +200,8 @@ void List_Remove(List * list) {
 #endif
 	Node *nptr;
 	Node *current = list->current;
+	int was_last;
+	int was_first;
 	if(!list->size)
 		return;
 	if(list->size == 1) {
@@ -208,23 +210,22 @@ void List_Remove(List * list) {
 		free(current);
 		list->first = list->current = list->last = NULL;
 	} else {
+		was_last = current == list->last;
+		was_first = current == list->first;
 		if(current->prev)
 			current->prev->next = current->next;
 		if(current->next)
 			current->next->prev = current->prev;
-		if(current == list->last)
-			nptr = current->prev;
-		else
-			nptr = current->next;
+		nptr = was_last ? current->prev : current->next;
 
 		List_RemoveHash(list, current);
 
 		if(!list->no_strdup) Node_Clear(current);
 		free(current);
 
-		if(current == list->last)
+		if(was_last)
 			list->last = nptr;
-		if(current == list->first)
+		if(was_first)
 			list->first = nptr;
 		list->current = nptr;
 	}
