@@ -181,6 +181,8 @@ void List_InsertAfter(List *list, void *value, char *name) {
 	Node *current = list->current;
 
 	assert(node);
+	if(list->size)
+		assert(current);
 	node->value = value;
 	node->name = list->no_strdup ? name : strdup(name);
 
