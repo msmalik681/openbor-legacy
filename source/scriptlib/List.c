@@ -66,8 +66,9 @@ static void List_AddHash(List *list, Node *node) {
 	size_t capacity = bucket->size;
 	assert(bucket->used <= capacity);
 	if(bucket->used == capacity) {
-		bucket->nodes = realloc(bucket->nodes, sizeof *bucket->nodes * (capacity * 2));
-		assert(bucket->nodes);
+		Node **nodes = realloc(bucket->nodes, sizeof *bucket->nodes * (capacity * 2));
+		assert(nodes);
+		bucket->nodes = nodes;
 		bucket->size = capacity * 2;
 	}
 
