@@ -81,6 +81,7 @@ static void List_RemoveHash(List *list, const Node *node) {
 #endif
 	if(!node->name)
 		return;
+	assert(list->buckets);
 	unsigned char bucket_index = strhash(node->name);
 	Bucket *bucket = list->buckets[bucket_index];
 	assert(bucket);
