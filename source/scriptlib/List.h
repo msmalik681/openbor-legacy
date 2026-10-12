@@ -16,7 +16,6 @@
 #ifndef LIST_H
 #define LIST_H
 
-// Optional string lookup support.
 #define USE_STRING_HASHES
 
 #include <stddef.h>
@@ -31,13 +30,11 @@ typedef struct Node {
 	char *name;		//optional name of the Node
 } Node;
 
-#ifdef USE_STRING_HASHES
 typedef struct Bucket {
 	size_t size;
 	size_t used;
 	Node **nodes;
 } Bucket;
-#endif
 
 typedef struct List {
 	//Data members
@@ -45,9 +42,7 @@ typedef struct List {
 	Node *current;
 	Node *last;
 	size_t size;
-#ifdef USE_STRING_HASHES
 	Bucket **buckets;
-#endif
 #ifdef DEBUG
 	int initdone;
 #endif
