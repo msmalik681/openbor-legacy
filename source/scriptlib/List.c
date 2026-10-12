@@ -195,10 +195,7 @@ void List_Remove(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *nptr;
 	Node *current = list->current;
-	int was_last;
-	int was_first;
 	if(list->size == 0)
 		return;
 	if(list->size == 1) {
