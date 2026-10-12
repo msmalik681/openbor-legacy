@@ -24,17 +24,6 @@
 #include <string.h>
 #include <stdio.h>
 
-//A macro to simplify iterating through all this lists.
-#define FOREACH( x, y ) { \
-	  size = List_GetSize(&x); \
-	  List_Reset(&x); \
-	  for (i = 0; i < size; i++){ \
-		 y \
-		 List_GotoNext(&x); \
-	  } \
-   }
-
-
 #define NAME(s) ((s)?(strdup(s)):NULL)
 
 typedef struct Node {
