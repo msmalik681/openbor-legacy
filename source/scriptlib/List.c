@@ -154,13 +154,13 @@ void List_Clear(List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
-	Node *nptr = list->first;
-	while(nptr) {
-		Node *next = nptr->next;
+	Node *node = list->first;
+	while(node) {
+		Node *next = node->next;
 		if(!list->no_strdup)
-			Node_Clear(nptr);
-		free(nptr);
-		nptr = next;
+			Node_Clear(node);
+		free(node);
+		node = next;
 	}
 	List_FreeHashes(list);
 	List_Init(list);
