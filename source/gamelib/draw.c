@@ -210,12 +210,7 @@ void putpixel(unsigned x, unsigned y, int colour, s_screen * screen, int alpha) 
 
 
 
-// Code to draw a circle.
-// I ripped this, not sure how it works...
-// It seems it devides the circle into 8 parts, which are drawn
-// simultaneously.
-// Not much optimization, though, since every pixel is clipped
-// separately.
+// Draw a circle using eight-way symmetry.
 
 void circle(int x, int y, int rad, int col, s_screen * screen, int alpha) {
 	int cx = 0;		// 'Circle X'
