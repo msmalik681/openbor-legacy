@@ -577,9 +577,6 @@ void filecache_init(int realfd, int pakcdsectors, int blocksize, unsigned char b
 }
 
 /////////////////////////////////////////////////////////////////////////////
-//
-// quick and dirty
-//
 void filecache_wait_for_prebuffer(int vfd, int nblocks) {
 	if(vfd_readptr_pakblock[vfd] < 0)
 		return;
