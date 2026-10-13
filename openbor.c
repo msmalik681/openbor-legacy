@@ -18104,16 +18104,8 @@ void execute_keyscripts() {
 	}
 }
 
-void execute_updatescripts() {
-	/* --- FIXED: BYPASSED UNCOMPILED C LEVEL UPDATE CODES --- */
-	return;
-}
-
 void execute_updatedscripts() {
-    // Completely bypassed uncompiled C script references:
-    // if(level) runscript(&(level->update_script));
-
-    // --- MAIN TICK INTERCEPT: Direct processing loop to native Lua VM ---
+    // Main tick is handled by the native Lua VM.
     if (g_lua_engine_state && quit_game == 0) { 
         lua_getglobal(g_lua_engine_state, "main");
         
@@ -18154,8 +18146,7 @@ void update(int ingame, int usevwait) {
 
 	if(!pause) {
 		if(ingame == 1)
-			execute_updatescripts();
-		if(ingame == 1 || selectScreen)
+				if(ingame == 1 || selectScreen)
 			execute_keyscripts();
 
 		if((level_completed && !level->noslow && !tospeedup) || slowmotion[0]) {
