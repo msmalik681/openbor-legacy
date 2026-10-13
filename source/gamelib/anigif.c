@@ -19,7 +19,6 @@
 
 
 // ============================== This is it! ===============================
-// Should be something like this...
 
 
 #define			ANIGIF_DECODE_END		0
