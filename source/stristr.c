@@ -12,7 +12,7 @@
 char *stristr(const char *String, const char *Pattern) {
 	char *pptr, *sptr, *start;
 	unsigned int slen, plen;
-	for(start = (char *) String, pptr = (char *) Pattern, slen = strlen(String), plen = strlen(Pattern);
+	for(start = (char *) String, slen = strlen(String), plen = strlen(Pattern);
 	    slen >= plen; start++, slen--) {
 		/* find start of pattern in string */
 		while(toupper((int) *start) != toupper((int) *Pattern)) {
