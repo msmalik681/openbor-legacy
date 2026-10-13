@@ -137,7 +137,7 @@ void line(int sx, int sy, int ex, int ey, int colour, s_screen * screen, int alp
 		ydir = -ydir;
 	while(sy != ey) {
 		d = sx + sy;
-		screen->data[d] = (lut && screen->data[d]) ? (lut[screen->data[d]]) : colour;;
+		screen->data[d] = (lut && screen->data[d]) ? (lut[screen->data[d]]) : colour;
 		sy += ydir;
 		if((thres -= absdiffx) <= 0) {
 			sx += xdir;
