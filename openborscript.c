@@ -31,25 +31,6 @@ if(VAR->vt == VT_STR) { \
 	} else { printf(FAILMSG, propname); } \
 }
 
-extern int MAX_WALL_HEIGHT;
-extern int current_palette;
-extern s_player player[4];
-extern s_savedata savedata;
-extern s_savelevel savelevel[MAX_DIFFICULTIES];
-extern s_savescore savescore;
-extern s_level *level;
-extern entity *self;
-
-extern int noshare;
-extern int credits;
-extern char musicname[128];
-extern float musicfade[2];
-extern int musicloop;
-extern u32 musicoffset;
-extern int models_cached;
-
-extern unsigned char *blendings[MAX_BLENDINGS];
-extern int current_palette;
 s_variantnode **global_var_list = NULL;
 static s_spawn_entry spawnentry;
 static s_drawmethod drawmethod;
