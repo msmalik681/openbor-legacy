@@ -6,7 +6,6 @@
 typedef struct {
 	Script* script;
 	char* path;
-	char* name;
 } s_script_and_path_and_name;
 
 extern const s_script_and_path_and_name script_and_path_and_name[];
