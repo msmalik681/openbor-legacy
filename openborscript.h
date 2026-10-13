@@ -11,21 +11,9 @@
 
 #include "ScriptVariant.h"
 
-#define MAX_GLOBAL_VAR 2048
-#define MAX_KEY_LEN    24
-
-typedef struct {
-	ScriptVariant value;
-	char key[MAX_KEY_LEN];
-} s_variantnode;
-
 typedef struct Script {
     int dummy;
 } Script;
-
-extern s_variantnode **global_var_list;
-extern int max_global_vars;
-extern int max_global_var_index;
 
 
 void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount);
