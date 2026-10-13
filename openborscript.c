@@ -37,13 +37,6 @@ int max_global_var_index = -1;
 
 int max_global_vars = MAX_GLOBAL_VAR;
 
-//safe copy method
-void Script_Copy(Script * pdest, Script * psrc)
-{
-    (void)psrc;
-    memset(pdest, 0, sizeof(Script));
-}
-
 //////////////////////////////////////////////////////////
 ////////////   openbor functions
 //////////////////////////////////////////////////////////
