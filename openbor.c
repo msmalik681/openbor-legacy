@@ -341,8 +341,6 @@ s_playercontrols *playercontrolpointers[] = { &playercontrols1, &playercontrols2
 s_savelevel savelevel[MAX_DIFFICULTIES];
 s_savescore savescore;
 s_savedata savedata;
-s_game_scripts game_scripts;
-extern s_game_scripts game_scripts;
 void common_walkoff(void);
 
 //-------------------------methods-------------------------------
@@ -1059,11 +1057,6 @@ void execute_onblocka_script(entity * ent, entity * other) {
 void execute_spawn_script(s_spawn_entry * p, entity * e) {
     (void)p;
     bor_lua_call_entity_event(e, "spawnscript", "spawnscript");
-}
-
-void execute_script_player(int player_nr, Script* script) {
-    (void)script;
-    bor_lua_call_player_event(player_nr, "playerscript", "playerscript");
 }
 
 void execute_level_key_script(int player_nr) {
@@ -18119,7 +18112,6 @@ void execute_updatescripts() {
 
 void execute_updatedscripts() {
     // Completely bypassed uncompiled C script references:
-    // runscript(&game_scripts.update_script);
     // if(level) runscript(&(level->update_script));
 
     // --- MAIN TICK INTERCEPT: Direct processing loop to native Lua VM ---
