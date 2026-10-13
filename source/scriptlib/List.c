@@ -23,7 +23,7 @@ void List_Set_UseStrdup(List *list, int use_strdup) {
 }
 
 #ifdef DEBUG
-void chklist(const List *list) {
+static void chklist(const List *list) {
 	assert(list);
 	assert(list->initdone == 1);
 }
