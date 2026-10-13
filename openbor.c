@@ -528,10 +528,6 @@ void load_scripts() {
     }
 }
 
-// This method is called once when the engine is shutting down, do not use it multiple times
-void clear_scripts() {
- return;
-}
 
 static const s_script_args_names script_args_names = {
 	.ent = "self",
@@ -18639,7 +18635,7 @@ void borShutdown(const char *caller, int status, char *msg, ...) {
 	if(startup_done)
 		free_modelcache();
 	if(startup_done)
-		clear_scripts();
+
 	PLOG("\nRelease game data............\tDone!\n");
 
 	PLOG("Release Persistent Lua VM...");
