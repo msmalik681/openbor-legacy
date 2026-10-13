@@ -1,6 +1,5 @@
 #include "openbor.h"
 #include "data.h"
-#include "openborscript.h"
 #include "luabindings.h"
 #include <lauxlib.h>
 #include <string.h>
