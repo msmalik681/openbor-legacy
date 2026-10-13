@@ -33,8 +33,6 @@ int max_global_vars = MAX_GLOBAL_VAR;
 //////////////////////////////////////////////////////////
 
 // ===== playerkeys =====
-enum { _pk_the_end = 14 };
-
 void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int i, prop;
@@ -58,14 +56,12 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 	};
 
 	for(i = 2; i < paramCount; i++) {
-		MAPSTRINGS(varlist[i], proplist, _pk_the_end, "Button name '%s' is not supported by playerkeys.");
+		MAPSTRINGS(varlist[i], proplist, (sizeof(proplist) / sizeof(proplist[0])), "Button name '%s' is not supported by playerkeys.");
 	}
 }
 
 
 // ===== getbglayerproperty ======
-enum { _gbglp_the_end = 16 };
-
 void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int prop;
@@ -91,14 +87,12 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, _gbglp_the_end,
+	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
 		   "Property name '%s' is not supported by function getbglayerproperty.\n");
 }
 
 
 // ===== changebglayerproperty =====
-enum { _cbglp_the_end = 16 };
-
 void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int prop;
@@ -124,14 +118,12 @@ void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, _cbglp_the_end,
+	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
 		   "Property name '%s' is not supported by function changebglayerproperty.\n");
 }
 
 
 // ===== getfglayerproperty =====
-enum { _gfglp_the_end = 16 };
-
 void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int prop;
@@ -157,14 +149,12 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, _gfglp_the_end,
+	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
 		   "Property name '%s' is not supported by function getfglayerproperty.\n");
 }
 
 
 // ===== changefglayerproperty =====
-enum { _cfglp_the_end = 16 };
-
 void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int prop;
@@ -190,7 +180,7 @@ void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, _cfglp_the_end,
+	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
 		   "Property name '%s' is not supported by function changefglayerproperty.\n");
 }
 
