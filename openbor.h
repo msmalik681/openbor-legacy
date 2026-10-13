@@ -1616,33 +1616,6 @@ typedef struct {
 	s_script_args_tuple other;
 } s_script_args;
 
-typedef struct {
-	char* ent;
-	char* attacker;
-	char* drop;
-	char* type;
-	char* noblock;
-	char* guardcost;
-	char* jugglecost;
-	char* pauseadd;
-	char* which;
-	char* atkid;
-	char* blocked;
-	char* animnum;
-	char* frame;
-	char* player;
-	char* attacktype;
-	char* reset;
-	char* plane;
-	char* height;
-	char* obstacle;
-	char* time;
-	char* gotime;
-	char* damage;
-	char* damagetaker;
-	char* other;
-} s_script_args_names;
-#define s_script_args_membercount (sizeof(s_script_args_names) / sizeof(char*))
 
 typedef enum {
 	CB_UP = 0,
