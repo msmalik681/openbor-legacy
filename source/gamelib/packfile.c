@@ -850,7 +850,7 @@ int pak_init() {
 	// finally, initialize the filecache
 	filecache_init(pakfd, (paksize + 0x7FF) / 0x800, CACHEBLOCKSIZE, CACHEBLOCKS, MAXPACKHANDLES);
 	pak_initialized = 1;
-	return (CACHEBLOCKSIZE * CACHEBLOCKS + 64);
+	return CACHEBLOCKSIZE * CACHEBLOCKS + 64;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -858,7 +858,7 @@ int pak_init() {
 int packfileeof(int handle) {
 	if(!pak_isvalidhandle(handle))
 		return -1;
-	return (pak_vfdpos[handle] >= pak_vfdsize[handle]);
+	return pak_vfdpos[handle] >= pak_vfdsize[handle];
 }
 
 /////////////////////////////////////////////////////////////////////////////
