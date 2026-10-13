@@ -88,69 +88,6 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 }
 
 
-// ===== gettextobjproperty(name, value) =====
-enum gtop_enum {
-	_gtop_font,
-	_gtop_text,
-	_gtop_time,
-	_gtop_x,
-	_gtop_y,
-	_gtop_z,
-	_gtop_the_end,
-};
-
-void mapstrings_gettextobjproperty(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
-	int prop;
-
-	static const char *proplist[] = {
-		"font",
-		"text",
-		"time" "x",
-		"y",
-		"z",
-	};
-
-	if(paramCount < 2)
-		return;
-
-	MAPSTRINGS(varlist[1], proplist, _gtop_the_end,
-		   "Property name '%s' is not supported by function gettextobjproperty.\n");
-}
-
-
-// ===== changetextobjproperty(name, value) =====
-enum ctop_enum {
-	_ctop_font,
-	_ctop_text,
-	_ctop_time,
-	_ctop_x,
-	_ctop_y,
-	_ctop_z,
-	_ctop_the_end,
-};
-
-void mapstrings_changetextobjproperty(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
-	int prop;
-
-	static const char *proplist[] = {
-		"font",
-		"text",
-		"time",
-		"x",
-		"y",
-		"z",
-	};
-
-	if(paramCount < 2)
-		return;
-	MAPSTRINGS(varlist[1], proplist, _ctop_the_end,
-		   "Property name '%s' is not supported by function changetextobjproperty.\n");
-}
-
-
-
 // ===== getbglayerproperty ======
 enum getbglp_enum {
 	_gbglp_alpha,
