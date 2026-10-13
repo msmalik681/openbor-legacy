@@ -10,7 +10,6 @@
 #include "utils.h"
 #include "packfile.h"
 #include "filecache.h"
-#include "openbor.h"
 
 #ifdef PSP
 #include <pspsuspend.h>
