@@ -423,12 +423,6 @@ int anigif_decode(s_screen * screen, int *delay, int x, int y) {
 			iblock.top += y;
 
 			decodegifblock(handle, (unsigned char *) screen->data, screen->width, screen->height, &iblock);
-/*
-			if(!decodegifblock(handle, screen->data, screen->width, screen->height, &iblock)){
-				anigif_close();
-				return ANIGIF_DECODE_END;
-			}
-*/
 
 			if(delay)
 				*delay = lastdelay;
