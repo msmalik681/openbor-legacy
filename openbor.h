@@ -36,7 +36,11 @@
 #include	"palette.h"
 #include	"anigif.h"
 #include	"texture.h"
-#include    "openborscript.h"
+#include    "ScriptVariant.h"
+
+typedef struct Script {
+    int dummy;
+} Script;
 #include    "globals.h"
 #include    "version.h"
 #include	"List.h"
