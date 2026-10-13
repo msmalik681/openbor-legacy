@@ -37,7 +37,6 @@
 #include "globals.h"
 #include "openbor.h"
 
-#include <sys/stat.h>
 
 #define	stricmp	strcasecmp
 
