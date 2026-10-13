@@ -11,10 +11,6 @@
 #include "data.h"
 #include "openborscript.h"
 #include "openbor.h"
-#include "soundmix.h"
-#include "globals.h"
-#include "models.h"
-#include "commands.h"
 
 // Define macro for string mapping
 #define MAPSTRINGS(VAR, LIST, MAXINDEX, FAILMSG) \
