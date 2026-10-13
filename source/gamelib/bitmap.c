@@ -7,7 +7,6 @@
  */
 
 // Simple bitmap code. Not fast, but useful nonetheless...
-// 25-jan-2003
 
 #include <string.h>
 #include <stddef.h>
