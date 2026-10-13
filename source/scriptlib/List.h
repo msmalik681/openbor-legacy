@@ -44,7 +44,6 @@ typedef struct List {
 } List;
 
 void List_Set_UseStrdup(List *list, int use_strdup);
-void Node_Clear(Node *node);
 void List_Init(List *list);
 void List_Clear(List *list);
 void List_InsertAfter(List *list, void *value, char *name);
