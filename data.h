@@ -4,7 +4,6 @@
 #include "openbor.h"
 
 typedef struct {
-	Script* script;
 	char* path;
 } s_script_and_path_and_name;
 
