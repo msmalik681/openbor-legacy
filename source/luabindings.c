@@ -2,8 +2,6 @@
 #include "data.h"
 #include "openborscript.h"
 #include "luabindings.h"
-#include "soundmix.h"
-#include "crashhandler.h"
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
