@@ -51,7 +51,6 @@ void freebitmap(s_bitmap * bitmap) {
 void getbitmap(int x, int y, int width, int height, s_bitmap * bitmap, s_screen * screen) {
 
 	int s, d;
-	//int i;
 	int j;
 
 	// Clip width and height
@@ -83,13 +82,6 @@ void getbitmap(int x, int y, int width, int height, s_bitmap * bitmap, s_screen 
 		s = x + (y + j) * screen->width;
 		memcpy(((char *) bitmap->data) + d, ((char *) screen->data) + s, width);
 		d += width;
-		/*
-		   for(i=0; i<width; i++){
-		   bitmap->data[d] = screen->data[s];
-		   ++d;
-		   ++s;
-		   }
-		 */
 	}
 }
 
