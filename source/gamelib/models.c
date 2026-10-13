@@ -41,7 +41,7 @@ void addModel(s_model * model) {
 	assert(model);
 	assert(modellist);
 	makelowercp(model->name);
-	List_InsertAfter(modellist, (void *) model, convertbuf);
+	List_InsertAfter(modellist, model, convertbuf);
 }
 
 void deleteModel(char *modelname) {
@@ -75,7 +75,7 @@ s_model *getCurrentModel(void) {
 	assert(modellist);
 	Node *n = List_GetCurrentNode(modellist);
 	if(n)
-		return (s_model *) n->value;
+		return n->value;
 	else
 		return NULL;
 }
