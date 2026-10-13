@@ -11,7 +11,7 @@
 #include "openborscript.h"
 #include "openbor.h"
 
-// Define macro for string mapping
+// Map string arguments to indexes in a property-name array.
 #define MAPSTRINGS(VAR, LIST, FAILMSG) \
 if(VAR->vt == VT_STR) { \
 	propname = (char*)StrCache_Get(VAR->strVal); \
