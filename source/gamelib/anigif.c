@@ -424,13 +424,11 @@ int anigif_decode(s_screen * screen, int *delay, int x, int y) {
 
 			if(delay)
 				*delay = lastdelay;
-			// lastdelay = 0;
 			return ANIGIF_DECODE_FRAME;
 
 		case '!':
 			// Handle GIF extension
 			gifextension(handle);
-			// if(delay) *delay = lastdelay;
 			// lastdelay = 0;
 			return ANIGIF_DECODE_RETRY;
 
