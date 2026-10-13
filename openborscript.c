@@ -61,6 +61,26 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 }
 
 
+// Shared property names for background and foreground layer functions.
+static const char *layer_property_list[] = {
+	"alpha",
+	"amplitude",
+	"bgspeedratio",
+	"enabled",
+	"transparency",
+	"watermode",
+	"wavelength",
+	"wavespeed",
+	"xoffset",
+	"xratio",
+	"xrepeat",
+	"xspacing",
+	"zoffset",
+	"zratio",
+	"zrepeat",
+	"zspacing",
+};
+
 // ===== getbglayerproperty ======
 void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname;
