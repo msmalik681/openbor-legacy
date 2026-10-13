@@ -110,17 +110,6 @@ static void List_FreeHashes(List *list) {
 	list->buckets = NULL;
 }
 
-int List_GotoLast(List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	if(!list->size)
-		return 0;
-	assert(list->last);
-	list->current = list->last;
-	return 1;
-}
-
 int List_GotoFirst(List *list) {
 #ifdef DEBUG
 	chklist(list);
