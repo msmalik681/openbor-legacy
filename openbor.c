@@ -496,7 +496,7 @@ void load_scripts() {
     int i;
 
     for (i = 0; i < script_and_path_and_name_itemcount; i++) {
-        load_script(script_and_path_and_name[i].path);
+        load_script(lua_script_paths[i]);
     }
 }
 
