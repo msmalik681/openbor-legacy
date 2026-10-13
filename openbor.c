@@ -529,33 +529,6 @@ void load_scripts() {
 }
 
 
-static const s_script_args_names script_args_names = {
-	.ent = "self",
-	.attacker = "attacker",
-	.drop = "drop",
-	.type = "attacktype",
-	.noblock = "noblock",
-	.guardcost = "guardcost",
-	.jugglecost = "jugglecost",
-	.pauseadd = "pauseadd",
-	.which = "which",
-	.atkid = "attackid",
-	.blocked = "blocked",
-	.animnum = "animnum",
-	.frame = "frame",
-	.player = "player",
-	.attacktype = "attacktype",
-	.reset = "reset",
-	.plane = "plane",
-	.height = "height",
-	.obstacle = "obstacle",
-	.time = "time",
-	.gotime = "gotime",
-	.damage = "damage",
-	.damagetaker = "damagetaker",
-	.other = "other",
-};
-
 static const s_script_args init_script_args_default = {
 	.ent = {VT_PTR, 0},
 	.attacker = {VT_PTR, 0},
@@ -579,33 +552,6 @@ static const s_script_args init_script_args_default = {
 	.time = {VT_EMPTY, 0},
 	.gotime = {VT_EMPTY, 0},
 	.damage = {VT_INTEGER, 0},
-	.damagetaker = {VT_EMPTY, 0},
-	.other = {VT_EMPTY, 0},
-};
-
-static const s_script_args init_script_args_only_ent = {
-	.ent = {VT_PTR, 0},
-	.attacker = {VT_EMPTY, 0},
-	.drop = {VT_EMPTY, 0},
-	.type = {VT_EMPTY, 0},
-	.noblock = {VT_EMPTY, 0},
-	.guardcost = {VT_EMPTY, 0},
-	.jugglecost = {VT_EMPTY, 0},
-	.pauseadd = {VT_EMPTY, 0},
-	.which = {VT_EMPTY, 0},
-	.atkid = {VT_EMPTY, 0},
-	.blocked = {VT_EMPTY, 0},
-	.animnum = {VT_EMPTY, 0},
-	.frame = {VT_EMPTY, 0},
-	.player = {VT_EMPTY, 0},
-	.attacktype = {VT_EMPTY, 0},
-	.reset = {VT_EMPTY, 0},
-	.plane = {VT_EMPTY, 0},
-	.height = {VT_EMPTY, 0},
-	.obstacle = {VT_EMPTY, 0},
-	.time = {VT_EMPTY, 0},
-	.gotime = {VT_EMPTY, 0},
-	.damage = {VT_EMPTY, 0},
 	.damagetaker = {VT_EMPTY, 0},
 	.other = {VT_EMPTY, 0},
 };
