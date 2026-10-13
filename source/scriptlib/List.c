@@ -295,10 +295,3 @@ int List_FindByName(List *list, const char *name) {
 	list->current = node;
 	return 1;
 }
-
-void List_Reset(List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	list->current = list->first;
-}
