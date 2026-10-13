@@ -49,7 +49,7 @@ void deleteModel(char *modelname) {
 	assert(modellist);
 	assert(modelname);
 	makelowercp(modelname);
-	if(List_FindByName(modellist, convertbuf) && (temp = List_Retrieve(modellist))) {
+	if(List_FindByName(modellist, convertbuf) && (temp = List_GetCurrentNode(modellist)->value)) {
 		List_Remove(modellist);
 		free(temp);
 	}
@@ -60,7 +60,7 @@ s_model *findmodel(char *modelname) {
 	assert(modellist);
 	makelowercp(modelname);
 	if(List_FindByName(modellist, convertbuf))
-		temp = List_Retrieve(modellist);
+		temp = List_GetCurrentNode(modellist)->value;
 	return temp;
 }
 
@@ -82,14 +82,12 @@ s_model *getCurrentModel(void) {
 
 s_model *getNextModel(void) {
 	assert(modellist);
-	if(List_GotoNext(modellist))
-		return getCurrentModel();
-	else
-		return NULL;
+	List_GotoNext(modellist);
+	return getCurrentModel();
 }
 
-int isLastModel(void) {
-	if(!modellist->current || modellist->current == modellist->last)
-		return 1;
-	return 0;
+int freeModelListItem(void *model) {
+	if(model)
+		free(model);
+	return 1;
 }
