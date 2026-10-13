@@ -37,9 +37,6 @@
 #include	"anigif.h"
 #include	"texture.h"
 
-typedef struct Script {
-    int dummy;
-} Script;
 #include    "globals.h"
 #include    "version.h"
 #include	"List.h"
@@ -843,22 +840,6 @@ typedef enum {
 	MF_SCRIPTS = 65536,
 } ModelFreetype;
 #define MF_ALL 0x1FFFF
-
-typedef struct {
-    Script level_script;
-    Script endlevel_script;
-    Script update_script;
-    Script updated_script;
-    Script key_script_all;
-    Script timetick_script;
-    Script score_script[4];
-    Script key_script[4];
-    Script join_script[4];
-    Script respawn_script[4];
-    Script pdie_script[4];
-} s_game_scripts;
-
-extern s_game_scripts game_scripts;
 
 typedef struct {
 	int (*special)[MAX_SPECIAL_INPUTS];	// Stores freespecials
