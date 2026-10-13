@@ -17,9 +17,6 @@
 
 #pragma pack (1)
 
-
-
-
 #define			ANIGIF_DECODE_END		0
 #define			ANIGIF_DECODE_FRAME		1
 #define			ANIGIF_DECODE_RETRY		3
