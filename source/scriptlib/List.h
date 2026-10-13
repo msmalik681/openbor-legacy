@@ -40,7 +40,6 @@ typedef struct List {
 #ifdef DEBUG
 	int initdone;
 #endif
-	int no_strdup:1;
 } List;
 
 void List_Init(List *list);
