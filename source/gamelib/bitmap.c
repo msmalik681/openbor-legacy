@@ -44,7 +44,6 @@ void freebitmap(s_bitmap * bitmap) {
 	}
 }
 
-// Sluggish getbitmap function. Should be redone in ASM.
 void getbitmap(int x, int y, int width, int height, s_bitmap * bitmap, s_screen * screen) {
 
 	int s, d;
