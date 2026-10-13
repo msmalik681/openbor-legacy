@@ -245,13 +245,6 @@ int List_GotoNext(List *list) {
 	return 1;
 }
 
-void *List_Retrieve(const List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	return list->current ? list->current->value : NULL;
-}
-
 Node *List_GetNodeByName(const List *list, const char *name) {
 #ifdef DEBUG
 	chklist(list);
