@@ -33,23 +33,7 @@ int max_global_vars = MAX_GLOBAL_VAR;
 //////////////////////////////////////////////////////////
 
 // ===== playerkeys =====
-enum {
-	_pk_anybutton,
-	_pk_attack,
-	_pk_attack2,
-	_pk_attack3,
-	_pk_attack4,
-	_pk_esc,
-	_pk_jump,
-	_pk_movedown,
-	_pk_moveleft,
-	_pk_moveright,
-	_pk_moveup,
-	_pk_screenshot,
-	_pk_special,
-	_pk_start,
-	_pk_the_end,
-};
+enum { _pk_the_end = 14 };
 
 void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
@@ -80,25 +64,7 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 
 
 // ===== getbglayerproperty ======
-enum {
-	_gbglp_alpha,
-	_gbglp_amplitude,
-	_gbglp_bgspeedratio,
-	_gbglp_enabled,
-	_gbglp_transparency,
-	_gbglp_watermode,
-	_gbglp_wavelength,
-	_gbglp_wavespeed,
-	_gbglp_xoffset,
-	_gbglp_xratio,
-	_gbglp_xrepeat,
-	_gbglp_xspacing,
-	_gbglp_zoffset,
-	_gbglp_zratio,
-	_gbglp_zrepeat,
-	_gbglp_zspacing,
-	_gbglp_the_end,
-};
+enum { _gbglp_the_end = 16 };
 
 void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
@@ -131,25 +97,7 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 
 // ===== changebglayerproperty =====
-enum {
-	_cbglp_alpha,
-	_cbglp_amplitude,
-	_cbglp_bgspeedratio,
-	_cbglp_enabled,
-	_cbglp_transparency,
-	_cbglp_watermode,
-	_cbglp_wavelength,
-	_cbglp_wavespeed,
-	_cbglp_xoffset,
-	_cbglp_xratio,
-	_cbglp_xrepeat,
-	_cbglp_xspacing,
-	_cbglp_zoffset,
-	_cbglp_zratio,
-	_cbglp_zrepeat,
-	_cbglp_zspacing,
-	_cbglp_the_end,
-};
+enum { _cbglp_the_end = 16 };
 
 void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
@@ -182,25 +130,7 @@ void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 
 // ===== getfglayerproperty =====
-enum {
-	_gfglp_alpha,
-	_gfglp_amplitude,
-	_gfglp_bgspeedratio,
-	_gfglp_enabled,
-	_gfglp_transparency,
-	_gfglp_watermode,
-	_gfglp_wavelength,
-	_gfglp_wavespeed,
-	_gfglp_xoffset,
-	_gfglp_xratio,
-	_gfglp_xrepeat,
-	_gfglp_xspacing,
-	_gfglp_zoffset,
-	_gfglp_zratio,
-	_gfglp_zrepeat,
-	_gfglp_zspacing,
-	_gfglp_the_end,
-};
+enum { _gfglp_the_end = 16 };
 
 void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
@@ -233,25 +163,7 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 
 // ===== changefglayerproperty =====
-enum {
-	_cfglp_alpha,
-	_cfglp_amplitude,
-	_cfglp_bgspeedratio,
-	_cfglp_enabled,
-	_cfglp_transparency,
-	_cfglp_watermode,
-	_cfglp_wavelength,
-	_cfglp_wavespeed,
-	_cfglp_xoffset,
-	_cfglp_xratio,
-	_cfglp_xrepeat,
-	_cfglp_xspacing,
-	_cfglp_zoffset,
-	_cfglp_zratio,
-	_cfglp_zrepeat,
-	_cfglp_zspacing,
-	_cfglp_the_end,
-};
+enum { _cfglp_the_end = 16 };
 
 void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
