@@ -128,13 +128,6 @@ Node *List_GetCurrentNode(const List *list) {
 	return list ? list->current : NULL;
 }
 
-void List_Set_UseStrdup(List *list, int use_strdup) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	list->no_strdup = !use_strdup;
-}
-
 void List_Init(List *list) {
 	list->first = list->current = list->last = NULL;
 	list->size = 0;
@@ -142,7 +135,6 @@ void List_Init(List *list) {
 #ifdef DEBUG
 	list->initdone = 1;
 #endif
-	list->no_strdup = 0;
 }
 
 void List_Clear(List *list) {
@@ -152,8 +144,7 @@ void List_Clear(List *list) {
 	Node *current_node = list->first;
 	while(current_node) {
 		Node *next_node = current_node->next;
-		if(!list->no_strdup)
-			free(current_node->name);
+		free(current_node->name);
 		free(current_node);
 		current_node = next_node;
 	}
@@ -172,7 +163,7 @@ void List_InsertAfter(List *list, void *value, char *name) {
 	if(list->size)
 		assert(current);
 	node->value = value;
-	node->name = !name || list->no_strdup ? name : strdup(name);
+	node->name = name ? strdup(name) : NULL;
 
 	List_AddHash(list, node);
 
@@ -205,8 +196,7 @@ void List_Remove(List *list) {
 	assert(list->last);
 	if(list->size == 1) {
 		List_RemoveHash(list, current_node);
-		if(!list->no_strdup)
-			free(current_node->name);
+		free(current_node->name);
 		free(current_node);
 		list->first = list->current = list->last = NULL;
 	} else {
@@ -220,8 +210,7 @@ void List_Remove(List *list) {
 
 		List_RemoveHash(list, current_node);
 
-		if(!list->no_strdup)
-			free(current_node->name);
+		free(current_node->name);
 		free(current_node);
 
 		if(was_last)
