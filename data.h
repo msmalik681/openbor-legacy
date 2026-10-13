@@ -3,11 +3,7 @@
 
 #include "openbor.h"
 
-typedef struct {
-	char* path;
-} s_script_and_path_and_name;
-
-extern const s_script_and_path_and_name script_and_path_and_name[];
+extern const char *lua_script_paths[];
 extern const int script_and_path_and_name_itemcount;
 
 typedef struct {
