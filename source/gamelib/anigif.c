@@ -458,7 +458,4 @@ int anigif_decode(s_screen * screen, int *delay, int x, int y) {
 //                      anigif_close();
 //                      return ANIGIF_DECODE_END;
 	}
-
-	anigif_close();
-	return ANIGIF_DECODE_END;
 }
