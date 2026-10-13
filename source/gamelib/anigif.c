@@ -428,7 +428,6 @@ int anigif_decode(s_screen * screen, int *delay, int x, int y) {
 			return ANIGIF_DECODE_RETRY;
 
 		default:
-			// Isn't this an EOF?
 			return ANIGIF_DECODE_RETRY;
 	}
 }
