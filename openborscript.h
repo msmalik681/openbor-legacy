@@ -27,10 +27,6 @@ extern s_variantnode **global_var_list;
 extern int max_global_vars;
 extern int max_global_var_index;
 
-//these functions can be used by openbor.c
-void Script_Copy(Script * pdest, Script * psrc);
-
-
 s32 openbor_rgbcolor(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
 void mapstrings_systemvariant(ScriptVariant ** varlist, int paramCount);
