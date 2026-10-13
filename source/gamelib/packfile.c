@@ -841,7 +841,6 @@ int pak_init() {
 		// add a trailing null o/~
 		pak_header[pak_headersize] = 0;
 	}
-	//printf("pak cached header (%d bytes)\n", pak_headersize);
 	// initialize vfd table
 	for(i = 0; i < MAXPACKHANDLES; i++)
 		pak_vfdexists[i] = 0;
