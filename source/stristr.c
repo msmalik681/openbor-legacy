@@ -10,7 +10,8 @@
 #include <ctype.h>
 
 char *stristr(const char *String, const char *Pattern) {
-	char *pptr, *sptr, *start;
+	const char *pptr, *sptr;
+	char *start;
 	unsigned int slen, plen;
 	for(start = (char *) String, slen = strlen(String), plen = strlen(Pattern);
 	    slen >= plen; start++, slen--) {
@@ -23,7 +24,7 @@ char *stristr(const char *String, const char *Pattern) {
 				return NULL;
 		}
 		sptr = start;
-		pptr = (char *) Pattern;
+		pptr = Pattern;
 		while(toupper((int) *sptr) == toupper((int) *pptr)) {
 			sptr++;
 			pptr++;
