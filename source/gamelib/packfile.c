@@ -23,6 +23,7 @@
 	dword	headerstart
 */
 #include <ctype.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include "sdlport.h"
@@ -35,7 +36,6 @@
 #include "packfile.h"
 #include "filecache.h"
 #include "globals.h"
-#include "openbor.h"
 
 
 #define	stricmp	strcasecmp
