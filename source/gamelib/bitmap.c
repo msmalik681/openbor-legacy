@@ -41,7 +41,6 @@ s_bitmap *allocbitmap(int width, int height, int format) {
 void freebitmap(s_bitmap * bitmap) {
 	if(bitmap != NULL) {
 		free(bitmap);
-		bitmap = NULL;
 	}
 }
 
