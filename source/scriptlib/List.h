@@ -50,7 +50,6 @@ void List_InsertAfter(List *list, void *value, char *name);
 void List_Remove(List *list);
 int List_GotoNext(List *list);
 int List_GotoFirst(List *list);
-int List_GotoLast(List *list);
 void *List_Retrieve(const List *list);
 int List_FindByName(List *list, const char *name);
 void List_Reset(List *list);
