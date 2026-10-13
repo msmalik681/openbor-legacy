@@ -73,7 +73,6 @@ static int packhandle[MAXPACKHANDLES] = { -1, -1, -1, -1, -1, -1, -1, -1 };
 // Own file pointers and sizes
 static unsigned int packfilepointer[MAXPACKHANDLES];
 static unsigned int packfilesize[MAXPACKHANDLES];
-//char packfile[128] <- defined in sdl/sdlport.c... hmmm
 List *filenamelist = NULL;
 
 /////////////////////////////////////////////////////////////////////////////
