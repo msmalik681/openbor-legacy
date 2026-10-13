@@ -14,7 +14,7 @@
 // Map string arguments to indexes in a property-name array.
 #define MAPSTRINGS(VAR, LIST, FAILMSG) \
 if(VAR->vt == VT_STR) { \
-	propname = (char*)StrCache_Get(VAR->strVal); \
+	propname = StrCache_Get(VAR->strVal); \
 	prop = searchList(LIST, propname, sizeof(LIST) / sizeof((LIST)[0])); \
 	if(prop >= 0) { \
 		ScriptVariant_ChangeType(VAR, VT_INTEGER); \
@@ -86,8 +86,6 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname;
 	int prop;
 
-
-
 	if(paramCount < 2)
 		return;
 	MAPSTRINGS(varlist[1], layer_property_list,
@@ -99,8 +97,6 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname;
 	int prop;
-
-
 
 	if(paramCount < 2)
 		return;
@@ -114,8 +110,6 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname;
 	int prop;
 
-
-
 	if(paramCount < 2)
 		return;
 	MAPSTRINGS(varlist[1], layer_property_list,
@@ -127,8 +121,6 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname;
 	int prop;
-
-
 
 	if(paramCount < 2)
 		return;
