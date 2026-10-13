@@ -143,7 +143,7 @@ Node *List_GetCurrentNode(List *list) {
 	return list ? list->current : NULL;
 }
 
-void Node_Clear(Node *node) {
+static void Node_Clear(Node *node) {
 	if(!node)
 		return;
 	free(node->name);
