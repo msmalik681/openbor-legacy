@@ -137,7 +137,6 @@ char tolowerOneChar(const char *c) {
 		default:
 			return *c;
 	}
-	return '\0';		//should never be reached
 }
 
 // file name lowercase in-place.
