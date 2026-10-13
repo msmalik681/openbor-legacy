@@ -40,7 +40,6 @@ void addModel(s_model * model) {
 	assert(model);
 	assert(modellist);
 	makelowercp(model->name);
-	List_GotoLast(modellist);
 	List_InsertAfter(modellist, (void *) model, convertbuf);
 }
 
