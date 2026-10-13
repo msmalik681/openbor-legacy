@@ -23,6 +23,8 @@
 	dword	headerstart
 */
 #include <assert.h>
+#include <ctype.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include "sdlport.h"
 #include <fcntl.h>
