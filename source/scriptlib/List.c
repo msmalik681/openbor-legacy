@@ -146,6 +146,13 @@ static void Node_Clear(Node *node) {
 	node->name = NULL;
 }
 
+void List_Set_UseStrdup(List *list, int use_strdup) {
+#ifdef DEBUG
+	chklist(list);
+#endif
+	list->no_strdup = !use_strdup;
+}
+
 void List_Init(List *list) {
 	list->first = list->current = list->last = NULL;
 	list->size = 0;
