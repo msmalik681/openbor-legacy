@@ -22,7 +22,6 @@
 	} rep
 	dword	headerstart
 */
-#include <assert.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <stdlib.h>
