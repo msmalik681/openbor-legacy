@@ -18,7 +18,6 @@
 #pragma pack (1)
 
 
-// ============================== This is it! ===============================
 
 
 #define			ANIGIF_DECODE_END		0
