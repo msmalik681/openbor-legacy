@@ -836,7 +836,7 @@ void execute_didhit_script(entity * ent, entity * other, int force, int drop, in
 			   int jugglecost, int pauseadd, int blocked) {
 	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
-					    instead of reusing "attacker" */
+
 	script_args.damagetaker.value = (intptr_t) other;
 	script_args.blocked.value = blocked;
 	
