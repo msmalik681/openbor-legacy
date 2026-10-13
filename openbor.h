@@ -1635,7 +1635,6 @@ typedef enum {
 
 int buffer_pakfile(char *filename, char **pbuffer, size_t * psize);
 int load_script(char *path);
-void init_scripts();
 void load_scripts();
 void execute_animation_script(entity * ent);
 void execute_takedamage_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
