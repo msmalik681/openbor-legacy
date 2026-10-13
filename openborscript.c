@@ -8,7 +8,6 @@
 
 /* Legacy string-to-index mapping helpers used by the engine. */
 
-#include "data.h"
 #include "openborscript.h"
 #include "openbor.h"
 
