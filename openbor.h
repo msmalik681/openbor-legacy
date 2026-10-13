@@ -36,7 +36,6 @@
 #include	"palette.h"
 #include	"anigif.h"
 #include	"texture.h"
-#include    "ScriptVariant.h"
 
 typedef struct Script {
     int dummy;
@@ -1585,7 +1584,6 @@ typedef struct {
 
 extern List *scriptConstantsCommandList;
 typedef struct {
-	VARTYPE vt;
 	intptr_t value;
 } s_script_args_tuple;
 
