@@ -42,7 +42,7 @@ int max_global_vars = MAX_GLOBAL_VAR;
 //////////////////////////////////////////////////////////
 
 // ===== playerkeys =====
-enum playerkeys_enum {
+enum {
 	_pk_anybutton,
 	_pk_attack,
 	_pk_attack2,
@@ -89,7 +89,7 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 
 
 // ===== getbglayerproperty ======
-enum getbglp_enum {
+enum {
 	_gbglp_alpha,
 	_gbglp_amplitude,
 	_gbglp_bgspeedratio,
@@ -140,7 +140,7 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 
 // ===== changebglayerproperty =====
-enum cbglp_enum {
+enum {
 	_cbglp_alpha,
 	_cbglp_amplitude,
 	_cbglp_bgspeedratio,
@@ -191,7 +191,7 @@ void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 
 // ===== getfglayerproperty =====
-enum gfglp_enum {
+enum {
 	_gfglp_alpha,
 	_gfglp_amplitude,
 	_gfglp_bgspeedratio,
@@ -242,7 +242,7 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 
 // ===== changefglayerproperty =====
-typedef enum {
+enum {
 	_cfglp_alpha,
 	_cfglp_amplitude,
 	_cfglp_bgspeedratio,
@@ -260,7 +260,7 @@ typedef enum {
 	_cfglp_zrepeat,
 	_cfglp_zspacing,
 	_cfglp_the_end,
-} prop_enum;
+};
 
 void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
