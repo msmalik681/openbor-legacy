@@ -22,12 +22,6 @@ if(VAR->vt == VT_STR) { \
 	} else { printf(FAILMSG, propname); } \
 }
 
-s_variantnode **global_var_list = NULL;
-
-int max_global_var_index = -1;
-
-int max_global_vars = MAX_GLOBAL_VAR;
-
 //////////////////////////////////////////////////////////
 ////////////   openbor functions
 //////////////////////////////////////////////////////////
