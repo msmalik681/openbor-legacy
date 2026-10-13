@@ -191,7 +191,6 @@ static int decodegifblock(int handle, unsigned char *buf, int width, int height,
 
 	linebuffer = buf + (gb->top * width);
 
-	// loop until something breaks
 	for(;;) {
 		if(bitsleft == 8) {
 			if(++p >= q && (((blocksize = readbyte(handle)) < 1) ||
