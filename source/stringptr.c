@@ -14,7 +14,7 @@ stringptr *new_string(size_t size) {
 		return NULL;
 	result->ptr = (char *) result + sizeof(stringptr);
 	result->size = size;
-	*((char *) (result->ptr + size)) = '\0';
+	result->ptr[size] = '\0';
 	return result;
 }
 
