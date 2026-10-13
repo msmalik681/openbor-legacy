@@ -30,8 +30,5 @@ typedef struct {
 	VARTYPE vt;		//variant type
 } ScriptVariant;
 
-char *StrCache_Get(int index);
-
-void ScriptVariant_ChangeType(ScriptVariant * var, VARTYPE cvt);
 
 #endif
