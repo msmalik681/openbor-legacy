@@ -53,7 +53,6 @@ int List_GotoFirst(List *list);
 void *List_Retrieve(const List *list);
 int List_FindByName(List *list, const char *name);
 void List_Reset(List *list);
-int List_GetSize(const List *list);
 Node *List_GetNodeByName(const List *list, const char *name);
 Node *List_GetCurrentNode(const List *list);
 
