@@ -27,7 +27,7 @@ typedef struct ScriptVariant {
 		double dblVal;
 		int strVal;
 	};
-	VARTYPE vt;		//variatn type
+	VARTYPE vt;		//variant type
 } ScriptVariant;
 
 char *StrCache_Get(int index);
