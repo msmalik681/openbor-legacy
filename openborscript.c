@@ -66,28 +66,11 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int prop;
 
-	static const char *proplist[] = {
-		"alpha",
-		"amplitude",
-		"bgspeedratio",
-		"enabled",
-		"transparency",
-		"watermode",
-		"wavelength",
-		"wavespeed",
-		"xoffset",
-		"xratio",
-		"xrepeat",
-		"xspacing",
-		"zoffset",
-		"zratio",
-		"zrepeat",
-		"zspacing",
-	};
+
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
+	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
 		   "Property name '%s' is not supported by function getbglayerproperty.\n");
 }
 
@@ -97,28 +80,11 @@ void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) 
 	char *propname = NULL;
 	int prop;
 
-	static const char *proplist[] = {
-		"alpha",
-		"amplitude",
-		"bgspeedratio",
-		"enabled",
-		"transparency",
-		"watermode",
-		"wavelength",
-		"wavespeed",
-		"xoffset",
-		"xratio",
-		"xrepeat",
-		"xspacing",
-		"zoffset",
-		"zratio",
-		"zrepeat",
-		"zspacing",
-	};
+
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
+	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
 		   "Property name '%s' is not supported by function changebglayerproperty.\n");
 }
 
@@ -128,28 +94,11 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 	char *propname = NULL;
 	int prop;
 
-	static const char *proplist[] = {
-		"alpha",
-		"amplitude",
-		"bgspeedratio",
-		"enabled",
-		"transparency",
-		"watermode",
-		"wavelength",
-		"wavespeed",
-		"xoffset",
-		"xratio",
-		"xrepeat",
-		"xspacing",
-		"zoffset",
-		"zratio",
-		"zrepeat",
-		"zspacing",
-	};
+
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
+	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
 		   "Property name '%s' is not supported by function getfglayerproperty.\n");
 }
 
@@ -159,28 +108,11 @@ void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) 
 	char *propname = NULL;
 	int prop;
 
-	static const char *proplist[] = {
-		"alpha",
-		"amplitude",
-		"bgspeedratio",
-		"enabled",
-		"transparency",
-		"watermode",
-		"wavelength",
-		"wavespeed",
-		"xoffset",
-		"xratio",
-		"xrepeat",
-		"xspacing",
-		"zoffset",
-		"zratio",
-		"zrepeat",
-		"zspacing",
-	};
+
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], proplist, (sizeof(proplist) / sizeof(proplist[0])),
+	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
 		   "Property name '%s' is not supported by function changefglayerproperty.\n");
 }
 
