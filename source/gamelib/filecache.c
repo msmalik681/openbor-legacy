@@ -384,7 +384,7 @@ void filecache_process(void) {
 			int disCcWarns;
 			lseek(real_pakfd, pakblock_read * filecache_blocksize, SEEK_SET);
 			disCcWarns =
-			    read(real_pakfd, (char *) filecache + (cacheblock_read * filecache_blocksize),
+			    read(real_pakfd, filecache + (cacheblock_read * filecache_blocksize),
 				 filecache_blocksize);
 #endif
 		}
