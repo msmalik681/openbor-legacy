@@ -494,37 +494,11 @@ int load_script(char *file) {
 
 void load_scripts() {
     int i;
-    
+
     for (i = 0; i < script_and_path_and_name_itemcount; i++) {
-        // --- INTERCEPT ROUTE: Route Lua scripts through the Lua VM ---
-        size_t __path_len = strlen(script_and_path_and_name[i].path);
-        if (__path_len >= 4 && strcmp(script_and_path_and_name[i].path + __path_len - 4, ".lua") == 0) {
-            
-            size_t pak_size = 0; 
-            char *pak_buffer = NULL; 
-
-            // Read the script out of the uncompressed memory stream into RAM
-            if (buffer_pakfile(script_and_path_and_name[i].path, &pak_buffer, &pak_size) == 1) { 
-                if (g_lua_engine_state) {
-                    // Compile the script text directly using the Lua VM
-                    if (bor_lua_runbuffer(g_lua_engine_state, pak_buffer, pak_size, script_and_path_and_name[i].path) != LUA_OK) {
-                        printf("Lua Compiler Error: %s\n", lua_tostring(g_lua_engine_state, -1));
-                        borShutdown(__FUNCTION__, 1, "Failed native Lua processing.\n");
-                    }
-                }
-                freeAndNull((void**) &pak_buffer); 
-            }
-            continue; // Prevents data from ever reaching OpenBOR's legacy C parser!
-        }
-
-		shutdown(
-		    1,
-		    "Legacy script '%s' requested. This build supports Lua scripts only.\n",
-		    script_and_path_and_name[i].path
-		);
+        load_script(script_and_path_and_name[i].path);
     }
 }
-
 
 static void bor_lua_call_entity_event(entity *ent, const char *event, const char *context)
 {
