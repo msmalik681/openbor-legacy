@@ -32,8 +32,6 @@ if(VAR->vt == VT_STR) { \
 }
 
 s_variantnode **global_var_list = NULL;
-static s_spawn_entry spawnentry;
-static s_drawmethod drawmethod;
 
 int max_global_var_index = -1;
 
