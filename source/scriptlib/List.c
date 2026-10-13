@@ -91,6 +91,17 @@ static void List_FreeHashes(List *list) {
 	list->buckets = NULL;
 }
 
+int List_GotoFirst(List *list) {
+#ifdef DEBUG
+	chklist(list);
+#endif
+	if(!list->size)
+		return 0;
+	assert(list->first);
+	list->current = list->first;
+	return 1;
+}
+
 Node *List_GetCurrentNode(const List *list) {
 #ifdef DEBUG
 	chklist(list);
@@ -161,6 +172,46 @@ void List_InsertAfter(List *list, void *value, char *name) {
 		list->current = node;
 	}
 	list->size++;
+}
+
+void List_Remove(List *list) {
+#ifdef DEBUG
+	chklist(list);
+#endif
+	Node *current_node = list->current;
+	if(!list->size)
+		return;
+	assert(current_node);
+	assert(list->first);
+	assert(list->last);
+	if(list->size == 1) {
+		List_RemoveHash(list, current_node);
+		if(!list->no_strdup)
+			free(current_node->name);
+		free(current_node);
+		list->first = list->current = list->last = NULL;
+	} else {
+		const int was_last = current_node == list->last;
+		const int was_first = current_node == list->first;
+		if(current_node->prev)
+			current_node->prev->next = current_node->next;
+		if(current_node->next)
+			current_node->next->prev = current_node->prev;
+		Node *next_current = was_last ? current_node->prev : current_node->next;
+
+		List_RemoveHash(list, current_node);
+
+		if(!list->no_strdup)
+			free(current_node->name);
+		free(current_node);
+
+		if(was_last)
+			list->last = next_current;
+		if(was_first)
+			list->first = next_current;
+		list->current = next_current;
+	}
+	list->size--;
 }
 
 int List_GotoNext(List *list) {
