@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 #include "models.h"
 #include "List.h"
 #include "utils.h"
