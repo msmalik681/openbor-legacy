@@ -8,7 +8,6 @@
 
 // Animated GIF player.
 
-#include <stdio.h>
 #include <string.h>
 #include "packfile.h"
 #include "borendian.h"
