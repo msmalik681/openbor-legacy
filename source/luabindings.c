@@ -2,8 +2,6 @@
 #include "data.h"
 #include "openborscript.h"
 #include "luabindings.h"
-#include <lua.h>
-#include <lualib.h>
 #include <lauxlib.h>
 #include <stdlib.h>
 #include <string.h>
