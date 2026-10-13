@@ -11,7 +11,7 @@
 
 #include "types.h"
 
-typedef enum VariantType {
+typedef enum {
 	VT_EMPTY = 0,		//not initialized
 	VT_INTEGER = 1,		//int/long
 	VT_DECIMAL = 2,		//double
@@ -19,7 +19,7 @@ typedef enum VariantType {
 	VT_STR = 6,		//char*
 } VARTYPE;
 
-typedef struct ScriptVariant {
+typedef struct {
 	union			//value
 	{
 		s32 lVal;
