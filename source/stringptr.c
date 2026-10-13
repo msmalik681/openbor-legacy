@@ -7,6 +7,7 @@
  */
 
 #include "stringptr.h"
+#include <stdlib.h>
 
 stringptr *new_string(size_t size) {
 	stringptr *result = malloc(sizeof(stringptr) + size + 1);
