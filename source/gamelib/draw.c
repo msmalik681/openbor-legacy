@@ -6,7 +6,7 @@
  * Copyright (c) 2004 - 2011 OpenBOR Team
  */
 
-// Primitive drawing functions. Should really be done in ASM...
+// Primitive drawing functions.
 // Last update: 24-jun-2002
 
 #include "types.h"
