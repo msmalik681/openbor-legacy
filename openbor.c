@@ -1311,43 +1311,6 @@ void loadHighScoreFile(void) {
 
 
 
-void loadScriptFile(void) {
-	int disCcWarns;
-
-	size_t size;
-	ptrdiff_t l, c;
-
-	FILE *handle = NULL;
-	char path[256] = { "" };
-	char tmpname[256] = { "" };
-	//named list
-	//if(max_global_vars<=0) return ;
-	getBasePath(path, "Saves", 0);
-	getSaveFileName(tmpname, ST_SCRIPT);
-	strcat(path, tmpname);
-	l = strlen(path);	//s00, s01, s02 etc
-	path[l - 2] = '0' + (current_set / 10);
-	path[l - 1] = '0' + (current_set % 10);
-	handle = fopen(path, "rb");
-	if(handle == NULL)
-		return;
-	fseek(handle, 0, SEEK_END);
-	size = ftell(handle);
-	fseek(handle, 0, SEEK_SET);
-	if(size < sizeof(c)) {
-		fclose(handle);
-		return;
-	}
-	disCcWarns = fread(&c, sizeof(c), 1, handle);
-	max_global_var_index = c;
-	if(max_global_var_index >= max_global_vars)
-		max_global_var_index = max_global_vars - 1;
-	for(size = 0; size <= max_global_var_index; size++) {
-		disCcWarns = fread(global_var_list[size], sizeof(s_variantnode), 1, handle);
-	}
-	fclose(handle);
-}
-
 void clearSavedGame(void) {
 	int i;
 
@@ -5867,12 +5830,7 @@ int load_script_setting() {
 		ParseArgs(&arglist, buf + pos, argbuf);
 		command = GET_ARG(0);
 		if(command && command[0]) {
-			if(stricmp(command, "maxglobalvars") == 0)	// for global_var_list, default to 2048
-			{
-				max_global_vars = GET_INT_ARG(1);
-				if(max_global_vars < 0)
-					max_global_vars = 0;
-			} else if(stricmp(command, "keyscriptrate") == 0)	// Rate that keyscripts fire when holding a key.
+			if(stricmp(command, "keyscriptrate") == 0)	// Rate that keyscripts fire when holding a key.
 			{
 				keyscriptrate = GET_INT_ARG(1);
 			}
@@ -19623,7 +19581,6 @@ void playgame(int *players, unsigned which_set, int useSavedGame) {
 	memset(player, 0, sizeof(s_player) * 4);
 
 	if(useSavedGame) {
-		loadScriptFile();
 		current_level = savelevel[current_set].level;
 		current_stage = savelevel[current_set].stage;
 		if(savelevel[current_set].flag == 2)	// don't check 1 or 0 becuase if we use saved game the flag must be >0
@@ -19639,8 +19596,6 @@ void playgame(int *players, unsigned which_set, int useSavedGame) {
 			}
 			credits = savelevel[current_set].credits;
 		}
-	} else {
-		max_global_var_index = 0;
 	}
 
 	if((useSavedGame && savelevel[current_set].flag == 2) || selectplayer(players, NULL))	// if save flag is 2 don't select player
@@ -19708,8 +19663,6 @@ void playgame(int *players, unsigned which_set, int useSavedGame) {
 			hallfame(1);
 		}
 	}
-	// clear global script variant list
-	max_global_var_index = -1;
 	sound_close_music();
 }
 
