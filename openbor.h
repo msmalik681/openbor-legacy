@@ -1563,7 +1563,6 @@ typedef struct {
 	char* bike;
 } s_samples_strings;
 
-extern List *scriptConstantsCommandList;
 typedef struct {
 	intptr_t value;
 } s_script_args_tuple;
