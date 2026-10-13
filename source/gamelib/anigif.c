@@ -108,8 +108,6 @@ static void handle_gfx_control(int handle) {
 			transparent = buf[3];
 		lastdelay = (buf[2] << 8) | buf[1];
 
-		// disposal = (buf[0]>>2) & 7;
-		// inputflag = (buf[0]>>1) & 1;
 	}
 }
 
