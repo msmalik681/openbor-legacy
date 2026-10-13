@@ -131,8 +131,7 @@ GAME          = source/gamelib/draw.o                                           
 									source/gamelib/commands.o                                                         \
 									source/gamelib/models.o                                                           \
 									source/gamelib/texture32.o source/gamelib/movie.o source/gamelib/menus.o
-SCRIPT          =                                                  				  \
-									source/scriptlib/List.o
+LISTLIB          = source/scriptlib/List.o
 RAND          = source/randlib/rand32.o
 PNG             = source/pnglib/pngdec.o source/pnglib/savepng.o
 SOURCE          = source/stringptr.o                                                                				  \
@@ -169,7 +168,7 @@ endif
 MAIN = openbor.o data.o source/luabindings.o source/crashhandler.o
 
 # --- UPDATED: Included LUALIB in master object generation map ---
-OBJS = $(MAIN) $(GAME_CONSOLE) $(ADPCM) $(GFX) $(GAME) $(SOURCE) $(SCRIPT) $(RAND) $(PNG) $(LUALIB)
+OBJS = $(MAIN) $(GAME_CONSOLE) $(ADPCM) $(GFX) $(GAME) $(SOURCE) $(LISTLIB) $(RAND) $(PNG) $(LUALIB)
 									
 			
 #----------------------------------------------------------------------------------------------------
