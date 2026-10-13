@@ -898,7 +898,7 @@ void packfile_music_read(fileliststruct * filelist, int dListTotal) {
 	FILE *fd;
 	int len, i;
 	unsigned int off;
-	char pack[4], *p = NULL;
+	char pack[4], *p;
 	for(i = 0; i < dListTotal; i++) {
 		getBasePath(packfile, filelist[i].filename, 1);
 		if(stristr(packfile, ".pak")) {
@@ -946,7 +946,6 @@ int packfile_music_play(struct fileliststruct *filelist, FILE * bgmFile, int bgm
 	getBasePath(packfile, filelist[curPos + scrPos].filename, 1);
 	if(bgmFile) {
 		fclose(bgmFile);
-		bgmFile = NULL;
 	}
 	bgmFile = fopen(packfile, "rb");
 	if(!bgmFile)
