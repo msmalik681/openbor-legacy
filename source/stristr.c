@@ -20,7 +20,7 @@ char *stristr(const char *String, const char *Pattern) {
 			slen--;
 			/* if pattern longer than string */
 			if(slen < plen)
-				return (NULL);
+				return NULL;
 		}
 		sptr = start;
 		pptr = (char *) Pattern;
@@ -29,8 +29,8 @@ char *stristr(const char *String, const char *Pattern) {
 			pptr++;
 			/* if end of pattern then pattern was found */
 			if('\0' == *pptr)
-				return (start);
+				return start;
 		}
 	}
-	return (NULL);
+	return NULL;
 }
