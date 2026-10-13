@@ -17,7 +17,6 @@
 typedef struct {
 	ScriptVariant value;
 	char key[MAX_KEY_LEN];
-	struct Script *owner;
 } s_variantnode;
 
 typedef struct Script {
