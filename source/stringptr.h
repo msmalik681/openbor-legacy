@@ -10,7 +10,6 @@
 #define _STRINGPTR_H_
 
 #include <stdlib.h>
-#include <string.h>
 
 typedef struct {
 	char *ptr;
