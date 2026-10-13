@@ -41,7 +41,6 @@ INCS         += .                                                               
 									source                                                                            \
 									source/adpcmlib                                                                   \
 									source/gamelib                                                                    \
-									source/preprocessorlib                                                            \
 									source/randlib                                                                    \
 									source/scriptlib                                                                  \
 									source/pnglib                                                                     \
