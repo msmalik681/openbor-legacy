@@ -6,11 +6,7 @@
  * Copyright (c) 2004 - 2011 OpenBOR Team
  */
 
-/* This file include all script methods used by openbor engine
-
- Notice: Make sure to null *pretvar when you about to return E_FAIL,
-		 Or the engine might crash.
-*/
+/* Legacy string-to-index mapping helpers used by the engine. */
 
 #include "data.h"
 #include "openborscript.h"
