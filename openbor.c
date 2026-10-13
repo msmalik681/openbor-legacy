@@ -529,8 +529,6 @@ void load_scripts() {
 }
 
 
-static const s_script_args init_script_args_default = {0};
-
 static void bor_lua_call_entity_event(entity *ent, const char *event, const char *context)
 {
     if (!g_lua_engine_state || !ent || !ent->exists)
@@ -758,7 +756,7 @@ static void execute_didhit_script_i(s_script_args* args) {
 
 void execute_takedamage_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
 			       int jugglecost, int pauseadd) {
-	s_script_args script_args = init_script_args_default;
+	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
 	script_args.attacker.value = (intptr_t) other;
 	script_args.damage.value = force;
@@ -773,7 +771,7 @@ void execute_takedamage_script(entity * ent, entity * other, int force, int drop
 
 void execute_ondeath_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
 			    int jugglecost, int pauseadd) {
-	s_script_args script_args = init_script_args_default;
+	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
 	script_args.attacker.value = (intptr_t) other;
 	script_args.damage.value = force;
@@ -787,7 +785,7 @@ void execute_ondeath_script(entity * ent, entity * other, int force, int drop, i
 }
 void execute_onfall_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
 			   int jugglecost, int pauseadd) {
-	s_script_args script_args = init_script_args_default;
+	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
 	script_args.attacker.value = (intptr_t) other;
 	script_args.damage.value = force;
@@ -802,7 +800,7 @@ void execute_onfall_script(entity * ent, entity * other, int force, int drop, in
 
 void execute_didblock_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
 			     int jugglecost, int pauseadd) {
-	s_script_args script_args = init_script_args_default;
+	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
 	script_args.attacker.value = (intptr_t) other;
 	script_args.damage.value = force;
@@ -816,7 +814,7 @@ void execute_didblock_script(entity * ent, entity * other, int force, int drop, 
 }
 void execute_ondoattack_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
 			       int jugglecost, int pauseadd, int iWhich, int iAtkID) {
-	s_script_args script_args = init_script_args_default;
+	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
 	script_args.other.value = (intptr_t) other;
 	/* yep, that one calls it "other", all the others "attacker" */
@@ -836,7 +834,7 @@ void execute_ondoattack_script(entity * ent, entity * other, int force, int drop
 }
 void execute_didhit_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
 			   int jugglecost, int pauseadd, int blocked) {
-	s_script_args script_args = init_script_args_default;
+	s_script_args script_args = {0};
 	script_args.ent.value = (intptr_t) ent;
 					    instead of reusing "attacker" */
 	script_args.damagetaker.value = (intptr_t) other;
