@@ -34,7 +34,7 @@ int max_global_vars = MAX_GLOBAL_VAR;
 
 // ===== playerkeys =====
 void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
+	char *propname;
 	int i, prop;
 
 	static const char *proplist[] =	// for args 2+
@@ -63,7 +63,7 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 
 // ===== getbglayerproperty ======
 void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
+	char *propname;
 	int prop;
 
 
@@ -77,7 +77,7 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 // ===== changebglayerproperty =====
 void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
+	char *propname;
 	int prop;
 
 
@@ -91,7 +91,7 @@ void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 // ===== getfglayerproperty =====
 void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
+	char *propname;
 	int prop;
 
 
@@ -105,7 +105,7 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 // ===== changefglayerproperty =====
 void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) {
-	char *propname = NULL;
+	char *propname;
 	int prop;
 
 
