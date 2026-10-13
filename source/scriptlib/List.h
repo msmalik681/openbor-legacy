@@ -16,8 +16,6 @@
 #ifndef LIST_H
 #define LIST_H
 
-#define USE_STRING_HASHES
-
 #include <stddef.h>
 
 typedef struct Node {
