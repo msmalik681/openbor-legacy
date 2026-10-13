@@ -425,7 +425,6 @@ int filecache_readpakblock(unsigned char *dest, int pakblock, int startofs, int 
 
 		filecache_process();
 	}
-	return bytes;
 }
 
 /////////////////////////////////////////////////////////////////////////////
