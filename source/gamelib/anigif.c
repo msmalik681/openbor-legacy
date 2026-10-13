@@ -138,15 +138,6 @@ static void gifextension(int handle) {
 
 
 
-/*
-int readnonzero(int handle){
-	char b = 0;
-	while(b==0){
-		if(readpackfile(handle, &b, 1) < 1) return 0;
-	}
-	return b;
-}
-*/
 
 
 
