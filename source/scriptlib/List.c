@@ -296,10 +296,3 @@ void List_Reset(List *list) {
 	list->current = list->first;
 }
 
-int List_GetSize(const List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	return list->size;
-}
-
