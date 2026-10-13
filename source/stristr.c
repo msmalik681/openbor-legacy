@@ -6,7 +6,6 @@
  * Copyright (c) 2004 - 2011 OpenBOR Team
  */
 
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
