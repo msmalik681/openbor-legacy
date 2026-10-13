@@ -36,6 +36,7 @@
 #include "packfile.h"
 #include "filecache.h"
 #include "globals.h"
+#include "openbor.h"
 
 
 #define	stricmp	strcasecmp
