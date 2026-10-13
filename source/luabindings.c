@@ -3,7 +3,6 @@
 #include "openborscript.h"
 #include "luabindings.h"
 #include <lauxlib.h>
-#include <stdlib.h>
 #include <string.h>
 /*
  * Common Lua -> C execution boundary.
