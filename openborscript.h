@@ -27,16 +27,7 @@ extern s_variantnode **global_var_list;
 extern int max_global_vars;
 extern int max_global_var_index;
 
-s32 openbor_rgbcolor(ScriptVariant ** varlist, ScriptVariant ** pretvar, int paramCount);
 
-void mapstrings_systemvariant(ScriptVariant ** varlist, int paramCount);
-void mapstrings_changesystemvariant(ScriptVariant ** varlist, int paramCount);
-void mapstrings_getentityproperty(ScriptVariant ** varlist, int paramCount);
-void mapstrings_changeentityproperty(ScriptVariant ** varlist, int paramCount);
-void mapstrings_getplayerproperty(ScriptVariant ** varlist, int paramCount);
-void mapstrings_changeplayerproperty(ScriptVariant ** varlist, int paramCount);
-void mapstrings_setspawnentry(ScriptVariant ** varlist, int paramCount);
-void mapstrings_transconst(ScriptVariant ** varlist, int paramCount);
 void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount);
 void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount);
 void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount);
