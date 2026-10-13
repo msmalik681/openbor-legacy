@@ -12,10 +12,10 @@
 #include "openbor.h"
 
 // Define macro for string mapping
-#define MAPSTRINGS(VAR, LIST, MAXINDEX, FAILMSG) \
+#define MAPSTRINGS(VAR, LIST, FAILMSG) \
 if(VAR->vt == VT_STR) { \
 	propname = (char*)StrCache_Get(VAR->strVal); \
-	prop = searchList(LIST, propname, MAXINDEX); \
+	prop = searchList(LIST, propname, sizeof(LIST) / sizeof((LIST)[0])); \
 	if(prop >= 0) { \
 		ScriptVariant_ChangeType(VAR, VT_INTEGER); \
 		VAR->lVal = prop; \
@@ -56,7 +56,7 @@ void mapstrings_playerkeys(ScriptVariant ** varlist, int paramCount) {
 	};
 
 	for(i = 2; i < paramCount; i++) {
-		MAPSTRINGS(varlist[i], proplist, (sizeof(proplist) / sizeof(proplist[0])), "Button name '%s' is not supported by playerkeys.");
+		MAPSTRINGS(varlist[i], proplist, "Button name '%s' is not supported by playerkeys.");
 	}
 }
 
@@ -70,7 +70,7 @@ void mapstrings_getbglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
+	MAPSTRINGS(varlist[1], layer_property_list,
 		   "Property name '%s' is not supported by function getbglayerproperty.\n");
 }
 
@@ -84,7 +84,7 @@ void mapstrings_changebglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
+	MAPSTRINGS(varlist[1], layer_property_list,
 		   "Property name '%s' is not supported by function changebglayerproperty.\n");
 }
 
@@ -98,7 +98,7 @@ void mapstrings_getfglayerproperty(ScriptVariant ** varlist, int paramCount) {
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
+	MAPSTRINGS(varlist[1], layer_property_list,
 		   "Property name '%s' is not supported by function getfglayerproperty.\n");
 }
 
@@ -112,7 +112,7 @@ void mapstrings_changefglayerproperty(ScriptVariant ** varlist, int paramCount) 
 
 	if(paramCount < 2)
 		return;
-	MAPSTRINGS(varlist[1], layer_property_list, (sizeof(layer_property_list) / sizeof(layer_property_list[0])),
+	MAPSTRINGS(varlist[1], layer_property_list,
 		   "Property name '%s' is not supported by function changefglayerproperty.\n");
 }
 
