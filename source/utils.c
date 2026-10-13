@@ -6,17 +6,13 @@
  * Copyright (c) 2004 - 2011 OpenBOR Team
  */
 
-#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <malloc.h>
 #include <locale.h>
-#include <math.h>
 
-#include "stringptr.h"
 #include "utils.h"
-#include "stristr.h"
 #include "openbor.h"
 #include "packfile.h"
 #include "savepng.h"
