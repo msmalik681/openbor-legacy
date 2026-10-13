@@ -136,7 +136,7 @@ int List_GotoFirst(List *list) {
 	return 1;
 }
 
-Node *List_GetCurrentNode(List *list) {
+Node *List_GetCurrentNode(const List *list) {
 #ifdef DEBUG
 	chklist(list);
 #endif
