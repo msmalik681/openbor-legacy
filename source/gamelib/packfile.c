@@ -178,7 +178,6 @@ int myfilenamecmp(const char *a, size_t asize, const char *b, size_t bsize) {
 		ca++;
 		cb++;
 	}
-	return -2;		// should never be reached
 }
 
 /////////////////////////////////////////////////////////////////////////////
