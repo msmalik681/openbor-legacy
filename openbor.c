@@ -529,32 +529,7 @@ void load_scripts() {
 }
 
 
-static const s_script_args init_script_args_default = {
-	.ent = {VT_PTR, 0},
-	.attacker = {VT_PTR, 0},
-	.drop = {VT_INTEGER, 0},
-	.type = {VT_INTEGER, 0},
-	.noblock = {VT_INTEGER, 0},
-	.guardcost = {VT_INTEGER, 0},
-	.jugglecost = {VT_INTEGER, 0},
-	.pauseadd = {VT_INTEGER, 0},
-	.which = {VT_EMPTY, 0},
-	.atkid = {VT_EMPTY, 0},
-	.blocked = {VT_EMPTY, 0},
-	.animnum = {VT_EMPTY, 0},
-	.frame = {VT_EMPTY, 0},
-	.player = {VT_EMPTY, 0},
-	.attacktype = {VT_EMPTY, 0},
-	.reset = {VT_EMPTY, 0},
-	.plane = {VT_EMPTY, 0},
-	.height = {VT_EMPTY, 0},
-	.obstacle = {VT_EMPTY, 0},
-	.time = {VT_EMPTY, 0},
-	.gotime = {VT_EMPTY, 0},
-	.damage = {VT_INTEGER, 0},
-	.damagetaker = {VT_EMPTY, 0},
-	.other = {VT_EMPTY, 0},
-};
+static const s_script_args init_script_args_default = {0};
 
 static void bor_lua_call_entity_event(entity *ent, const char *event, const char *context)
 {
@@ -843,9 +818,6 @@ void execute_ondoattack_script(entity * ent, entity * other, int force, int drop
 			       int jugglecost, int pauseadd, int iWhich, int iAtkID) {
 	s_script_args script_args = init_script_args_default;
 	script_args.ent.value = (intptr_t) ent;
-	
-	script_args.attacker.vt = VT_EMPTY;
-	script_args.other.vt = VT_PTR;
 	script_args.other.value = (intptr_t) other;
 	/* yep, that one calls it "other", all the others "attacker" */
 	
@@ -857,9 +829,6 @@ void execute_ondoattack_script(entity * ent, entity * other, int force, int drop
 	script_args.jugglecost.value = jugglecost;
 	script_args.pauseadd.value = pauseadd;
 	
-	script_args.which.vt = VT_INTEGER;
-	script_args.atkid.vt = VT_INTEGER;
-	
 	script_args.which.value = iWhich;
 	script_args.atkid.value = iAtkID;
 	
@@ -869,12 +838,8 @@ void execute_didhit_script(entity * ent, entity * other, int force, int drop, in
 			   int jugglecost, int pauseadd, int blocked) {
 	s_script_args script_args = init_script_args_default;
 	script_args.ent.value = (intptr_t) ent;
-	script_args.attacker.vt = VT_EMPTY; /* yep, some smartass introduced another field "damagetaker"
 					    instead of reusing "attacker" */
-	script_args.damagetaker.vt = VT_PTR;
 	script_args.damagetaker.value = (intptr_t) other;
-	
-	script_args.blocked.vt = VT_INTEGER;
 	script_args.blocked.value = blocked;
 	
 	// at least these few are standard...
