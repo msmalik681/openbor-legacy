@@ -137,10 +137,6 @@ void List_Init(List *list) {
 #endif
 }
 
-void List_Set_UseStrdup(List *list, int use_strdup) {
-	(void) list;
-	(void) use_strdup;
-}
 
 void List_Clear(List *list) {
 #ifdef DEBUG
