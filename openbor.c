@@ -19534,7 +19534,6 @@ void openborMain(int argc, char **argv) {
 		strncat(tmpBuff, "logo", 4);
 		load_background(tmpBuff, 0);
 	} else {
-		printf("use cached bg\n");
 		load_cached_background("data/bgs/logo", 0);
 	}
 
