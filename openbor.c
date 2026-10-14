@@ -18374,16 +18374,6 @@ void startup() {
         printf("Disabled / Failure\n");
     }
 
-	// Instantiate a test virtual state machine context cleanly
-	lua_State *L = luaL_newstate();
-	if (L) {
-	    luaL_openlibs(L); // Initialize safe internal core packages
-	    printf("Enabled (Lua 5.4 Ready)\n");
-	    lua_close(L);    // Discard cleanly for now to protect VRAM allocations
-	} else {
-    	printf("Disabled / Failure\n");
-	}
-
 	int i;
 
 	printf("FileCaching System Init......\t");
