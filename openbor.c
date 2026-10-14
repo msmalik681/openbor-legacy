@@ -18040,14 +18040,8 @@ void update(int ingame, int usevwait) {
 #endif
 	}
 
-// Hardware accelerated flip loop
-if (ingame == 1 || selectScreen) {
-    // We let our modern video.c handle texture updates and hardware presenting
-    video_copy_screen(vscreen); 
-} else {
-    // Fallback presentation for direct backgrounds/menus
-    video_copy_screen(vscreen);
-}
+// Present the screen through video.c.
+video_copy_screen(vscreen);
 
 
 	spriteq_clear();
