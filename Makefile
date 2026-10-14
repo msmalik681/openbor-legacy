@@ -59,11 +59,10 @@ INCS += $(INCLUDES)
 
 ADPCM           = source/adpcmlib/adpcm.o
 
-# --- ADDED: Core Lua 5.4 Scripting Library Static Objects ---
+# --- Lua 5.4 core plus only the standard libraries used by the embedded engine ---
 LUALIB          = 					source/lualib/lapi.o     \
 									source/lualib/lcode.o    \
 									source/lualib/lctype.o   \
-									source/lualib/ldebug.o   \
 									source/lualib/ldo.o      \
 									source/lualib/ldump.o    \
 									source/lualib/lfunc.o    \
@@ -83,15 +82,11 @@ LUALIB          = 					source/lualib/lapi.o     \
 									source/lualib/lauxlib.o  \
 									source/lualib/lbaselib.o \
 									source/lualib/lcorolib.o \
-									source/lualib/ldblib.o   \
-									source/lualib/liolib.o   \
 									source/lualib/lmathlib.o \
-									source/lualib/loslib.o   \
 									source/lualib/lstrlib.o  \
 									source/lualib/ltablib.o  \
 									source/lualib/lutf8lib.o \
-									source/lualib/loadlib.o  \
-									source/lualib/linit.o
+									source/lualib/loadlib.o
 
 ifdef BUILD_GFX
 GFX           = source/gfxlib/2xSaI.o                                                             \
@@ -164,9 +159,9 @@ ifdef BUILD_LOADGL
 GAME_CONSOLE   += sdl/loadgl.o
 endif
 
-MAIN = openbor.o data.o source/luabindings.o source/crashhandler.o
+MAIN = openbor.o data.o source/luabindings.o source/lua_stdlibs.o source/crashhandler.o
 
-# --- UPDATED: Included LUALIB in master object generation map ---
+# --- Included the reduced Lua library set in the master object map ---
 OBJS = $(MAIN) $(GAME_CONSOLE) $(ADPCM) $(GFX) $(GAME) $(SOURCE) $(LISTLIB) $(RAND) $(PNG) $(LUALIB)
 									
 			
