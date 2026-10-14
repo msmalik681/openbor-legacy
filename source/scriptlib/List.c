@@ -110,13 +110,6 @@ static void List_FreeHashes(List *list) {
 	list->buckets = NULL;
 }
 
-Node *List_GetCurrentNode(const List *list) {
-#ifdef DEBUG
-	chklist(list);
-#endif
-	return list ? list->current : NULL;
-}
-
 void List_Init(List *list) {
 	list->first = list->current = list->last = NULL;
 	list->size = 0;
