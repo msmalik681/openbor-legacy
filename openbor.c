@@ -804,9 +804,7 @@ void execute_onmovea_script(entity * ent) {
 }
 
 void execute_onkill_script(entity * ent) {
-    printf("KILL: before bor_lua_call_entity_event\n"); //debug
     bor_lua_call_entity_event(ent, "onkillscript", "onkillscript");
-    printf("KILL: after bor_lua_call_entity_event\n"); //debug
 }
 
 void execute_updateentity_script(entity * ent) {
