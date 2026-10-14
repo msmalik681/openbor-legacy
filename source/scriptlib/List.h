@@ -47,6 +47,8 @@ void List_Clear(List *list);
 void List_InsertAfter(List *list, void *value, char *name);
 void List_Remove(List *list);
 int List_GotoNext(List *list);
+int List_GotoFirst(List *list);
 Node *List_GetNodeByName(const List *list, const char *name);
+Node *List_GetCurrentNode(const List *list);
 
 #endif
