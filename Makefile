@@ -97,7 +97,7 @@ GFX           = source/gfxlib/2xSaI.o                                           
 									source/gfxlib/motionblur.o                                                        \
 									source/gfxlib/scale2x.o                                                           \
 									source/gfxlib/scanline.o                                                          \
-									source/gfxlib/simple2x.o                                                          \
+									source/gfxlib/simple2x.o                                                         \
 									source/gfxlib/tv2x.o
 endif
 			
@@ -170,7 +170,8 @@ OBJS = $(MAIN) $(GAME_CONSOLE) $(ADPCM) $(GFX) $(GAME) $(SOURCE) $(LISTLIB) $(RA
 #----------------------------------------------------------------------------------------------------
 
 CFLAGS         += $(addprefix -I", $(addsuffix ", $(INCS))) $(ARCHFLAGS)
-CFLAGS         += -Wall -fsigned-char -fcommon 
+CFLAGS         += -Wall -fsigned-char -fcommon -ffunction-sections -fdata-sections
+LDFLAGS        += -Wl,--gc-sections
 
 ifndef BUILD_DEBUG
 	CFLAGS         += -fno-ident -freorder-blocks 
@@ -270,8 +271,8 @@ source/luabindings.o: source/luabindings.c
 $(TARGET) : $(OBJS) $(RES)
 	@echo
 	@echo Linking $(TARGET_PLATFORM) Port: $(TARGET)...
-	@echo $(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(TARGET_RESOURCE) $(LIBS) 
-	@$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(TARGET_RESOURCE) $(LIBS) 
+	@echo $(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(TARGET_RESOURCE) $(LIBS) 
+	@$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET) $(OBJS) $(TARGET_RESOURCE) $(LIBS) 
 	@mkdir -p releases
 	@cp $(TARGET) releases/
 	@echo Completed $(TARGET_PLATFORM) Port!
