@@ -9351,9 +9351,7 @@ void kill(entity * victim) {
 	s_attack attack;
 	entity *tempent = self;
 
-	printf("KILL: entering execute_onkill_script\n");
 	execute_onkill_script(victim);
-	printf("KILL: back in kill()\n");
 	if(!victim || !victim->exists)
 		return;
 
