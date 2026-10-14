@@ -5129,8 +5129,6 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 								++peek;
 						}
 						value = GET_ARG(1);
-						//printf("frame count: %d\n",framecount);
-						//printf("Load sprite '%s'...\n", value);
 						index = loadsprite(value, offset[0], offset[1], PIXEL_8);
 						if(pixelformat == PIXEL_x8) {
 							if(newchar->palette == NULL) {
@@ -5209,8 +5207,6 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 						goto lCleanup;
 					}
 					value = GET_ARG(1);
-					//printf("frame count: %d\n",framecount);
-					//printf("Load sprite '%s'...\n", value);
 					index = loadsprite(value, offset[0], offset[1], PIXEL_8);	//don't use palette for the mask
 					maskindex = index;
 					break;
@@ -5746,7 +5742,6 @@ int load_models() {
 	printf("\n");
 
 	for(i = 0, pos = 0; i < models_cached; i++) {
-		//printf("Checking '%s' '%s'\n", model_cache[i].name, model_cache[i].path);
 		if(model_cache[i].loadflag) {
 			load_cached_model(model_cache[i].name, "models.txt", 0);
 			update_loading(&loadingbg[0], ++pos, modelLoadCount);
@@ -10011,7 +10006,6 @@ void do_attack(entity * e) {
 							execute_onspawn_script(flash);
 					}
 				} else if(self->takedamage(e, attack)) {	// Didn't block so go ahead and take the damage
-					//printf("*%d*", current_attack_id);
 					execute_didhit_script(e, self, force, attack->attack_drop, attack->attack_type,
 							      attack->no_block, attack->guardcost, attack->jugglecost,
 							      attack->pause_add, 0);
@@ -10640,7 +10634,6 @@ void update_animation() {
 				else
 					f = 0;
 			}
-			//printf("%d %d %d\n", other->nextanim, borTime, other->update_mark);
 			move = (float) (other->animation->move ? other->animation->move[f] : 0);
 			movez = (float) (other->animation->movez ? other->animation->movez[f] : 0);
 			if(other->direction == 0)
@@ -11109,7 +11102,6 @@ void display_ents() {
 				{
 					useshadow = (e->animation->shadow ? e->animation->shadow[e->animpos] : 1)
 					    && colors.shadow && light[1];
-					//printf("\n %d, %d, %d\n", shadowcolor, light[0], light[1]);
 					if(useshadow && e->a >= 0
 					   && (!e->modeldata.aironly || (e->modeldata.aironly && inair(e)))) {
 						wall = checkwall_below(e->x, e->z, e->a);
@@ -11555,7 +11547,6 @@ void set_weapon(entity * ent, int wpnum, int anim_flag)	// anim_flag added for s
 {
 	if(!ent)
 		return;
-//printf("setweapon: %d \n", wpnum);
 
 	if(ent->modeldata.weapon && wpnum > 0 && wpnum <= MAX_WEAPONS && (*ent->modeldata.weapon)[wpnum - 1])
 		set_model_ex(ent, NULL, (*ent->modeldata.weapon)[wpnum - 1], NULL, !anim_flag);
@@ -16386,7 +16377,6 @@ void dropweapon(int flag) {
 
 int player_takedamage(entity * other, s_attack * attack) {
 	s_attack atk;
-	//printf("damaged by: '%s' %d\n", other->name, attack->attack_force);
 	if(healthcheat) {
 		memcpy(&atk, attack, sizeof(s_attack));
 		atk.attack_force = 0;
@@ -16973,7 +16963,6 @@ entity *smartspawn(s_spawn_entry * props) {	// 7-1-2005 Entire section replaced 
 	if(e == NULL)
 		return NULL;
 
-	//printf("%s, (%f, %f, %f) - (%f, %f, %f)", props->name, props->x, props->z, props->a, e->x, e->z, e->a);
 
 	// Alias?
 	if(props->alias[0])
