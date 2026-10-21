@@ -153,12 +153,56 @@ static entity *bor_lua_get_live_entity_ptr(entity *candidate)
     return NULL;
 }
 
+typedef struct bor_lua_entity_handle {
+    entity *ptr;
+} bor_lua_entity_handle;
+
+#define BOR_LUA_ENTITY_METATABLE "OpenBOR.Entity"
+
+static void bor_lua_push_entity(lua_State *L, entity *ent)
+{
+    bor_lua_entity_handle *handle;
+
+    if (!ent) {
+        lua_pushnil(L);
+        return;
+    }
+
+    handle = (bor_lua_entity_handle *)lua_newuserdata(L, sizeof(*handle));
+    handle->ptr = ent;
+    luaL_getmetatable(L, BOR_LUA_ENTITY_METATABLE);
+    lua_setmetatable(L, -2);
+}
+
 static entity *bor_lua_get_live_entity(lua_State *L, int index)
 {
-    if (!lua_islightuserdata(L, index) && !lua_isuserdata(L, index))
-        return NULL;
+    entity *candidate = NULL;
 
-    return bor_lua_get_live_entity_ptr((entity *)lua_touserdata(L, index));
+    /* Accept raw lightuserdata for compatibility, but expose entity handles
+     * as full userdata so Lua can safely use ent.health-style property access. */
+    if (lua_islightuserdata(L, index)) {
+        candidate = (entity *)lua_touserdata(L, index);
+    } else if (lua_isuserdata(L, index)) {
+        bor_lua_entity_handle *handle;
+        int matches;
+
+        if (!lua_getmetatable(L, index))
+            return NULL;
+        luaL_getmetatable(L, BOR_LUA_ENTITY_METATABLE);
+        matches = lua_rawequal(L, -1, -2);
+        lua_pop(L, 2);
+        if (!matches)
+            return NULL;
+
+        handle = (bor_lua_entity_handle *)lua_touserdata(L, index);
+        if (!handle)
+            return NULL;
+        candidate = handle->ptr;
+    } else {
+        return NULL;
+    }
+
+    return bor_lua_get_live_entity_ptr(candidate);
 }
 
 // openbor.killentity(entity_pointer)
@@ -179,7 +223,7 @@ static int lua_openbor_getentity(lua_State *L) {
     extern entity *ent_list[MAX_ENTS];
 
     if (idx >= 0 && idx < MAX_ENTS && ent_list[idx]) {
-        lua_pushlightuserdata(L, (void *)ent_list[idx]);
+        bor_lua_push_entity(L, ent_list[idx]);
     } else {
         lua_pushnil(L);
     }
@@ -303,19 +347,19 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "maxjugglepoints")) lua_pushinteger(L, ent->modeldata.jugglepoints[1]);
     else if (!strcmp(prop, "player"))           lua_pushinteger(L, ent->playerindex);
     else if (!strcmp(prop, "owner")) {
-        if (ent->owner && ent->owner->exists) lua_pushlightuserdata(L, ent->owner); else lua_pushnil(L);
+        if (ent->owner && ent->owner->exists) bor_lua_push_entity(L, ent->owner); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "parent")) {
-        if (ent->parent && ent->parent->exists) lua_pushlightuserdata(L, ent->parent); else lua_pushnil(L);
+        if (ent->parent && ent->parent->exists) bor_lua_push_entity(L, ent->parent); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "subentity")) {
-        if (ent->subentity && ent->subentity->exists) lua_pushlightuserdata(L, ent->subentity); else lua_pushnil(L);
+        if (ent->subentity && ent->subentity->exists) bor_lua_push_entity(L, ent->subentity); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "opponent")) {
-        if (ent->opponent && ent->opponent->exists) lua_pushlightuserdata(L, ent->opponent); else lua_pushnil(L);
+        if (ent->opponent && ent->opponent->exists) bor_lua_push_entity(L, ent->opponent); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "link")) {
-        if (ent->link && ent->link->exists) lua_pushlightuserdata(L, ent->link); else lua_pushnil(L);
+        if (ent->link && ent->link->exists) bor_lua_push_entity(L, ent->link); else lua_pushnil(L);
     }
     /* Additional properties supported by the original legacy API. */
     else if (!strcmp(prop, "animal"))            lua_pushinteger(L, ent->modeldata.animal);
@@ -372,7 +416,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "antigravity"))        lua_pushnumber(L, ent->antigravity);
     else if (!strcmp(prop, "path"))               lua_pushstring(L, ent->modeldata.path ? ent->modeldata.path : "");
     else if (!strcmp(prop, "grabbing")) {
-        if (ent->grabbing && ent->grabbing->exists) lua_pushlightuserdata(L, ent->grabbing); else lua_pushnil(L);
+        if (ent->grabbing && ent->grabbing->exists) bor_lua_push_entity(L, ent->grabbing); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "aimove"))             lua_pushinteger(L, ent->modeldata.aimove);
     else if (!strcmp(prop, "aggression"))         lua_pushinteger(L, ent->modeldata.aggression);
@@ -395,7 +439,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "blockback"))          lua_pushinteger(L, ent->modeldata.blockback);
     else if (!strcmp(prop, "blockpain"))          lua_pushinteger(L, ent->modeldata.blockpain);
     else if (!strcmp(prop, "weapent")) {
-        if (ent->weapent) lua_pushlightuserdata(L, ent->weapent); else lua_pushnil(L);
+        if (ent->weapent) bor_lua_push_entity(L, ent->weapent); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "blink"))              lua_pushinteger(L, ent->blink ? 1 : 0);
     else if (!strcmp(prop, "animation")) {
@@ -595,7 +639,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else if (!strcmp(field, "rate")) lua_pushinteger(L, ent->dot_rate[which]);
         else if (!strcmp(field, "type")) lua_pushinteger(L, ent->dot_atk[which]);
         else if (!strcmp(field, "owner")) {
-            if (ent->dot_owner[which]) lua_pushlightuserdata(L, ent->dot_owner[which]);
+            if (ent->dot_owner[which]) bor_lua_push_entity(L, ent->dot_owner[which]);
             else lua_pushnil(L);
         }
         else return luaL_error(L, "unknown dot property '%s'", field);
@@ -702,6 +746,27 @@ static int lua_openbor_setentityproperty(lua_State *L) {
     return 1;
 }
 
+/* Entity userdata metatable: property reads reuse the legacy getter, and
+ * writes reuse the supported setter so both interfaces stay consistent. */
+static int lua_openbor_entity_index(lua_State *L)
+{
+    if (lua_type(L, 2) != LUA_TSTRING) {
+        lua_pushnil(L);
+        return 1;
+    }
+    return lua_openbor_getentityproperty(L);
+}
+
+static int lua_openbor_entity_newindex(lua_State *L)
+{
+    if (lua_type(L, 2) != LUA_TSTRING)
+        return luaL_error(L, "entity property name must be a string");
+
+    lua_openbor_setentityproperty(L);
+    lua_pop(L, 1);
+    return 0;
+}
+
 // openbor.isEntityValid(entity)
 // Lightweight validity check for the light-userdata entity handle.
 static int lua_openbor_isentityvalid(lua_State *L) {
@@ -736,7 +801,7 @@ static int lua_openbor_getentitytarget(lua_State *L) {
         lua_pushnil(L);
         return 1;
     }
-    lua_pushlightuserdata(L, (void *)ent->opponent);
+    bor_lua_push_entity(L, ent->opponent);
     return 1;
 }
 
@@ -847,14 +912,14 @@ static int lua_openbor_spawn(lua_State *L) {
         return 1;
     }
 
-    lua_pushlightuserdata(L, (void *)ent);
+    bor_lua_push_entity(L, ent);
     return 1;
 }
 
 // openbor.get_self()
 static int lua_openbor_get_self(lua_State *L) {
     if (self && self->exists) {
-        lua_pushlightuserdata(L, (void *)self);
+        bor_lua_push_entity(L, self);
     } else {
         lua_pushnil(L);
     }
@@ -864,6 +929,14 @@ static int lua_openbor_get_self(lua_State *L) {
 // Global table registration index called during startup()
 void openbor_register_lua_api(void) {
     if (!g_lua_engine_state) return;
+
+    /* Register before any entity handles are created. */
+    luaL_newmetatable(g_lua_engine_state, BOR_LUA_ENTITY_METATABLE);
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_entity_index);
+    lua_setfield(g_lua_engine_state, -2, "__index");
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_entity_newindex);
+    lua_setfield(g_lua_engine_state, -2, "__newindex");
+    lua_pop(g_lua_engine_state, 1);
 
     lua_newtable(g_lua_engine_state);
     
