@@ -228,8 +228,8 @@ static int lua_openbor_damageentity(lua_State *L) {
     return 1;
 }
 
-// openbor.getEntityProperty(entity, property)
-// Lightweight compatibility layer for the legacy getentityproperty() API.
+// getentityproperty(entity, property, ...)
+// Lua implementation of the legacy OpenBOR entity-property query API.
 static int lua_openbor_getentityproperty(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
     const char *prop;
