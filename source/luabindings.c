@@ -411,6 +411,114 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else if (!strcmp(flag, "autokill")) lua_pushboolean(L, ent->autokill);
         else return luaL_error(L, "unknown aiflag '%s'", flag);
     }
+    else if (!strcmp(prop, "animvalid")) {
+        int anim = (int)luaL_optinteger(L, 3, 0);
+        lua_pushboolean(L, validanim(ent, anim));
+    }
+    else if (!strcmp(prop, "dropframe") || !strcmp(prop, "landframe")) {
+        int anim = (int)luaL_optinteger(L, 3, 0);
+        if (!validanim(ent, anim)) lua_pushnil(L);
+        else if (!strcmp(prop, "dropframe")) lua_pushinteger(L, ent->modeldata.animation[anim]->dropframe);
+        else lua_pushinteger(L, ent->modeldata.animation[anim]->landframe[0]);
+    }
+    else if (!strcmp(prop, "energycost")) {
+        int anim = (int)luaL_checkinteger(L, 3);
+        int arg = (int)luaL_checkinteger(L, 4);
+        if (!validanim(ent, anim) || arg < 0)
+            return luaL_error(L, "getentityproperty: invalid energycost animation or argument");
+        lua_pushinteger(L, ent->modeldata.animation[anim]->energycost[arg]);
+    }
+    else if (!strcmp(prop, "komap")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        if (which < 0 || which > 1) lua_pushnil(L);
+        else lua_pushinteger(L, ent->modeldata.komap[which]);
+    }
+    else if (!strcmp(prop, "offense")) {
+        int which = (int)luaL_optinteger(L, 3, 0);
+        if (which < 0 || which >= (int)(sizeof(ent->modeldata.offense_factors) / sizeof(ent->modeldata.offense_factors[0])))
+            lua_pushnil(L);
+        else lua_pushnumber(L, ent->modeldata.offense_factors[which]);
+    }
+    else if (!strcmp(prop, "defense")) {
+        int which = (int)luaL_optinteger(L, 3, 0);
+        const char *field = luaL_optstring(L, 4, "factor");
+        if (which < 0 || which >= (int)(sizeof(ent->modeldata.defense_factors) / sizeof(ent->modeldata.defense_factors[0])))
+            lua_pushnil(L);
+        else if (!strcmp(field, "factor")) lua_pushnumber(L, ent->modeldata.defense_factors[which]);
+        else if (!strcmp(field, "blockpower")) lua_pushnumber(L, ent->modeldata.defense_blockpower[which]);
+        else if (!strcmp(field, "blockratio")) lua_pushnumber(L, ent->modeldata.defense_blockratio[which]);
+        else if (!strcmp(field, "blockthreshold")) lua_pushnumber(L, ent->modeldata.defense_blockthreshold[which]);
+        else if (!strcmp(field, "blocktype")) lua_pushnumber(L, ent->modeldata.defense_blocktype[which]);
+        else if (!strcmp(field, "knockdown")) lua_pushnumber(L, ent->modeldata.defense_knockdown[which]);
+        else if (!strcmp(field, "pain")) lua_pushnumber(L, ent->modeldata.defense_pain[which]);
+        else return luaL_error(L, "unknown defense property '%s'", field);
+    }
+    else if (!strcmp(prop, "flash")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        if (which == 1) lua_pushinteger(L, ent->modeldata.noatflash);
+        else if (which == 2) lua_pushinteger(L, ent->modeldata.bflash);
+        else lua_pushinteger(L, ent->modeldata.flash);
+    }
+    else if (!strcmp(prop, "icon")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        int sprite = ent->modeldata.icon;
+        if (which == 1) sprite = ent->modeldata.icondie;
+        else if (which == 2) sprite = ent->modeldata.iconget;
+        else if (which == 3) sprite = ent->modeldata.iconmp[0];
+        else if (which == 4) sprite = ent->modeldata.iconmp[1];
+        else if (which == 5) sprite = ent->modeldata.iconmp[2];
+        else if (which == 6) sprite = ent->modeldata.iconpain;
+        else if (which == 7) sprite = ent->modeldata.iconw;
+        else if (which == 8) sprite = ent->modeldata.iconx;
+        else if (which == 9) sprite = ent->modeldata.icony;
+        lua_pushinteger(L, sprite);
+    }
+    else if (!strcmp(prop, "edelay")) {
+        const char *field = luaL_checkstring(L, 3);
+        if (!strcmp(field, "mode")) lua_pushinteger(L, ent->modeldata.edelay.mode);
+        else if (!strcmp(field, "factor")) lua_pushnumber(L, ent->modeldata.edelay.factor);
+        else if (!strcmp(field, "cap_min")) lua_pushinteger(L, ent->modeldata.edelay.cap_min);
+        else if (!strcmp(field, "cap_max")) lua_pushinteger(L, ent->modeldata.edelay.cap_max);
+        else if (!strcmp(field, "range_min")) lua_pushinteger(L, ent->modeldata.edelay.range_min);
+        else if (!strcmp(field, "range_max")) lua_pushinteger(L, ent->modeldata.edelay.range_max);
+        else return luaL_error(L, "unknown edelay property '%s'", field);
+    }
+    else if (!strcmp(prop, "running")) {
+        const char *field = luaL_checkstring(L, 3);
+        if (!strcmp(field, "speed")) lua_pushnumber(L, ent->modeldata.runspeed);
+        else if (!strcmp(field, "jumpy")) lua_pushnumber(L, ent->modeldata.runjumpheight);
+        else if (!strcmp(field, "jumpx")) lua_pushnumber(L, ent->modeldata.runjumpdist);
+        else if (!strcmp(field, "land")) lua_pushinteger(L, ent->modeldata.runhold);
+        else if (!strcmp(field, "movez")) lua_pushinteger(L, ent->modeldata.runupdown);
+        else return luaL_error(L, "unknown running property '%s'", field);
+    }
+    else if (!strcmp(prop, "bbox")) {
+        int anim = (int)luaL_checkinteger(L, 4);
+        int frame = (int)luaL_checkinteger(L, 5);
+        int coord = (int)luaL_checkinteger(L, 6);
+        if (!validanim(ent, anim) || frame < 0 || coord < 0 || coord >= 4 ||
+            !ent->modeldata.animation[anim]->bbox_coords)
+            lua_pushnil(L);
+        else lua_pushinteger(L, ent->modeldata.animation[anim]->bbox_coords[frame][coord]);
+    }
+    else if (!strcmp(prop, "range")) {
+        const char *field = luaL_checkstring(L, 3);
+        int anim = (int)luaL_checkinteger(L, 4);
+        int idx = -1;
+        if (!validanim(ent, anim)) lua_pushnil(L);
+        else {
+            if (!strcmp(field, "xmin")) idx = 0;
+            else if (!strcmp(field, "xmax")) idx = 1;
+            else if (!strcmp(field, "zmin")) idx = 2;
+            else if (!strcmp(field, "zmax")) idx = 3;
+            else if (!strcmp(field, "amin")) idx = 4;
+            else if (!strcmp(field, "amax")) idx = 5;
+            else if (!strcmp(field, "bmin")) idx = 6;
+            else if (!strcmp(field, "bmax")) idx = 7;
+            if (idx < 0) return luaL_error(L, "unknown range property '%s'", field);
+            lua_pushinteger(L, ent->modeldata.animation[anim]->range[idx]);
+        }
+    }
     else {
         return luaL_error(L, "unsupported legacy entity property '%s'", prop);
     }
