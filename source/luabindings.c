@@ -522,7 +522,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "stats")) {
         int type = (int)luaL_checkinteger(L, 3);
         int idx = (int)luaL_checkinteger(L, 4);
-        if (idx < 0 || idx >= MAX_STATS) lua_pushnil(L);
+        if (idx < 0 || idx >= 20) lua_pushnil(L);
         else if (type == 1) lua_pushnumber(L, ent->stats[idx]);
         else lua_pushnumber(L, ent->modeldata.stats[idx]);
     }
