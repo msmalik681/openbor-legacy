@@ -581,10 +581,10 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown running property '%s'", field);
     }
     else if (!strcmp(prop, "bbox")) {
-        (void)luaL_checkinteger(L, 3); /* legacy bbox index argument */
         int anim = (int)luaL_checkinteger(L, 4);
         int frame = (int)luaL_checkinteger(L, 5);
         int coord = (int)luaL_checkinteger(L, 6);
+        (void)luaL_checkinteger(L, 3); /* legacy bbox index argument */
         if (!validanim(ent, anim) || frame < 0 ||
             frame >= ent->modeldata.animation[anim]->numframes || coord < 0 || coord >= 5 ||
             !ent->modeldata.animation[anim]->bbox_coords)
@@ -647,11 +647,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!strcmp(prop, "attack")) {
         const char *field = luaL_checkstring(L, 3);
-        (void)luaL_checkinteger(L, 4); /* legacy attack-box index argument */
         int anim = (int)luaL_checkinteger(L, 5);
         int frame = (int)luaL_checkinteger(L, 6);
         int arg = (int)luaL_optinteger(L, 7, 0);
         s_attack *attack;
+        (void)luaL_checkinteger(L, 4); /* legacy attack-box index argument */
         if (!validanim(ent, anim) || frame < 0 ||
             frame >= ent->modeldata.animation[anim]->numframes ||
             !ent->modeldata.animation[anim]->attacks ||
