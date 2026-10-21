@@ -347,19 +347,19 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "maxjugglepoints")) lua_pushinteger(L, ent->modeldata.jugglepoints[1]);
     else if (!strcmp(prop, "player"))           lua_pushinteger(L, ent->playerindex);
     else if (!strcmp(prop, "owner")) {
-        if (ent->owner && ent->owner->exists) bor_lua_push_entity(L, ent->owner); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->owner) && ent->owner->exists) bor_lua_push_entity(L, ent->owner); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "parent")) {
-        if (ent->parent && ent->parent->exists) bor_lua_push_entity(L, ent->parent); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->parent) && ent->parent->exists) bor_lua_push_entity(L, ent->parent); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "subentity")) {
-        if (ent->subentity && ent->subentity->exists) bor_lua_push_entity(L, ent->subentity); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->subentity) && ent->subentity->exists) bor_lua_push_entity(L, ent->subentity); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "opponent")) {
-        if (ent->opponent && ent->opponent->exists) bor_lua_push_entity(L, ent->opponent); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->opponent) && ent->opponent->exists) bor_lua_push_entity(L, ent->opponent); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "link")) {
-        if (ent->link && ent->link->exists) bor_lua_push_entity(L, ent->link); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->link) && ent->link->exists) bor_lua_push_entity(L, ent->link); else lua_pushnil(L);
     }
     /* Additional properties supported by the original legacy API. */
     else if (!strcmp(prop, "animal"))            lua_pushinteger(L, ent->modeldata.animal);
@@ -416,7 +416,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "antigravity"))        lua_pushnumber(L, ent->antigravity);
     else if (!strcmp(prop, "path"))               lua_pushstring(L, ent->modeldata.path ? ent->modeldata.path : "");
     else if (!strcmp(prop, "grabbing")) {
-        if (ent->grabbing && ent->grabbing->exists) bor_lua_push_entity(L, ent->grabbing); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->grabbing) && ent->grabbing->exists) bor_lua_push_entity(L, ent->grabbing); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "aimove"))             lua_pushinteger(L, ent->modeldata.aimove);
     else if (!strcmp(prop, "aggression"))         lua_pushinteger(L, ent->modeldata.aggression);
@@ -797,7 +797,7 @@ static int lua_openbor_getentityhealth(lua_State *L) {
 // OpenBOR's built-in target relationship is represented by entity->opponent.
 static int lua_openbor_getentitytarget(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
-    if (!ent || !ent->exists || !ent->opponent || !bor_lua_get_live_entity_ptr(ent->opponent) || !ent->opponent->exists) {
+    if (!ent || !ent->exists || !bor_lua_get_live_entity_ptr(ent->opponent) || !ent->opponent->exists) {
         lua_pushnil(L);
         return 1;
     }
