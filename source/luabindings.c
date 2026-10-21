@@ -519,6 +519,86 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             lua_pushinteger(L, ent->modeldata.animation[anim]->range[idx]);
         }
     }
+    else if (!strcmp(prop, "stats")) {
+        int type = (int)luaL_checkinteger(L, 3);
+        int idx = (int)luaL_checkinteger(L, 4);
+        if (idx < 0 || idx >= MAX_STATS) lua_pushnil(L);
+        else if (type == 1) lua_pushnumber(L, ent->stats[idx]);
+        else lua_pushnumber(L, ent->modeldata.stats[idx]);
+    }
+    else if (!strcmp(prop, "staydown")) {
+        int which = (int)luaL_checkinteger(L, 4);
+        if (which < 0 || which > 1) lua_pushnil(L);
+        else lua_pushnumber(L, ent->staydown[which]);
+    }
+    else if (!strcmp(prop, "dot")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        const char *field = luaL_checkstring(L, 4);
+        if (which < 0 || which >= MAX_DOT) lua_pushnil(L);
+        else if (!strcmp(field, "time")) lua_pushinteger(L, ent->dot_time[which]);
+        else if (!strcmp(field, "mode")) lua_pushinteger(L, ent->dot[which]);
+        else if (!strcmp(field, "force")) lua_pushinteger(L, ent->dot_force[which]);
+        else if (!strcmp(field, "rate")) lua_pushinteger(L, ent->dot_rate[which]);
+        else if (!strcmp(field, "type")) lua_pushinteger(L, ent->dot_atk[which]);
+        else if (!strcmp(field, "owner")) {
+            if (ent->dot_owner[which]) lua_pushlightuserdata(L, ent->dot_owner[which]);
+            else lua_pushnil(L);
+        }
+        else return luaL_error(L, "unknown dot property '%s'", field);
+    }
+    else if (!strcmp(prop, "attack")) {
+        const char *field = luaL_checkstring(L, 3);
+        int anim = (int)luaL_checkinteger(L, 5);
+        int frame = (int)luaL_checkinteger(L, 6);
+        int arg = (int)luaL_optinteger(L, 7, 0);
+        s_attack *attack;
+        if (!validanim(ent, anim) || frame < 0 ||
+            !ent->modeldata.animation[anim]->attacks ||
+            !ent->modeldata.animation[anim]->attacks[frame]) {
+            lua_pushnil(L);
+        } else {
+            attack = ent->modeldata.animation[anim]->attacks[frame];
+            if (!strcmp(field, "blockflash")) lua_pushinteger(L, attack->blockflash);
+            else if (!strcmp(field, "blocksound")) lua_pushinteger(L, attack->blocksound);
+            else if (!strcmp(field, "coords")) {
+                if (arg < 0 || arg >= 4) lua_pushnil(L); else lua_pushinteger(L, attack->attack_coords[arg]);
+            }
+            else if (!strcmp(field, "counterattack")) lua_pushinteger(L, attack->counterattack);
+            else if (!strcmp(field, "direction")) lua_pushinteger(L, attack->force_direction);
+            else if (!strcmp(field, "dol")) lua_pushinteger(L, attack->damage_on_landing);
+            else if (!strcmp(field, "dot")) lua_pushinteger(L, attack->dot);
+            else if (!strcmp(field, "dotforce")) lua_pushinteger(L, attack->dot_force);
+            else if (!strcmp(field, "dotindex")) lua_pushinteger(L, attack->dot_index);
+            else if (!strcmp(field, "dotrate")) lua_pushinteger(L, attack->dot_rate);
+            else if (!strcmp(field, "dottime")) lua_pushinteger(L, attack->dot_time);
+            else if (!strcmp(field, "drop")) lua_pushinteger(L, attack->attack_drop);
+            else if (!strcmp(field, "dropv")) {
+                if (arg < 0 || arg >= 3) lua_pushnil(L); else lua_pushnumber(L, attack->dropv[arg]);
+            }
+            else if (!strcmp(field, "force")) lua_pushinteger(L, attack->attack_force);
+            else if (!strcmp(field, "forcemap")) lua_pushinteger(L, attack->forcemap);
+            else if (!strcmp(field, "freeze")) lua_pushinteger(L, attack->freeze);
+            else if (!strcmp(field, "freezetime")) lua_pushinteger(L, attack->freezetime);
+            else if (!strcmp(field, "grab")) lua_pushinteger(L, attack->grab);
+            else if (!strcmp(field, "grabdistance")) lua_pushinteger(L, attack->grab_distance);
+            else if (!strcmp(field, "guardcost")) lua_pushinteger(L, attack->guardcost);
+            else if (!strcmp(field, "hitflash")) lua_pushinteger(L, attack->hitflash);
+            else if (!strcmp(field, "hitsound")) lua_pushinteger(L, attack->hitsound);
+            else if (!strcmp(field, "jugglecost")) lua_pushinteger(L, attack->jugglecost);
+            else if (!strcmp(field, "maptime")) lua_pushinteger(L, attack->maptime);
+            else if (!strcmp(field, "noblock")) lua_pushinteger(L, attack->no_block);
+            else if (!strcmp(field, "noflash")) lua_pushinteger(L, attack->no_flash);
+            else if (!strcmp(field, "nopain")) lua_pushinteger(L, attack->no_pain);
+            else if (!strcmp(field, "otg")) lua_pushinteger(L, attack->otg);
+            else if (!strcmp(field, "pause")) lua_pushinteger(L, attack->pause_add);
+            else if (!strcmp(field, "seal")) lua_pushinteger(L, attack->seal);
+            else if (!strcmp(field, "sealtime")) lua_pushinteger(L, attack->sealtime);
+            else if (!strcmp(field, "staydown")) lua_pushlightuserdata(L, attack->staydown);
+            else if (!strcmp(field, "steal")) lua_pushinteger(L, attack->steal);
+            else if (!strcmp(field, "type")) lua_pushinteger(L, attack->attack_type);
+            else return luaL_error(L, "unknown attack property '%s'", field);
+        }
+    }
     else {
         return luaL_error(L, "unsupported legacy entity property '%s'", prop);
     }
