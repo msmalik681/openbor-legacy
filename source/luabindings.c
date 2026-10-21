@@ -272,7 +272,17 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "defaultmodel"))    lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
     else if (!strcmp(prop, "spawntype"))        lua_pushinteger(L, ent->spawntype);
     else if (!strcmp(prop, "playerindex"))     lua_pushinteger(L, ent->playerindex);
-    else if (!strcmp(prop, "map"))             lua_pushinteger(L, ent->map);
+    else if (!strcmp(prop, "map")) {
+        int i;
+        lua_Integer map_index = 0;
+        for (i = 0; i < ent->modeldata.maps_loaded; ++i) {
+            if (ent->colourmap == ent->modeldata.colourmap[i]) {
+                map_index = i + 1;
+                break;
+            }
+        }
+        lua_pushinteger(L, map_index);
+    }
     else if (!strcmp(prop, "animnum"))         lua_pushinteger(L, ent->animnum);
     else if (!strcmp(prop, "animpos"))         lua_pushinteger(L, ent->animpos);
     else if (!strcmp(prop, "nextanim"))        lua_pushinteger(L, ent->nextanim);
@@ -539,10 +549,19 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushnumber(L, ent->modeldata.stats[idx]);
     }
     else if (!strcmp(prop, "staydown")) {
-        int which = (int)luaL_checkinteger(L, 4);
+        int which = 0;
+        if (lua_isstring(L, 4)) {
+            const char *field = lua_tostring(L, 4);
+            if (!strcmp(field, "staydownatk")) which = 1;
+            else if (strcmp(field, "staydown") != 0)
+                return luaL_error(L, "unknown staydown property '%s'", field);
+        } else {
+            which = (int)luaL_optinteger(L, 4, 0);
+        }
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushnumber(L, ent->staydown[which]);
     }
+    else if (!strcmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
     else if (!strcmp(prop, "dot")) {
         int which = (int)luaL_checkinteger(L, 3);
         const char *field = luaL_checkstring(L, 4);
