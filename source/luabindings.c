@@ -384,7 +384,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         if (ent->animation) lua_pushinteger(L, ent->animation->height); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "animationid"))        lua_pushinteger(L, ent->animnum);
-    else if (!strcmp(prop, "animating"))          lua_pushinteger(L, ent->animating ? 1 : 0);
+    else if (!strcmp(prop, "animating"))          lua_pushinteger(L, ent->animating);
     else if (!strcmp(prop, "jumping"))            lua_pushinteger(L, ent->jumping ? 1 : 0);
     else if (!strcmp(prop, "idling"))             lua_pushinteger(L, ent->idling ? 1 : 0);
     else if (!strcmp(prop, "drop"))               lua_pushinteger(L, ent->drop ? 1 : 0);
@@ -439,10 +439,10 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "blockback"))          lua_pushinteger(L, ent->modeldata.blockback);
     else if (!strcmp(prop, "blockpain"))          lua_pushinteger(L, ent->modeldata.blockpain);
     else if (!strcmp(prop, "weapent")) {
-        if (ent->weapent) bor_lua_push_entity(L, ent->weapent); else lua_pushnil(L);
+        if (bor_lua_get_live_entity_ptr(ent->weapent) && ent->weapent->exists) bor_lua_push_entity(L, ent->weapent); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "blink"))              lua_pushinteger(L, ent->blink ? 1 : 0);
-    else if (!strcmp(prop, "animation")) {
+    else if (!strcmp(prop, "animation") || !strcmp(prop, "animation.handle")) {
         if (ent->animation) lua_pushlightuserdata(L, ent->animation); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "colourmap")) {
@@ -472,7 +472,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else if (!strcmp(flag, "frozen")) lua_pushinteger(L, ent->frozen ? 1 : 0);
         else if (!strcmp(flag, "freezetime")) lua_pushinteger(L, ent->freezetime);
         else if (!strcmp(flag, "toexplode")) lua_pushinteger(L, ent->toexplode ? 1 : 0);
-        else if (!strcmp(flag, "animating")) lua_pushinteger(L, ent->animating ? 1 : 0);
+        else if (!strcmp(flag, "animating")) lua_pushinteger(L, ent->animating);
         else if (!strcmp(flag, "blink")) lua_pushinteger(L, ent->blink ? 1 : 0);
         else if (!strcmp(flag, "invincible")) lua_pushinteger(L, ent->invincible ? 1 : 0);
         else if (!strcmp(flag, "autokill")) lua_pushinteger(L, ent->autokill ? 1 : 0);
@@ -581,6 +581,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown running property '%s'", field);
     }
     else if (!strcmp(prop, "bbox")) {
+        (void)luaL_checkinteger(L, 3); /* legacy bbox index argument */
         int anim = (int)luaL_checkinteger(L, 4);
         int frame = (int)luaL_checkinteger(L, 5);
         int coord = (int)luaL_checkinteger(L, 6);
@@ -639,13 +640,14 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else if (!strcmp(field, "rate")) lua_pushinteger(L, ent->dot_rate[which]);
         else if (!strcmp(field, "type")) lua_pushinteger(L, ent->dot_atk[which]);
         else if (!strcmp(field, "owner")) {
-            if (ent->dot_owner[which]) bor_lua_push_entity(L, ent->dot_owner[which]);
+            if (bor_lua_get_live_entity_ptr(ent->dot_owner[which]) && ent->dot_owner[which]->exists) bor_lua_push_entity(L, ent->dot_owner[which]);
             else lua_pushnil(L);
         }
         else return luaL_error(L, "unknown dot property '%s'", field);
     }
     else if (!strcmp(prop, "attack")) {
         const char *field = luaL_checkstring(L, 3);
+        (void)luaL_checkinteger(L, 4); /* legacy attack-box index argument */
         int anim = (int)luaL_checkinteger(L, 5);
         int frame = (int)luaL_checkinteger(L, 6);
         int arg = (int)luaL_optinteger(L, 7, 0);
