@@ -614,6 +614,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             attack = ent->modeldata.animation[anim]->attacks[frame];
             if (!strcmp(field, "blockflash")) lua_pushinteger(L, attack->blockflash);
             else if (!strcmp(field, "blocksound")) lua_pushinteger(L, attack->blocksound);
+            else if (!strcmp(field, "blast")) lua_pushinteger(L, attack->blast);
             else if (!strcmp(field, "coords")) {
                 if (arg < 0 || arg >= 4) lua_pushnil(L); else lua_pushinteger(L, attack->attack_coords[arg]);
             }
