@@ -930,8 +930,6 @@ static int lua_openbor_get_self(lua_State *L) {
 
 // Global table registration index called during startup()
 void openbor_register_lua_api(void) {
-    const char *global_name;
-
     if (!g_lua_engine_state) return;
 
     /* Register before any entity handles are created. */
@@ -942,88 +940,71 @@ void openbor_register_lua_api(void) {
     lua_setfield(g_lua_engine_state, -2, "__newindex");
     lua_pop(g_lua_engine_state, 1);
 
-    lua_newtable(g_lua_engine_state);
-    
+    /*
+     * Register the API as global Lua functions. Scripts should call
+     * spawn(...), get_self(), log(), etc., without an openbor. prefix.
+     */
     lua_pushcfunction(g_lua_engine_state, lua_openbor_log);
-    lua_setfield(g_lua_engine_state, -2, "log");
-    
+    lua_setglobal(g_lua_engine_state, "log");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_rand);
-    lua_setfield(g_lua_engine_state, -2, "rand");
-    
+    lua_setglobal(g_lua_engine_state, "rand");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_drawstring);
-    lua_setfield(g_lua_engine_state, -2, "drawstring");
-    
+    lua_setglobal(g_lua_engine_state, "drawstring");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_drawbox);
-    lua_setfield(g_lua_engine_state, -2, "drawbox");
+    lua_setglobal(g_lua_engine_state, "drawbox");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_killentity);
-    lua_setfield(g_lua_engine_state, -2, "killentity");
+    lua_setglobal(g_lua_engine_state, "killentity");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_get_time);
-    lua_setfield(g_lua_engine_state, -2, "get_time");
+    lua_setglobal(g_lua_engine_state, "get_time");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_get_player_health);
-    lua_setfield(g_lua_engine_state, -2, "get_player_health");
+    lua_setglobal(g_lua_engine_state, "get_player_health");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentity);
-    lua_setfield(g_lua_engine_state, -2, "getentity");
+    lua_setglobal(g_lua_engine_state, "getentity");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_damageentity);
-    lua_setfield(g_lua_engine_state, -2, "damageentity");
+    lua_setglobal(g_lua_engine_state, "damageentity");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_get_self);
-    lua_setfield(g_lua_engine_state, -2, "get_self");
+    lua_setglobal(g_lua_engine_state, "get_self");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_setentityproperty);
-    lua_setfield(g_lua_engine_state, -2, "setEntityProperty");
+    lua_setglobal(g_lua_engine_state, "setEntityProperty");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_isentityvalid);
-    lua_setfield(g_lua_engine_state, -2, "isEntityValid");
+    lua_setglobal(g_lua_engine_state, "isEntityValid");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_isentityalive);
-    lua_setfield(g_lua_engine_state, -2, "isEntityAlive");
+    lua_setglobal(g_lua_engine_state, "isEntityAlive");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityhealth);
-    lua_setfield(g_lua_engine_state, -2, "getEntityHealth");
+    lua_setglobal(g_lua_engine_state, "getEntityHealth");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentitytarget);
-    lua_setfield(g_lua_engine_state, -2, "getEntityTarget");
+    lua_setglobal(g_lua_engine_state, "getEntityTarget");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_setentitytarget);
-    lua_setfield(g_lua_engine_state, -2, "setEntityTarget");
+    lua_setglobal(g_lua_engine_state, "setEntityTarget");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityposition);
-    lua_setfield(g_lua_engine_state, -2, "getEntityPosition");
+    lua_setglobal(g_lua_engine_state, "getEntityPosition");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_setentityposition);
-    lua_setfield(g_lua_engine_state, -2, "setEntityPosition");
+    lua_setglobal(g_lua_engine_state, "setEntityPosition");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changeanimation);
-    lua_setfield(g_lua_engine_state, -2, "changeAnimation");
+    lua_setglobal(g_lua_engine_state, "changeAnimation");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_spawn);
-    lua_setfield(g_lua_engine_state, -2, "spawn");
-    
-    lua_setglobal(g_lua_engine_state, "openbor");
+    lua_setglobal(g_lua_engine_state, "spawn");
 
-    /*
-     * Expose the same API functions globally as well as through openbor.
-     * This lets scripts use spawn(...), get_self(), log(), etc. without
-     * the openbor. prefix.
-     */
-    lua_getglobal(g_lua_engine_state, "openbor");
-    lua_pushnil(g_lua_engine_state);
-    while (lua_next(g_lua_engine_state, -2) != 0) {
-        global_name = lua_tostring(g_lua_engine_state, -2);
-        if (global_name) {
-            lua_pushvalue(g_lua_engine_state, -1);
-            lua_setglobal(g_lua_engine_state, global_name);
-        }
-        lua_pop(g_lua_engine_state, 1);
-    }
-    lua_pop(g_lua_engine_state, 1);
-
-    /* The legacy script API exposes this as a global lowercase function. */
+    /* Legacy property access is also available as a lowercase global. */
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityproperty);
     lua_setglobal(g_lua_engine_state, "getentityproperty");
 }
