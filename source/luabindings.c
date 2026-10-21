@@ -318,7 +318,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "mapdefault"))         lua_pushinteger(L, ent->map);
     else if (!strcmp(prop, "hmapl"))              lua_pushinteger(L, ent->modeldata.hmap1);
     else if (!strcmp(prop, "hmapu"))              lua_pushinteger(L, ent->modeldata.hmap2);
-    else if (!strcmp(prop, "defaultname"))        lua_pushstring(L, ent->defaultname ? ent->defaultname : "");
+    else if (!strcmp(prop, "defaultname"))        lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
     else if (!strcmp(prop, "type"))               lua_pushinteger(L, ent->modeldata.type);
     else if (!strcmp(prop, "subtype"))            lua_pushinteger(L, ent->modeldata.subtype);
     else if (!strcmp(prop, "throwdamage"))        lua_pushinteger(L, ent->modeldata.throwdamage);
