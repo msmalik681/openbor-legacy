@@ -36,7 +36,7 @@
 #include	"palette.h"
 #include	"anigif.h"
 #include	"texture.h"
-#include    "openborscript.h"
+
 #include    "globals.h"
 #include    "version.h"
 #include	"List.h"
@@ -842,22 +842,6 @@ typedef enum {
 #define MF_ALL 0x1FFFF
 
 typedef struct {
-    Script level_script;
-    Script endlevel_script;
-    Script update_script;
-    Script updated_script;
-    Script key_script_all;
-    Script timetick_script;
-    Script score_script[4];
-    Script key_script[4];
-    Script join_script[4];
-    Script respawn_script[4];
-    Script pdie_script[4];
-} s_game_scripts;
-
-extern s_game_scripts game_scripts;
-
-typedef struct {
 	int (*special)[MAX_SPECIAL_INPUTS];	// Stores freespecials
 	int (*weapon)[MAX_WEAPONS];	// weapon model list
 
@@ -1579,9 +1563,7 @@ typedef struct {
 	char* bike;
 } s_samples_strings;
 
-extern List *scriptConstantsCommandList;
 typedef struct {
-	VARTYPE vt;
 	intptr_t value;
 } s_script_args_tuple;
 
@@ -1612,33 +1594,6 @@ typedef struct {
 	s_script_args_tuple other;
 } s_script_args;
 
-typedef struct {
-	char* ent;
-	char* attacker;
-	char* drop;
-	char* type;
-	char* noblock;
-	char* guardcost;
-	char* jugglecost;
-	char* pauseadd;
-	char* which;
-	char* atkid;
-	char* blocked;
-	char* animnum;
-	char* frame;
-	char* player;
-	char* attacktype;
-	char* reset;
-	char* plane;
-	char* height;
-	char* obstacle;
-	char* time;
-	char* gotime;
-	char* damage;
-	char* damagetaker;
-	char* other;
-} s_script_args_names;
-#define s_script_args_membercount (sizeof(s_script_args_names) / sizeof(char*))
 
 typedef enum {
 	CB_UP = 0,
@@ -1658,7 +1613,6 @@ typedef enum {
 
 int buffer_pakfile(char *filename, char **pbuffer, size_t * psize);
 int load_script(char *path);
-void init_scripts();
 void load_scripts();
 void execute_animation_script(entity * ent);
 void execute_takedamage_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
