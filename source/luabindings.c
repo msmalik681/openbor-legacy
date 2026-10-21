@@ -3,6 +3,7 @@
 #include "luabindings.h"
 #include <lauxlib.h>
 #include <string.h>
+extern int sprite_map_max_items;
 /*
  * Common Lua -> C execution boundary.
  *
@@ -255,18 +256,18 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "jumpx"))           lua_pushnumber(L, ent->jumpx);
     else if (!strcmp(prop, "jumpv"))           lua_pushnumber(L, ent->jumpv);
     else if (!strcmp(prop, "direction"))       lua_pushinteger(L, ent->direction);
-    else if (!strcmp(prop, "exists"))          lua_pushboolean(L, ent->exists);
-    else if (!strcmp(prop, "dead"))            lua_pushboolean(L, ent->dead);
-    else if (!strcmp(prop, "dying"))           lua_pushboolean(L, ent->dying);
-    else if (!strcmp(prop, "attacking"))       lua_pushboolean(L, ent->attacking);
-    else if (!strcmp(prop, "blocking"))        lua_pushboolean(L, ent->blocking);
-    else if (!strcmp(prop, "falling"))         lua_pushboolean(L, ent->falling);
-    else if (!strcmp(prop, "running"))         lua_pushboolean(L, ent->running);
-    else if (!strcmp(prop, "frozen"))          lua_pushboolean(L, ent->frozen);
-    else if (!strcmp(prop, "invincible"))      lua_pushboolean(L, ent->invincible);
-    else if (!strcmp(prop, "projectile"))      lua_pushboolean(L, ent->projectile);
-    else if (!strcmp(prop, "autokill"))        lua_pushboolean(L, ent->autokill);
-    else if (!strcmp(prop, "seal"))            lua_pushboolean(L, ent->seal);
+    else if (!strcmp(prop, "exists"))          lua_pushinteger(L, ent->exists ? 1 : 0);
+    else if (!strcmp(prop, "dead"))            lua_pushinteger(L, ent->dead ? 1 : 0);
+    else if (!strcmp(prop, "dying"))           lua_pushinteger(L, ent->dying ? 1 : 0);
+    else if (!strcmp(prop, "attacking"))       lua_pushinteger(L, ent->attacking ? 1 : 0);
+    else if (!strcmp(prop, "blocking"))        lua_pushinteger(L, ent->blocking ? 1 : 0);
+    else if (!strcmp(prop, "falling"))         lua_pushinteger(L, ent->falling ? 1 : 0);
+    else if (!strcmp(prop, "running"))         lua_pushinteger(L, ent->running ? 1 : 0);
+    else if (!strcmp(prop, "frozen"))          lua_pushinteger(L, ent->frozen ? 1 : 0);
+    else if (!strcmp(prop, "invincible"))      lua_pushinteger(L, ent->invincible ? 1 : 0);
+    else if (!strcmp(prop, "projectile"))      lua_pushinteger(L, ent->projectile ? 1 : 0);
+    else if (!strcmp(prop, "autokill"))        lua_pushinteger(L, ent->autokill ? 1 : 0);
+    else if (!strcmp(prop, "seal"))            lua_pushinteger(L, ent->seal ? 1 : 0);
     else if (!strcmp(prop, "name"))            lua_pushstring(L, ent->name);
     else if (!strcmp(prop, "model"))           lua_pushstring(L, ent->model ? ent->model->name : "");
     else if (!strcmp(prop, "defaultmodel"))    lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
@@ -339,15 +340,15 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         if (ent->animation) lua_pushinteger(L, ent->animation->height); else lua_pushnil(L);
     }
     else if (!strcmp(prop, "animationid"))        lua_pushinteger(L, ent->animnum);
-    else if (!strcmp(prop, "animating"))          lua_pushboolean(L, ent->animating);
-    else if (!strcmp(prop, "jumping"))            lua_pushboolean(L, ent->jumping);
-    else if (!strcmp(prop, "idling"))             lua_pushboolean(L, ent->idling);
-    else if (!strcmp(prop, "drop"))               lua_pushboolean(L, ent->drop);
-    else if (!strcmp(prop, "getting"))            lua_pushboolean(L, ent->getting);
-    else if (!strcmp(prop, "turning"))            lua_pushboolean(L, ent->turning);
-    else if (!strcmp(prop, "charging"))           lua_pushboolean(L, ent->charging);
-    else if (!strcmp(prop, "inpain"))             lua_pushboolean(L, ent->inpain);
-    else if (!strcmp(prop, "toexplode"))          lua_pushboolean(L, ent->toexplode);
+    else if (!strcmp(prop, "animating"))          lua_pushinteger(L, ent->animating ? 1 : 0);
+    else if (!strcmp(prop, "jumping"))            lua_pushinteger(L, ent->jumping ? 1 : 0);
+    else if (!strcmp(prop, "idling"))             lua_pushinteger(L, ent->idling ? 1 : 0);
+    else if (!strcmp(prop, "drop"))               lua_pushinteger(L, ent->drop ? 1 : 0);
+    else if (!strcmp(prop, "getting"))            lua_pushinteger(L, ent->getting ? 1 : 0);
+    else if (!strcmp(prop, "turning"))            lua_pushinteger(L, ent->turning ? 1 : 0);
+    else if (!strcmp(prop, "charging"))           lua_pushinteger(L, ent->charging ? 1 : 0);
+    else if (!strcmp(prop, "inpain"))             lua_pushinteger(L, ent->inpain ? 1 : 0);
+    else if (!strcmp(prop, "toexplode"))          lua_pushinteger(L, ent->toexplode ? 1 : 0);
     else if (!strcmp(prop, "freezetime"))         lua_pushinteger(L, ent->freezetime);
     else if (!strcmp(prop, "invinctime"))         lua_pushinteger(L, ent->invinctime);
     else if (!strcmp(prop, "rush_count"))         lua_pushinteger(L, ent->rush[0]);
@@ -396,7 +397,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "weapent")) {
         if (ent->weapent) lua_pushlightuserdata(L, ent->weapent); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "blink"))              lua_pushboolean(L, ent->blink);
+    else if (!strcmp(prop, "blink"))              lua_pushinteger(L, ent->blink ? 1 : 0);
     else if (!strcmp(prop, "animation")) {
         if (ent->animation) lua_pushlightuserdata(L, ent->animation); else lua_pushnil(L);
     }
@@ -411,31 +412,31 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!strcmp(prop, "aiflag")) {
         const char *flag = luaL_optstring(L, 3, "");
-        if (!strcmp(flag, "dead")) lua_pushboolean(L, ent->dead);
-        else if (!strcmp(flag, "jumping")) lua_pushboolean(L, ent->jumping);
-        else if (!strcmp(flag, "idling")) lua_pushboolean(L, ent->idling);
-        else if (!strcmp(flag, "drop")) lua_pushboolean(L, ent->drop);
-        else if (!strcmp(flag, "attacking")) lua_pushboolean(L, ent->attacking);
-        else if (!strcmp(flag, "getting")) lua_pushboolean(L, ent->getting);
-        else if (!strcmp(flag, "turning")) lua_pushboolean(L, ent->turning);
-        else if (!strcmp(flag, "charging")) lua_pushboolean(L, ent->charging);
-        else if (!strcmp(flag, "blocking")) lua_pushboolean(L, ent->blocking);
-        else if (!strcmp(flag, "falling")) lua_pushboolean(L, ent->falling);
-        else if (!strcmp(flag, "running")) lua_pushboolean(L, ent->running);
-        else if (!strcmp(flag, "inpain")) lua_pushboolean(L, ent->inpain);
-        else if (!strcmp(flag, "projectile")) lua_pushboolean(L, ent->projectile);
-        else if (!strcmp(flag, "frozen")) lua_pushboolean(L, ent->frozen);
+        if (!strcmp(flag, "dead")) lua_pushinteger(L, ent->dead ? 1 : 0);
+        else if (!strcmp(flag, "jumping")) lua_pushinteger(L, ent->jumping ? 1 : 0);
+        else if (!strcmp(flag, "idling")) lua_pushinteger(L, ent->idling ? 1 : 0);
+        else if (!strcmp(flag, "drop")) lua_pushinteger(L, ent->drop ? 1 : 0);
+        else if (!strcmp(flag, "attacking")) lua_pushinteger(L, ent->attacking ? 1 : 0);
+        else if (!strcmp(flag, "getting")) lua_pushinteger(L, ent->getting ? 1 : 0);
+        else if (!strcmp(flag, "turning")) lua_pushinteger(L, ent->turning ? 1 : 0);
+        else if (!strcmp(flag, "charging")) lua_pushinteger(L, ent->charging ? 1 : 0);
+        else if (!strcmp(flag, "blocking")) lua_pushinteger(L, ent->blocking ? 1 : 0);
+        else if (!strcmp(flag, "falling")) lua_pushinteger(L, ent->falling ? 1 : 0);
+        else if (!strcmp(flag, "running")) lua_pushinteger(L, ent->running ? 1 : 0);
+        else if (!strcmp(flag, "inpain")) lua_pushinteger(L, ent->inpain ? 1 : 0);
+        else if (!strcmp(flag, "projectile")) lua_pushinteger(L, ent->projectile ? 1 : 0);
+        else if (!strcmp(flag, "frozen")) lua_pushinteger(L, ent->frozen ? 1 : 0);
         else if (!strcmp(flag, "freezetime")) lua_pushinteger(L, ent->freezetime);
-        else if (!strcmp(flag, "toexplode")) lua_pushboolean(L, ent->toexplode);
-        else if (!strcmp(flag, "animating")) lua_pushboolean(L, ent->animating);
-        else if (!strcmp(flag, "blink")) lua_pushboolean(L, ent->blink);
-        else if (!strcmp(flag, "invincible")) lua_pushboolean(L, ent->invincible);
-        else if (!strcmp(flag, "autokill")) lua_pushboolean(L, ent->autokill);
+        else if (!strcmp(flag, "toexplode")) lua_pushinteger(L, ent->toexplode ? 1 : 0);
+        else if (!strcmp(flag, "animating")) lua_pushinteger(L, ent->animating ? 1 : 0);
+        else if (!strcmp(flag, "blink")) lua_pushinteger(L, ent->blink ? 1 : 0);
+        else if (!strcmp(flag, "invincible")) lua_pushinteger(L, ent->invincible ? 1 : 0);
+        else if (!strcmp(flag, "autokill")) lua_pushinteger(L, ent->autokill ? 1 : 0);
         else return luaL_error(L, "unknown aiflag '%s'", flag);
     }
     else if (!strcmp(prop, "animvalid")) {
         int anim = (int)luaL_optinteger(L, 3, 0);
-        lua_pushboolean(L, validanim(ent, anim));
+        lua_pushinteger(L, validanim(ent, anim) ? 1 : 0);
     }
     else if (!strcmp(prop, "dropframe") || !strcmp(prop, "landframe")) {
         int anim = (int)luaL_optinteger(L, 3, 0);
@@ -446,7 +447,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "energycost")) {
         int anim = (int)luaL_checkinteger(L, 3);
         int arg = (int)luaL_checkinteger(L, 4);
-        if (!validanim(ent, anim) || arg < 0)
+        if (!validanim(ent, anim) || arg < 0 || arg >= MAX_ATTACKS)
             return luaL_error(L, "getentityproperty: invalid energycost animation or argument");
         lua_pushinteger(L, ent->modeldata.animation[anim]->energycost[arg]);
     }
@@ -493,7 +494,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else if (which == 7) sprite = ent->modeldata.iconw;
         else if (which == 8) sprite = ent->modeldata.iconx;
         else if (which == 9) sprite = ent->modeldata.icony;
-        if (sprite < 0 || !sprite_map || !sprite_map[sprite].sprite) {
+        if (sprite < 0 || sprite >= sprite_map_max_items || !sprite_map || !sprite_map[sprite].sprite) {
             lua_pushinteger(L, -1);
         } else {
             sprite_map[sprite].sprite->centerx = sprite_map[sprite].centerx;
@@ -503,11 +504,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!strcmp(prop, "sprite")) {
         int sprite;
-        if (!ent->animation || ent->animpos < 0) {
+        if (!ent->animation || ent->animpos < 0 || ent->animpos >= ent->animation->numframes) {
             lua_pushnil(L);
         } else {
             sprite = ent->animation->sprite[ent->animpos];
-            if (sprite < 0 || !sprite_map || !sprite_map[sprite].sprite) {
+            if (sprite < 0 || sprite >= sprite_map_max_items || !sprite_map || !sprite_map[sprite].sprite) {
                 lua_pushnil(L);
             } else {
                 sprite_map[sprite].sprite->centerx = sprite_map[sprite].centerx;
@@ -616,7 +617,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             else if (!strcmp(field, "blocksound")) lua_pushinteger(L, attack->blocksound);
             else if (!strcmp(field, "blast")) lua_pushinteger(L, attack->blast);
             else if (!strcmp(field, "coords")) {
-                if (arg < 0 || arg >= 4) lua_pushnil(L); else lua_pushinteger(L, attack->attack_coords[arg]);
+                if (arg < 0 || arg >= 5) lua_pushnil(L); else lua_pushinteger(L, attack->attack_coords[arg]);
             }
             else if (!strcmp(field, "counterattack")) lua_pushinteger(L, attack->counterattack);
             else if (!strcmp(field, "direction")) lua_pushinteger(L, attack->force_direction);
