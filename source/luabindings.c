@@ -930,6 +930,8 @@ static int lua_openbor_get_self(lua_State *L) {
 
 // Global table registration index called during startup()
 void openbor_register_lua_api(void) {
+    const char *global_name;
+
     if (!g_lua_engine_state) return;
 
     /* Register before any entity handles are created. */
@@ -1003,6 +1005,23 @@ void openbor_register_lua_api(void) {
     lua_setfield(g_lua_engine_state, -2, "spawn");
     
     lua_setglobal(g_lua_engine_state, "openbor");
+
+    /*
+     * Expose the same API functions globally as well as through openbor.
+     * This lets scripts use spawn(...), get_self(), log(), etc. without
+     * the openbor. prefix.
+     */
+    lua_getglobal(g_lua_engine_state, "openbor");
+    lua_pushnil(g_lua_engine_state);
+    while (lua_next(g_lua_engine_state, -2) != 0) {
+        global_name = lua_tostring(g_lua_engine_state, -2);
+        if (global_name) {
+            lua_pushvalue(g_lua_engine_state, -1);
+            lua_setglobal(g_lua_engine_state, global_name);
+        }
+        lua_pop(g_lua_engine_state, 1);
+    }
+    lua_pop(g_lua_engine_state, 1);
 
     /* The legacy script API exposes this as a global lowercase function. */
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityproperty);
