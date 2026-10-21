@@ -371,7 +371,6 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "detect"))             lua_pushinteger(L, ent->modeldata.stealth[1]);
     else if (!strcmp(prop, "stealth"))            lua_pushinteger(L, ent->modeldata.stealth[0]);
     else if (!strcmp(prop, "stalltime"))          lua_pushinteger(L, ent->stalltime);
-    else if (!strcmp(prop, "staydown"))           lua_pushinteger(L, ent->modeldata.staydown);
     else if (!strcmp(prop, "gfxshadow"))          lua_pushinteger(L, ent->modeldata.gfxshadow);
     else if (!strcmp(prop, "nograb"))             lua_pushinteger(L, ent->nograb);
     else if (!strcmp(prop, "nodrop"))             lua_pushinteger(L, ent->modeldata.nodrop);
@@ -386,6 +385,19 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "blockpain"))          lua_pushinteger(L, ent->modeldata.blockpain);
     else if (!strcmp(prop, "weapent")) {
         if (ent->weapent) lua_pushlightuserdata(L, ent->weapent); else lua_pushnil(L);
+    }
+    else if (!strcmp(prop, "blink"))              lua_pushboolean(L, ent->blink);
+    else if (!strcmp(prop, "animation")) {
+        if (ent->animation) lua_pushlightuserdata(L, ent->animation); else lua_pushnil(L);
+    }
+    else if (!strcmp(prop, "colourmap")) {
+        if (ent->colourmap) lua_pushlightuserdata(L, ent->colourmap); else lua_pushnil(L);
+    }
+    else if (!strcmp(prop, "colourtable")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        if (which < 0 || which >= ent->modeldata.maps_loaded) lua_pushnil(L);
+        else if (ent->modeldata.colourmap[which]) lua_pushlightuserdata(L, ent->modeldata.colourmap[which]);
+        else lua_pushnil(L);
     }
     else if (!strcmp(prop, "aiflag")) {
         const char *flag = luaL_optstring(L, 3, "");
@@ -534,7 +546,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "dot")) {
         int which = (int)luaL_checkinteger(L, 3);
         const char *field = luaL_checkstring(L, 4);
-        if (which < 0 || which >= MAX_DOT) lua_pushnil(L);
+        if (which < 0 || which >= MAX_DOTS) lua_pushnil(L);
         else if (!strcmp(field, "time")) lua_pushinteger(L, ent->dot_time[which]);
         else if (!strcmp(field, "mode")) lua_pushinteger(L, ent->dot[which]);
         else if (!strcmp(field, "force")) lua_pushinteger(L, ent->dot_force[which]);
