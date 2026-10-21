@@ -493,7 +493,28 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else if (which == 7) sprite = ent->modeldata.iconw;
         else if (which == 8) sprite = ent->modeldata.iconx;
         else if (which == 9) sprite = ent->modeldata.icony;
-        lua_pushinteger(L, sprite);
+        if (sprite < 0 || !sprite_map || !sprite_map[sprite].sprite) {
+            lua_pushinteger(L, -1);
+        } else {
+            sprite_map[sprite].sprite->centerx = sprite_map[sprite].centerx;
+            sprite_map[sprite].sprite->centery = sprite_map[sprite].centery;
+            lua_pushlightuserdata(L, sprite_map[sprite].sprite);
+        }
+    }
+    else if (!strcmp(prop, "sprite")) {
+        int sprite;
+        if (!ent->animation || ent->animpos < 0) {
+            lua_pushnil(L);
+        } else {
+            sprite = ent->animation->sprite[ent->animpos];
+            if (sprite < 0 || !sprite_map || !sprite_map[sprite].sprite) {
+                lua_pushnil(L);
+            } else {
+                sprite_map[sprite].sprite->centerx = sprite_map[sprite].centerx;
+                sprite_map[sprite].sprite->centery = sprite_map[sprite].centery;
+                lua_pushlightuserdata(L, sprite_map[sprite].sprite);
+            }
+        }
     }
     else if (!strcmp(prop, "edelay")) {
         const char *field = luaL_checkstring(L, 3);
@@ -518,7 +539,8 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         int anim = (int)luaL_checkinteger(L, 4);
         int frame = (int)luaL_checkinteger(L, 5);
         int coord = (int)luaL_checkinteger(L, 6);
-        if (!validanim(ent, anim) || frame < 0 || coord < 0 || coord >= 4 ||
+        if (!validanim(ent, anim) || frame < 0 ||
+            frame >= ent->modeldata.animation[anim]->numframes || coord < 0 || coord >= 5 ||
             !ent->modeldata.animation[anim]->bbox_coords)
             lua_pushnil(L);
         else lua_pushinteger(L, ent->modeldata.animation[anim]->bbox_coords[frame][coord]);
@@ -584,6 +606,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         int arg = (int)luaL_optinteger(L, 7, 0);
         s_attack *attack;
         if (!validanim(ent, anim) || frame < 0 ||
+            frame >= ent->modeldata.animation[anim]->numframes ||
             !ent->modeldata.animation[anim]->attacks ||
             !ent->modeldata.animation[anim]->attacks[frame]) {
             lua_pushnil(L);
