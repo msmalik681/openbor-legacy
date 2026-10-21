@@ -78,7 +78,8 @@ extern u32 borTime;
 // openbor.log("message")
 static int lua_openbor_log(lua_State *L) {
     const char *message = luaL_checkstring(L, 1);
-    printf("%s", message);
+    printf("%s\n", message);
+    fflush(stdout);
     return 0;
 }
 
