@@ -307,7 +307,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!strcmp(prop, "attacking"))       lua_pushinteger(L, ent->attacking ? 1 : 0);
     else if (!strcmp(prop, "blocking"))        lua_pushinteger(L, ent->blocking ? 1 : 0);
     else if (!strcmp(prop, "falling"))         lua_pushinteger(L, ent->falling ? 1 : 0);
-    else if (!strcmp(prop, "running"))         lua_pushinteger(L, ent->running ? 1 : 0);
+    else if (!strcmp(prop, "running") && lua_gettop(L) < 3) lua_pushinteger(L, ent->running ? 1 : 0);
     else if (!strcmp(prop, "frozen"))          lua_pushinteger(L, ent->frozen ? 1 : 0);
     else if (!strcmp(prop, "invincible"))      lua_pushinteger(L, ent->invincible ? 1 : 0);
     else if (!strcmp(prop, "projectile"))      lua_pushinteger(L, ent->projectile ? 1 : 0);
