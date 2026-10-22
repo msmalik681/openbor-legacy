@@ -100,6 +100,8 @@ extern int ent_max;
 extern int gfx_y_offset;
 extern int panel_height;
 extern int pause;
+extern entity *textbox;
+extern entity *smartbomber;
 
 /* Entity handle helper is defined below the variant API. */
 static void bor_lua_push_entity(lua_State *L, entity *ent);
@@ -181,6 +183,25 @@ static int lua_openborvariant(lua_State *L) {
         lua_pushinteger(L, current_palette);
     } else if (!strcmp(name, "elapsed_time")) {
         lua_pushinteger(L, (lua_Integer)borTime);
+    } else if (!strcmp(name, "levelpos")) {
+        if (!level) return luaL_error(L, "openborvariant: 'levelpos' requires a loaded level");
+        lua_pushinteger(L, level->pos);
+    } else if (!strcmp(name, "blockade")) {
+        lua_pushnumber(L, blockade);
+    } else if (!strcmp(name, "scrollminz")) {
+        lua_pushnumber(L, scrollminz);
+    } else if (!strcmp(name, "scrollmaxz")) {
+        lua_pushnumber(L, scrollmaxz);
+    } else if (!strcmp(name, "smartbomber")) {
+        if (smartbomber && smartbomber->exists)
+            bor_lua_push_entity(L, smartbomber);
+        else
+            lua_pushnil(L);
+    } else if (!strcmp(name, "textbox")) {
+        if (textbox && textbox->exists)
+            bor_lua_push_entity(L, textbox);
+        else
+            lua_pushnil(L);
     } else if (!strcmp(name, "ent_max")) {
         lua_pushinteger(L, ent_max);
     } else if (!strcmp(name, "in_level")) {
