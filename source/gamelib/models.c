@@ -82,7 +82,8 @@ s_model *getCurrentModel(void) {
 
 s_model *getNextModel(void) {
 	assert(modellist);
-	List_GotoNext(modellist);
+	if(!List_GotoNext(modellist))
+		return NULL;
 	return getCurrentModel();
 }
 
