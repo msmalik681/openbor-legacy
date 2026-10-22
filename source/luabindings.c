@@ -223,8 +223,10 @@ static int lua_openborvariant(lua_State *L) {
     } else if (!strcmp(name, "in_selectscreen")) {
         lua_pushboolean(L, selectScreen != 0);
     } else if (!strcmp(name, "xpos")) {
+        if (!level) return luaL_error(L, "openborvariant: 'xpos' requires a loaded level");
         lua_pushnumber(L, advancex);
     } else if (!strcmp(name, "ypos")) {
+        if (!level) return luaL_error(L, "openborvariant: 'ypos' requires a loaded level");
         lua_pushnumber(L, advancey);
     } else if (!strcmp(name, "lasthitx")) {
         lua_pushnumber(L, lasthitx);
