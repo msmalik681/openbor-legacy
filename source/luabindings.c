@@ -812,6 +812,24 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (ent->mp > ent->modeldata.mp) ent->mp = ent->modeldata.mp;
     } else if (!strcmp(prop, "speed")) {
         ent->modeldata.speed = (float)luaL_checknumber(L, 3);
+    } else if (!strcmp(prop, "weapon")) {
+        int weapon = (int)luaL_checkinteger(L, 3);
+        int anim_flag = lua_isnoneornil(L, 4) ? 0 : (int)luaL_checkinteger(L, 4);
+        set_weapon(ent, weapon, anim_flag);
+    } else if (!strcmp(prop, "trymove")) {
+        int mode = (int)luaL_checkinteger(L, 3);
+        if (mode == 1) ent->trymove = common_trymove;
+        else if (mode == 2) ent->trymove = player_trymove;
+        else ent->trymove = NULL;
+    } else if (!strcmp(prop, "combostep")) {
+        int index = (int)luaL_checkinteger(L, 3);
+        if (index < 0 || index >= MAX_SPECIAL_INPUTS) return luaL_error(L, "combostep index out of range");
+        ent->combostep[index] = (unsigned char)luaL_checkinteger(L, 4);
+    } else if (!strcmp(prop, "mpset")) {
+        ent->modeldata.mp = (int)luaL_checknumber(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.mpstable = (int)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->modeldata.mpstableval = (int)luaL_checknumber(L, 5);
+        if (!lua_isnoneornil(L, 6)) ent->modeldata.mprate = (int)luaL_checknumber(L, 6);
     } else if (!strcmp(prop, "grabforce")) {
         ent->model->grabforce = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "iconposition")) {
