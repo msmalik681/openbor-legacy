@@ -6863,24 +6863,30 @@ void free_level(s_level * lv) {
 	s_spawn_script_cache_node *tempnode2;
 	if(!lv)
 		return;
+	printf("[UNLOAD DEBUG] free_level: begin lv=%p\n", (void *)lv); fflush(stdout);
 	//offload blending tables
 	for(i = 0; i < LEVEL_MAX_PALETTES; i++)
 		for(j = 0; j < MAX_BLENDINGS; j++)
 			freeAndNull((void**) &lv->blendings[i][j]);
+	printf("[UNLOAD DEBUG] free_level: blendings freed\n"); fflush(stdout);
 	//offload bglayers
 	for(i = 1; i < lv->numbglayers; i++)
 		freeAndNull((void**) &lv->bglayers[i].handle);
 	
+	printf("[UNLOAD DEBUG] free_level: bglayers freed (count=%d)\n", lv->numbglayers); fflush(stdout);
 	//offload fglayers
 	for(i = 0; i < lv->numfglayers; i++)
 		freeAndNull((void**) &lv->fglayers[i].handle);
 
+	printf("[UNLOAD DEBUG] free_level: fglayers freed (count=%d)\n", lv->numfglayers); fflush(stdout);
 	//offload textobjs
 	for(i = 0; i < LEVEL_MAX_TEXTOBJS; i++)
 		freeAndNull((void**) &lv->textobjs[i].text);
 
+	printf("[UNLOAD DEBUG] free_level: textobjs freed\n"); fflush(stdout);
 	for(i = 0; i < LEVEL_MAX_FILESTREAMS; i++)
 		freeAndNull((void**) &lv->filestreams[i].buf);
+	printf("[UNLOAD DEBUG] free_level: filestream buffers freed\n"); fflush(stdout);
 
 	for(i = 0; i < LEVEL_MAX_SPAWNS; i++) {
 		if(lv->spawnpoints[i].spawn_script_list_head) {
@@ -6894,6 +6900,7 @@ void free_level(s_level * lv) {
 			}
 		}
 	}
+	printf("[UNLOAD DEBUG] free_level: spawn script lists freed\n"); fflush(stdout);
 
 	tempnode = lv->spawn_script_cache_head;
 	lv->spawn_script_cache_head = NULL;
@@ -6904,16 +6911,24 @@ void free_level(s_level * lv) {
 		free(tempnode);
 		tempnode = tempnode2;
 	}
+	printf("[UNLOAD DEBUG] free_level: spawn script cache freed; freeing level allocation\n"); fflush(stdout);
 	freeAndNull((void**) &lv);
+	printf("[UNLOAD DEBUG] free_level: complete\n"); fflush(stdout);
 }
 
 
 void unload_level() {
 	s_model *temp;
+	printf("[UNLOAD DEBUG] unload_level: begin\n"); fflush(stdout);
+	printf("[UNLOAD DEBUG] unload_background begin\n"); fflush(stdout);
 	unload_background();
+	printf("[UNLOAD DEBUG] unload_background complete\n"); fflush(stdout);
 	unload_texture();
+	printf("[UNLOAD DEBUG] unload_texture complete\n"); fflush(stdout);
 	freepanels();
+	printf("[UNLOAD DEBUG] freepanels complete\n"); fflush(stdout);
 	freescreen(&bgbuffer);
+	printf("[UNLOAD DEBUG] freescreen bgbuffer complete\n"); fflush(stdout);
 
 	if(level) {
 
@@ -6923,25 +6938,32 @@ void unload_level() {
 		level->quaketime = 0;
 		level->waiting = 0;
 
-		printf("Level Unloading: '%s'\n", level->name);
+		printf("Level Unloading: '%s'\n", level->name); fflush(stdout);
+		printf("[UNLOAD DEBUG] freeing level name\n"); fflush(stdout);
 		freeAndNull((void**) &level->name);
+		printf("[UNLOAD DEBUG] calling free_level\n"); fflush(stdout);
 		free_level(level);
 		level = NULL;
+		printf("[UNLOAD DEBUG] free_level returned; starting model unload\n"); fflush(stdout);
 		temp = getFirstModel();
 		do {
 			if(!temp)
 				break;
 			if(temp->unload) {
+				printf("[UNLOAD DEBUG] freeing model '%s' ptr=%p\n", temp->name ? temp->name : "(null)", (void *)temp); fflush(stdout);
 				free_model(temp);
+				printf("[UNLOAD DEBUG] free_model returned\n"); fflush(stdout);
 				temp = getCurrentModel();
 			} else
 				temp = getNextModel();
 		} while(temp);
-		printf("Done.\n");
+		printf("[UNLOAD DEBUG] model unload loop complete\n"); fflush(stdout);
+		printf("Done.\n"); fflush(stdout);
 
 
 	}
 
+	printf("[UNLOAD DEBUG] resetting level state\n"); fflush(stdout);
 	advancex = 0;
 	advancey = 0;
 	nojoin = 0;
@@ -6964,6 +6986,7 @@ void unload_level() {
 	light[0] = 128;
 	light[1] = 64;
 	gfx_y_offset = 0;	// Added so select screen graphics display correctly
+	printf("[UNLOAD DEBUG] unload_level complete\n"); fflush(stdout);
 }
 
 char *llHandleCommandSpawnscript(ArgList * arglist, s_spawn_entry * next) {
