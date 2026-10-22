@@ -771,6 +771,17 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (ent->mp > ent->modeldata.mp) ent->mp = ent->modeldata.mp;
     } else if (!strcmp(prop, "speed")) {
         ent->modeldata.speed = (float)luaL_checknumber(L, 3);
+    } else if (!strcmp(prop, "grabforce")) {
+        ent->model->grabforce = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "iconposition")) {
+        ent->modeldata.iconx = (short)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.icony = (short)luaL_checkinteger(L, 4);
+    } else if (!strcmp(prop, "lifeposition")) {
+        ent->modeldata.hpx = (short)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.hpy = (short)luaL_checkinteger(L, 4);
+    } else if (!strcmp(prop, "nameposition")) {
+        ent->modeldata.namex = (short)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.namey = (short)luaL_checkinteger(L, 4);
     } else if (!strcmp(prop, "setlayer")) {
         ent->modeldata.setlayer = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "throwdamage")) {
