@@ -97,6 +97,8 @@ extern unsigned int models_loaded;
 extern unsigned int models_cached;
 extern int ent_count;
 extern int ent_max;
+extern int gfx_y_offset;
+extern int panel_height;
 extern int pause;
 
 // openbor.log("message")
@@ -236,6 +238,20 @@ static int lua_openborvariant(lua_State *L) {
     } else if (!strcmp(name, "levelwidth")) {
         if (!level) return luaL_error(L, "openborvariant: 'levelwidth' requires a loaded level");
         lua_pushinteger(L, level->width);
+    } else if (!strcmp(name, "levelheight")) {
+        if (!level) return luaL_error(L, "openborvariant: 'levelheight' requires a loaded level");
+        lua_pushinteger(L, panel_height);
+    } else if (!strcmp(name, "numpalettes")) {
+        if (!level) return luaL_error(L, "openborvariant: 'numpalettes' requires a loaded level");
+        lua_pushinteger(L, level->numpalettes);
+    } else if (!strcmp(name, "gfx_y_offset")) {
+        lua_pushinteger(L, gfx_y_offset);
+    } else if (!strcmp(name, "game_speed")) {
+        lua_pushinteger(L, GAME_SPEED);
+    } else if (!strcmp(name, "player_max_z")) {
+        lua_pushinteger(L, PLAYER_MAX_Z);
+    } else if (!strcmp(name, "player_min_z")) {
+        lua_pushinteger(L, PLAYER_MIN_Z);
     } else {
         return luaL_error(L, "openborvariant: unsupported or unimplemented property '%s'", name);
     }
