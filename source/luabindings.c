@@ -743,9 +743,9 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     else if (!strcmp(prop, "map"))           ent->map = (char)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "nextanim"))      ent->nextanim = (unsigned int)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "nextthink"))     ent->nextthink = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "autokill"))      ent->autokill = (char)lua_toboolean(L, 3);
-    else if (!strcmp(prop, "invincible"))   ent->invincible = (char)lua_toboolean(L, 3);
-    else if (!strcmp(prop, "frozen"))        ent->frozen = (char)lua_toboolean(L, 3);
+    else if (!strcmp(prop, "autokill"))      ent->autokill = (char)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "invincible"))   ent->invincible = (char)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "frozen"))        ent->frozen = (char)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "seal"))          ent->seal = (char)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "position")) {
         ent->x = (float)luaL_checknumber(L, 3);
@@ -808,7 +808,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!strcmp(prop, "bounce")) {
         ent->modeldata.bounce = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "antigrab")) {
-        ent->modeldata.antigrab = (int)luaL_checkinteger(L, 3);
+        ent->model->antigrab = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "nodrop")) {
         ent->modeldata.nodrop = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "nopain")) {
@@ -821,9 +821,39 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         ent->modeldata.nodieblink = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "falldie")) {
         ent->modeldata.falldie = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "bounce")) {
-        ent->modeldata.bounce = (int)luaL_checkinteger(L, 3);
-    } else {
+    } else if (!strcmp(prop, "aiflag")) {
+        const char *flag = luaL_checkstring(L, 3);
+        int value = (int)luaL_checkinteger(L, 4);
+        if (!strcmp(flag, "dead")) ent->dead = value;
+        else if (!strcmp(flag, "jumping")) ent->jumping = value;
+        else if (!strcmp(flag, "idling")) ent->idling = value;
+        else if (!strcmp(flag, "drop")) ent->drop = value;
+        else if (!strcmp(flag, "attacking")) ent->attacking = value;
+        else if (!strcmp(flag, "getting")) ent->getting = value;
+        else if (!strcmp(flag, "turning")) ent->turning = value;
+        else if (!strcmp(flag, "charging")) ent->charging = value;
+        else if (!strcmp(flag, "blocking")) ent->blocking = value;
+        else if (!strcmp(flag, "falling")) ent->falling = value;
+        else if (!strcmp(flag, "running")) ent->running = value;
+        else if (!strcmp(flag, "inpain")) ent->inpain = value;
+        else if (!strcmp(flag, "projectile")) ent->projectile = value;
+        else if (!strcmp(flag, "frozen")) ent->frozen = value;
+        else if (!strcmp(flag, "toexplode")) ent->toexplode = value;
+        else if (!strcmp(flag, "animating")) ent->animating = value;
+        else if (!strcmp(flag, "blink")) ent->blink = value;
+        else if (!strcmp(flag, "invincible")) ent->invincible = value;
+        else if (!strcmp(flag, "autokill")) ent->autokill = value;
+        else return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
+    } else if (!strcmp(prop, "dead"))            ent->dead = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "blink"))             ent->blink = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "attacking"))         ent->attacking = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "projectile"))        ent->projectile = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "damage_on_landing")) ent->damage_on_landing = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "stalltime"))         ent->stalltime = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "staydown"))          ent->staydown = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "stealth"))           ent->modeldata.stealth = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)luaL_checkinteger(L, 3);
+    else {
         return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
     }
 
