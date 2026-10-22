@@ -889,7 +889,9 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (which == 1) ent->stats[index] = (float)luaL_checknumber(L, 5);
         else ent->modeldata.stats[index] = (float)luaL_checknumber(L, 5);
     } else if (!strcmp(prop, "antigravity")) {
-        ent->modeldata.antigravity = (int)luaL_checkinteger(L, 3);
+        float value = (float)luaL_checknumber(L, 3);
+        ent->modeldata.antigravity = value;
+        ent->antigravity = value;
     } else if (!strcmp(prop, "maptime")) {
         ent->maptime = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "tosstime")) {
