@@ -286,28 +286,6 @@ static int lua_openbor_getentityproperty(lua_State *L) {
 
     prop = luaL_checkstring(L, 2);
 
-    if (!strcmp(prop, "type")) {
-        ent->modeldata.type = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "candamage") || !strcmp(prop, "hostile") ||
-               !strcmp(prop, "projectilehit")) {
-        int i;
-        int mask = 0;
-        int ground = 0;
-        for (i = 3; i <= lua_gettop(L); i++) {
-            int is_ground = 0;
-            mask |= lua_legacy_entity_type_mask(L, i, &is_ground);
-            if (is_ground) ground = 1;
-        }
-        if (!strcmp(prop, "candamage")) {
-            ent->modeldata.candamage = (short)mask;
-            if (ground) ent->modeldata.ground = 1;
-        } else if (!strcmp(prop, "hostile")) {
-            ent->modeldata.hostile = (short)mask;
-        } else {
-            ent->modeldata.projectilehit = (short)mask;
-        }
-    } else if (!strcmp(prop, "health")) {
-
     if (!strcmp(prop, "health"))              lua_pushinteger(L, ent->health);
     else if (!strcmp(prop, "mp"))             lua_pushinteger(L, ent->mp);
     else if (!strcmp(prop, "maxhealth"))      lua_pushinteger(L, ent->modeldata.health);
