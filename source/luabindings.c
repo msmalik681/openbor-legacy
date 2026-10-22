@@ -710,9 +710,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
 }
 
 // openbor.setEntityProperty(entity, property, value)
-static int lua_openbor_setentityproperty(lua_State *L) {
+static int lua_openbor_changeentityproperty(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
     const char *prop;
+    lua_Integer ivalue;
+    lua_Number nvalue;
 
     if (!ent || !ent->exists) {
         lua_pushboolean(L, 0);
@@ -721,28 +723,47 @@ static int lua_openbor_setentityproperty(lua_State *L) {
 
     prop = luaL_checkstring(L, 2);
 
-    if (!strcmp(prop, "health"))           ent->health = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "mp"))          ent->mp = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "x"))           ent->x = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "z"))           ent->z = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "a"))           ent->a = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "xdir"))        ent->xdir = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "zdir"))        ent->zdir = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "tossv"))       ent->tossv = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "base"))        ent->base = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "jumpz"))       ent->jumpz = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "jumpx"))       ent->jumpx = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "jumpv"))       ent->jumpv = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "direction"))   ent->direction = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "map"))         ent->map = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "nextanim"))    ent->nextanim = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "nextthink"))   ent->nextthink = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "autokill"))    ent->autokill = (char)lua_toboolean(L, 3);
-    else if (!strcmp(prop, "invincible"))  ent->invincible = (char)lua_toboolean(L, 3);
-    else if (!strcmp(prop, "frozen"))      ent->frozen = (char)lua_toboolean(L, 3);
-    else if (!strcmp(prop, "seal"))        ent->seal = (char)lua_toboolean(L, 3);
-    else {
-        return luaL_error(L, "entity property '%s' is read-only or unsupported", prop);
+    if (!strcmp(prop, "health")) {
+        ivalue = luaL_checkinteger(L, 3);
+        if (ivalue > ent->modeldata.health) ivalue = ent->modeldata.health;
+        if (ivalue < 0) ivalue = 0;
+        ent->health = (int)ivalue;
+    } else if (!strcmp(prop, "mp")) {
+        ivalue = luaL_checkinteger(L, 3);
+        if (ivalue > ent->modeldata.mp) ivalue = ent->modeldata.mp;
+        if (ivalue < 0) ivalue = 0;
+        ent->mp = (int)ivalue;
+    } else if (!strcmp(prop, "x"))          ent->x = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "z"))             ent->z = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "a"))             ent->a = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "xdir"))          ent->xdir = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "zdir"))          ent->zdir = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "tossv"))         ent->tossv = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "base"))          ent->base = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "direction"))     ent->direction = (char)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "map"))           ent->map = (char)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "nextanim"))      ent->nextanim = (unsigned int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "nextthink"))     ent->nextthink = (unsigned int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "autokill"))      ent->autokill = (char)lua_toboolean(L, 3);
+    else if (!strcmp(prop, "invincible"))   ent->invincible = (char)lua_toboolean(L, 3);
+    else if (!strcmp(prop, "frozen"))        ent->frozen = (char)lua_toboolean(L, 3);
+    else if (!strcmp(prop, "seal"))          ent->seal = (char)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "position")) {
+        ent->x = (float)luaL_checknumber(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->z = (float)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->a = (float)luaL_checknumber(L, 5);
+    } else if (!strcmp(prop, "velocity")) {
+        ent->xdir = (float)luaL_checknumber(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->zdir = (float)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->tossv = (float)luaL_checknumber(L, 5);
+    } else if (!strcmp(prop, "animation")) {
+        int anim = (int)luaL_checkinteger(L, 3);
+        int reset = lua_isnoneornil(L, 4) ? 1 : (int)luaL_checkinteger(L, 4);
+        ent_set_anim(ent, anim, reset);
+    } else if (!strcmp(prop, "animpos")) {
+        ent->animpos = (int)luaL_checkinteger(L, 3);
+    } else {
+        return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
     }
 
     lua_pushboolean(L, 1);
@@ -765,7 +786,7 @@ static int lua_openbor_entity_newindex(lua_State *L)
     if (lua_type(L, 2) != LUA_TSTRING)
         return luaL_error(L, "entity property name must be a string");
 
-    lua_openbor_setentityproperty(L);
+    lua_openbor_changeentityproperty(L);
     lua_pop(L, 1);
     return 0;
 }
@@ -975,8 +996,8 @@ void openbor_register_lua_api(void) {
     lua_pushcfunction(g_lua_engine_state, lua_openbor_get_self);
     lua_setglobal(g_lua_engine_state, "get_self");
 
-    lua_pushcfunction(g_lua_engine_state, lua_openbor_setentityproperty);
-    lua_setglobal(g_lua_engine_state, "setEntityProperty");
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changeentityproperty);
+    lua_setglobal(g_lua_engine_state, "changeentityproperty");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_isentityvalid);
     lua_setglobal(g_lua_engine_state, "isEntityValid");
