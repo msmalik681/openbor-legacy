@@ -503,14 +503,14 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!strcmp(prop, "offense")) {
         int which = (int)luaL_optinteger(L, 3, 0);
-        if (which < 0 || which >= (int)(sizeof(ent->modeldata.offense_factors) / sizeof(ent->modeldata.offense_factors[0])))
+        if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
         else lua_pushnumber(L, ent->modeldata.offense_factors[which]);
     }
     else if (!strcmp(prop, "defense")) {
         int which = (int)luaL_optinteger(L, 3, 0);
         const char *field = luaL_optstring(L, 4, "factor");
-        if (which < 0 || which >= (int)(sizeof(ent->modeldata.defense_factors) / sizeof(ent->modeldata.defense_factors[0])))
+        if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
         else if (!strcmp(field, "factor")) lua_pushnumber(L, ent->modeldata.defense_factors[which]);
         else if (!strcmp(field, "blockpower")) lua_pushnumber(L, ent->modeldata.defense_blockpower[which]);
@@ -794,6 +794,32 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!strcmp(prop, "komap")) {
         ent->modeldata.komap[0] = (char)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.komap[1] = (char)luaL_checkinteger(L, 4);
+    } else if (!strcmp(prop, "rush_count")) {
+        ent->rush[0] = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "rush_tally")) {
+        ent->rush[1] = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "rush_time")) {
+        ent->rushtime = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "offense")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        if (which < 0 || which >= MAX_ATKS) return luaL_error(L, "offense index out of range");
+        ent->modeldata.offense_factors[which] = (float)luaL_checknumber(L, 4);
+    } else if (!strcmp(prop, "defense")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        if (which < 0 || which >= MAX_ATKS) return luaL_error(L, "defense index out of range");
+        ent->modeldata.defense_factors[which] = (float)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->modeldata.defense_pain[which] = (float)luaL_checknumber(L, 5);
+        if (!lua_isnoneornil(L, 6)) ent->modeldata.defense_knockdown[which] = (float)luaL_checknumber(L, 6);
+        if (!lua_isnoneornil(L, 7)) ent->modeldata.defense_blockpower[which] = (float)luaL_checknumber(L, 7);
+        if (!lua_isnoneornil(L, 8)) ent->modeldata.defense_blockthreshold[which] = (float)luaL_checknumber(L, 8);
+        if (!lua_isnoneornil(L, 9)) ent->modeldata.defense_blockratio[which] = (float)luaL_checknumber(L, 9);
+        if (!lua_isnoneornil(L, 10)) ent->modeldata.defense_blocktype[which] = (float)luaL_checknumber(L, 10);
+    } else if (!strcmp(prop, "stats")) {
+        int which = (int)luaL_checkinteger(L, 3);
+        int index = (int)luaL_checkinteger(L, 4);
+        if (index < 0 || index >= 20) return luaL_error(L, "stats index out of range");
+        if (which == 1) ent->stats[index] = (float)luaL_checknumber(L, 5);
+        else ent->modeldata.stats[index] = (float)luaL_checknumber(L, 5);
     } else if (!strcmp(prop, "antigravity")) {
         ent->modeldata.antigravity = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "maptime")) {
