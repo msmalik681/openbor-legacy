@@ -738,6 +738,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     else if (!strcmp(prop, "xdir"))          ent->xdir = (float)luaL_checknumber(L, 3);
     else if (!strcmp(prop, "zdir"))          ent->zdir = (float)luaL_checknumber(L, 3);
     else if (!strcmp(prop, "tossv"))         ent->tossv = (float)luaL_checknumber(L, 3);
+    else if (!strcmp(prop, "jumpv"))         ent->jumpv = (float)luaL_checknumber(L, 3);
     else if (!strcmp(prop, "base"))          ent->base = (float)luaL_checknumber(L, 3);
     else if (!strcmp(prop, "direction"))     ent->direction = (char)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "map"))           ent->map = (char)luaL_checkinteger(L, 3);
