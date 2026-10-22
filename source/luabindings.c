@@ -286,6 +286,28 @@ static int lua_openbor_getentityproperty(lua_State *L) {
 
     prop = luaL_checkstring(L, 2);
 
+    if (!strcmp(prop, "type")) {
+        ent->modeldata.type = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "candamage") || !strcmp(prop, "hostile") ||
+               !strcmp(prop, "projectilehit")) {
+        int i;
+        int mask = 0;
+        int ground = 0;
+        for (i = 3; i <= lua_gettop(L); i++) {
+            int is_ground = 0;
+            mask |= lua_legacy_entity_type_mask(L, i, &is_ground);
+            if (is_ground) ground = 1;
+        }
+        if (!strcmp(prop, "candamage")) {
+            ent->modeldata.candamage = (short)mask;
+            if (ground) ent->modeldata.ground = 1;
+        } else if (!strcmp(prop, "hostile")) {
+            ent->modeldata.hostile = (short)mask;
+        } else {
+            ent->modeldata.projectilehit = (short)mask;
+        }
+    } else if (!strcmp(prop, "health")) {
+
     if (!strcmp(prop, "health"))              lua_pushinteger(L, ent->health);
     else if (!strcmp(prop, "mp"))             lua_pushinteger(L, ent->mp);
     else if (!strcmp(prop, "maxhealth"))      lua_pushinteger(L, ent->modeldata.health);
@@ -710,6 +732,25 @@ static int lua_openbor_getentityproperty(lua_State *L) {
 }
 
 // openbor.setEntityProperty(entity, property, value)
+static int lua_legacy_entity_type_mask(lua_State *L, int index, int *is_ground)
+{
+    const char *name = luaL_checkstring(L, index);
+
+    *is_ground = 0;
+    if (!strcmp(name, "ground")) {
+        *is_ground = 1;
+        return 0;
+    }
+    if (!strcmp(name, "enemy")) return TYPE_ENEMY;
+    if (!strcmp(name, "npc")) return TYPE_NPC;
+    if (!strcmp(name, "obstacle")) return TYPE_OBSTACLE;
+    if (!strcmp(name, "player")) return TYPE_PLAYER;
+    if (!strcmp(name, "shot")) return TYPE_SHOT;
+
+    luaL_error(L, "changeentityproperty: unknown entity type '%s'", name);
+    return 0;
+}
+
 static int lua_openbor_changeentityproperty(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
     const char *prop;
