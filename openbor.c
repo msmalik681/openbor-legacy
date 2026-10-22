@@ -2261,18 +2261,22 @@ int free_model(s_model * model) {
 	int i;
 	if(!model)
 		return 0;
+	printf("[UNLOAD DEBUG] free_model: begin name='%s' ptr=%p\n", model->name ? model->name : "(null)", (void *)model); fflush(stdout);
 	printf("Unload '%s'\n", model->name);
 
 	if(hasFreetype(model, MF_ANIMLIST))
 		for(i = 0; i < dyn_anim_custom_maxvalues.max_animations; i++)
 			anim_list = anim_list_delete(anim_list, model->index);
+	printf("[UNLOAD DEBUG] free_model: animation list cleanup complete\n"); fflush(stdout);
 
 	if(hasFreetype(model, MF_COLOURMAP))
 		for(i = 0; i < MAX_COLOUR_MAPS; i++)
 			freeAndNull((void**) &model->colourmap[i]);
 
+	printf("[UNLOAD DEBUG] free_model: colour maps freed\n"); fflush(stdout);
 	if(hasFreetype(model, MF_PALETTE) && model->palette)
 		freeAndNull((void**) &model->palette);
+	printf("[UNLOAD DEBUG] free_model: palette cleanup complete\n"); fflush(stdout);
 	
 	if(hasFreetype(model, MF_WEAPONS) && model->weapon && model->ownweapons) 
 		freeAndNull((void**) &model->weapon);
@@ -2312,11 +2316,14 @@ int free_model(s_model * model) {
 	
 	if(hasFreetype(model, MF_SMARTBOMB) && model->smartbomb)
 		freeAndNull((void**) &model->smartbomb);
+	printf("[UNLOAD DEBUG] free_model: remaining model resources freed\n"); fflush(stdout);
 
 	if(hasFreetype(model, MF_SCRIPTS)) {
 	}
 
+	printf("[UNLOAD DEBUG] free_model: deleting model-list entry name='%s'\n", model->name ? model->name : "(null)"); fflush(stdout);
 	deleteModel(model->name);
+	printf("[UNLOAD DEBUG] free_model: deleteModel returned\n"); fflush(stdout);
 
 	return models_loaded--;
 }
