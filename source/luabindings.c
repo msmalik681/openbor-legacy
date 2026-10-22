@@ -183,25 +183,6 @@ static int lua_openborvariant(lua_State *L) {
         lua_pushinteger(L, current_palette);
     } else if (!strcmp(name, "elapsed_time")) {
         lua_pushinteger(L, (lua_Integer)borTime);
-    } else if (!strcmp(name, "levelpos")) {
-        if (!level) return luaL_error(L, "openborvariant: 'levelpos' requires a loaded level");
-        lua_pushinteger(L, level->pos);
-    } else if (!strcmp(name, "blockade")) {
-        lua_pushnumber(L, blockade);
-    } else if (!strcmp(name, "scrollminz")) {
-        lua_pushnumber(L, scrollminz);
-    } else if (!strcmp(name, "scrollmaxz")) {
-        lua_pushnumber(L, scrollmaxz);
-    } else if (!strcmp(name, "smartbomber")) {
-        if (smartbomber && smartbomber->exists)
-            bor_lua_push_entity(L, smartbomber);
-        else
-            lua_pushnil(L);
-    } else if (!strcmp(name, "textbox")) {
-        if (textbox && textbox->exists)
-            bor_lua_push_entity(L, textbox);
-        else
-            lua_pushnil(L);
     } else if (!strcmp(name, "ent_max")) {
         lua_pushinteger(L, ent_max);
     } else if (!strcmp(name, "in_level")) {
@@ -255,6 +236,12 @@ static int lua_openborvariant(lua_State *L) {
             bor_lua_push_entity(L, player[index].ent);
         else
             lua_pushnil(L);
+    } else if (!strcmp(name, "count_enemies")) {
+        lua_pushinteger(L, count_ents(TYPE_ENEMY));
+    } else if (!strcmp(name, "count_npcs")) {
+        lua_pushinteger(L, count_ents(TYPE_NPC));
+    } else if (!strcmp(name, "count_players")) {
+        lua_pushinteger(L, count_ents(TYPE_PLAYER));
     } else if (!strcmp(name, "count_entities")) {
         lua_pushinteger(L, ent_count);
     } else if (!strcmp(name, "game_paused")) {
@@ -269,8 +256,10 @@ static int lua_openborvariant(lua_State *L) {
         if (!level) return luaL_error(L, "openborvariant: 'numpalettes' requires a loaded level");
         lua_pushinteger(L, level->numpalettes);
     } else if (!strcmp(name, "gfx_y_offset")) {
+        if (!level) return luaL_error(L, "openborvariant: 'gfx_y_offset' requires a loaded level");
         lua_pushinteger(L, gfx_y_offset);
     } else if (!strcmp(name, "game_speed")) {
+        if (!level) return luaL_error(L, "openborvariant: 'game_speed' requires a loaded level");
         lua_pushinteger(L, GAME_SPEED);
     } else if (!strcmp(name, "player_max_z")) {
         lua_pushinteger(L, PLAYER_MAX_Z);
