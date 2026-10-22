@@ -125,8 +125,13 @@ static int lua_openbor_get_time(lua_State *L) {
 // changeopenborvariant(name, value)
 // Implements the numeric legacy system-property setters.
 static int lua_changeopenborvariant(lua_State *L) {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
     lua_Integer value;
+
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "changeopenborvariant expects exactly 2 arguments");
+
+    name = luaL_checkstring(L, 1);
 
     /* The legacy API accepts entity pointers for these two properties. */
     if (!strcmp(name, "smartbomber") || !strcmp(name, "textbox")) {
@@ -190,8 +195,13 @@ static int lua_changeopenborvariant(lua_State *L) {
 // openborvariant(name)
 // First compatibility milestone: read-only legacy system properties.
 static int lua_openborvariant(lua_State *L) {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
     extern s_player player[4];
+
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "openborvariant expects exactly 1 argument");
+
+    name = luaL_checkstring(L, 1);
 
     if (!strcmp(name, "branchname")) {
         lua_pushstring(L, branch_name);
