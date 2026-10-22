@@ -95,10 +95,6 @@ extern unsigned int models_cached;
 extern int ent_count;
 extern int ent_max;
 extern int pause;
-extern int max_entity_vars;
-extern int max_global_vars;
-extern int max_indexed_vars;
-extern int max_script_vars;
 
 // openbor.log("message")
 static int lua_openbor_log(lua_State *L) {
@@ -174,14 +170,6 @@ static int lua_openborvariant(lua_State *L) {
         lua_pushinteger(L, (lua_Integer)models_cached);
     } else if (!strcmp(name, "maxplayers")) {
         lua_pushinteger(L, maxplayers[current_set >= 0 ? current_set : 0]);
-    } else if (!strcmp(name, "maxentityvars")) {
-        lua_pushinteger(L, max_entity_vars);
-    } else if (!strcmp(name, "maxglobalvars")) {
-        lua_pushinteger(L, max_global_vars);
-    } else if (!strcmp(name, "maxindexedvars")) {
-        lua_pushinteger(L, max_indexed_vars);
-    } else if (!strcmp(name, "maxscriptvars")) {
-        lua_pushinteger(L, max_script_vars);
     } else if (!strcmp(name, "player") || !strcmp(name, "player1")) {
         if (player[0].ent && player[0].ent->exists)
             bor_lua_push_entity(L, player[0].ent);
