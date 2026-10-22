@@ -74,6 +74,31 @@ extern lua_State *g_lua_engine_state;
 extern s_level *level;
 extern entity *self;
 extern u32 borTime;
+extern char branch_name[MAX_NAME_LEN + 1];
+extern int current_set;
+extern int current_level;
+extern int current_stage;
+extern int current_palette;
+extern float advancex;
+extern float advancey;
+extern float lasthitx;
+extern float lasthitz;
+extern float lasthita;
+extern int lasthitt;
+extern int lasthitc;
+extern int light[2];
+extern int shadowalpha;
+extern unsigned char slowmotion[3];
+extern int selectScreen;
+extern unsigned int models_loaded;
+extern unsigned int models_cached;
+extern int ent_count;
+extern int ent_max;
+extern int pause;
+extern int max_entity_vars;
+extern int max_global_vars;
+extern int max_indexed_vars;
+extern int max_script_vars;
 
 // openbor.log("message")
 static int lua_openbor_log(lua_State *L) {
@@ -86,6 +111,100 @@ static int lua_openbor_log(lua_State *L) {
 // openbor.get_time()
 static int lua_openbor_get_time(lua_State *L) {
     lua_pushinteger(L, (lua_Integer)borTime);
+    return 1;
+}
+
+
+// openborvariant(name)
+// First compatibility milestone: read-only legacy system properties.
+static int lua_openborvariant(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    extern s_player player[4];
+
+    if (!strcmp(name, "branchname")) {
+        lua_pushstring(L, branch_name);
+    } else if (!strcmp(name, "current_set")) {
+        lua_pushinteger(L, current_set);
+    } else if (!strcmp(name, "current_level")) {
+        lua_pushinteger(L, current_level);
+    } else if (!strcmp(name, "current_stage")) {
+        lua_pushinteger(L, current_stage);
+    } else if (!strcmp(name, "current_palette")) {
+        lua_pushinteger(L, current_palette);
+    } else if (!strcmp(name, "elapsed_time")) {
+        lua_pushinteger(L, (lua_Integer)borTime);
+    } else if (!strcmp(name, "ent_max")) {
+        lua_pushinteger(L, ent_max);
+    } else if (!strcmp(name, "in_level")) {
+        /* Preserve the original legacy API's return semantics. */
+        lua_pushboolean(L, level == NULL);
+    } else if (!strcmp(name, "in_selectscreen")) {
+        lua_pushboolean(L, selectScreen != 0);
+    } else if (!strcmp(name, "xpos")) {
+        lua_pushnumber(L, advancex);
+    } else if (!strcmp(name, "ypos")) {
+        lua_pushnumber(L, advancey);
+    } else if (!strcmp(name, "lasthitx")) {
+        lua_pushnumber(L, lasthitx);
+    } else if (!strcmp(name, "lasthitz")) {
+        lua_pushnumber(L, lasthitz);
+    } else if (!strcmp(name, "lasthita")) {
+        lua_pushnumber(L, lasthita);
+    } else if (!strcmp(name, "lasthitt")) {
+        lua_pushinteger(L, lasthitt);
+    } else if (!strcmp(name, "lasthitc")) {
+        lua_pushinteger(L, lasthitc);
+    } else if (!strcmp(name, "hResolution")) {
+        lua_pushinteger(L, videomodes.hRes);
+    } else if (!strcmp(name, "vResolution")) {
+        lua_pushinteger(L, videomodes.vRes);
+    } else if (!strcmp(name, "lightx")) {
+        lua_pushinteger(L, light[0]);
+    } else if (!strcmp(name, "lightz")) {
+        lua_pushinteger(L, light[1]);
+    } else if (!strcmp(name, "shadowalpha")) {
+        lua_pushinteger(L, shadowalpha);
+    } else if (!strcmp(name, "slowmotion")) {
+        lua_pushinteger(L, slowmotion[0]);
+    } else if (!strcmp(name, "slowmotion_duration")) {
+        lua_pushinteger(L, slowmotion[1]);
+    } else if (!strcmp(name, "models_loaded")) {
+        lua_pushinteger(L, (lua_Integer)models_loaded);
+    } else if (!strcmp(name, "models_cached")) {
+        lua_pushinteger(L, (lua_Integer)models_cached);
+    } else if (!strcmp(name, "maxplayers")) {
+        lua_pushinteger(L, maxplayers[current_set >= 0 ? current_set : 0]);
+    } else if (!strcmp(name, "maxentityvars")) {
+        lua_pushinteger(L, max_entity_vars);
+    } else if (!strcmp(name, "maxglobalvars")) {
+        lua_pushinteger(L, max_global_vars);
+    } else if (!strcmp(name, "maxindexedvars")) {
+        lua_pushinteger(L, max_indexed_vars);
+    } else if (!strcmp(name, "maxscriptvars")) {
+        lua_pushinteger(L, max_script_vars);
+    } else if (!strcmp(name, "player") || !strcmp(name, "player1")) {
+        if (player[0].ent && player[0].ent->exists)
+            bor_lua_push_entity(L, player[0].ent);
+        else
+            lua_pushnil(L);
+    } else if (!strcmp(name, "player2") || !strcmp(name, "player3") ||
+               !strcmp(name, "player4")) {
+        int index = name[6] - '1';
+        if (player[index].ent && player[index].ent->exists)
+            bor_lua_push_entity(L, player[index].ent);
+        else
+            lua_pushnil(L);
+    } else if (!strcmp(name, "count_entities")) {
+        lua_pushinteger(L, ent_count);
+    } else if (!strcmp(name, "game_paused")) {
+        lua_pushboolean(L, pause != 0);
+    } else if (!strcmp(name, "levelwidth")) {
+        if (!level) return luaL_error(L, "openborvariant: 'levelwidth' requires a loaded level");
+        lua_pushinteger(L, level->width);
+    } else {
+        return luaL_error(L, "openborvariant: unsupported or unimplemented property '%s'", name);
+    }
+
     return 1;
 }
 
@@ -1221,6 +1340,9 @@ void openbor_register_lua_api(void) {
     lua_setglobal(g_lua_engine_state, "spawn");
 
     /* Legacy property access is also available as a lowercase global. */
+    lua_pushcfunction(g_lua_engine_state, lua_openborvariant);
+    lua_setglobal(g_lua_engine_state, "openborvariant");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityproperty);
     lua_setglobal(g_lua_engine_state, "getentityproperty");
 }
