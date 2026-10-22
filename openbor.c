@@ -1458,11 +1458,15 @@ void standard_palette(int immediate) {
 
 void unload_background() {
 	int i;
-	if(background)
+	printf("[UNLOAD DEBUG] unload_background: begin background=%p\n", (void *)background); fflush(stdout);
+	if(background) {
 		clearscreen(background);
+		printf("[UNLOAD DEBUG] unload_background: clearscreen complete\n"); fflush(stdout);
+	}
 	for(i = 0; i < MAX_BLENDINGS; i++) {
 		freeAndNull((void**) &blendings[i]);
 	}
+	printf("[UNLOAD DEBUG] unload_background: blendings freed\n"); fflush(stdout);
 }
 
 
@@ -1712,7 +1716,9 @@ void load_fglayer(char *filename, int index) {
 }
 
 void unload_texture() {
+	printf("[UNLOAD DEBUG] unload_texture: texture=%p\n", (void *)texture); fflush(stdout);
 	freeAndNull((void**) &texture);
+	printf("[UNLOAD DEBUG] unload_texture: complete\n"); fflush(stdout);
 }
 
 void load_texture(char *filename) {
@@ -1724,12 +1730,14 @@ void load_texture(char *filename) {
 
 void freepanels() {
 	int i;
+	printf("[UNLOAD DEBUG] freepanels: begin\n"); fflush(stdout);
 	for(i = 0; i < MAX_PANELS; i++) {
 		freeAndNull((void**) &panels[i].sprite_normal);
 		freeAndNull((void**) &panels[i].sprite_neon);
 		freeAndNull((void**) &panels[i].sprite_screen);
 		freeAndNull((void**) &frontpanels[i]);
 	}
+	printf("[UNLOAD DEBUG] freepanels: panel sprites freed\n"); fflush(stdout);
 	panels_loaded = 0;
 	frontpanels_loaded = 0;
 	panel_width = 0;
