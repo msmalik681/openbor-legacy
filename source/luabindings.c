@@ -714,7 +714,6 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
     const char *prop;
     lua_Integer ivalue;
-    lua_Number nvalue;
 
     if (!ent || !ent->exists) {
         lua_pushboolean(L, 0);
@@ -762,6 +761,68 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         ent_set_anim(ent, anim, reset);
     } else if (!strcmp(prop, "animpos")) {
         ent->animpos = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "maxhealth")) {
+        ivalue = luaL_checkinteger(L, 3);
+        ent->modeldata.health = (int)(ivalue < 0 ? 0 : ivalue);
+        if (ent->health > ent->modeldata.health) ent->health = ent->modeldata.health;
+    } else if (!strcmp(prop, "maxmp")) {
+        ivalue = luaL_checkinteger(L, 3);
+        ent->modeldata.mp = (int)(ivalue < 0 ? 0 : ivalue);
+        if (ent->mp > ent->modeldata.mp) ent->mp = ent->modeldata.mp;
+    } else if (!strcmp(prop, "speed")) {
+        ent->modeldata.speed = (float)luaL_checknumber(L, 3);
+    } else if (!strcmp(prop, "setlayer")) {
+        ent->modeldata.setlayer = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "throwdamage")) {
+        ent->modeldata.throwdamage = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "throwdist")) {
+        ent->modeldata.throwdist = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "throwframewait")) {
+        ent->modeldata.throwframewait = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "throwheight")) {
+        ent->modeldata.throwheight = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "alpha")) {
+        ent->modeldata.alpha = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "guardpoints")) {
+        ent->modeldata.guardpoints = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "maxguardpoints")) {
+        ent->modeldata.guardpoints = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "jugglepoints")) {
+        ent->modeldata.jugglepoints = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "maxjugglepoints")) {
+        ent->modeldata.jugglepoints = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "komap")) {
+        ent->modeldata.komap = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "antigravity")) {
+        ent->modeldata.antigravity = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "maptime")) {
+        ent->maptime = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "tosstime")) {
+        ent->toss_time = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "invinctime")) {
+        ent->invinctime = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "lifespancountdown")) {
+        ent->lifespancountdown = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "freezetime")) {
+        ent->freezetime = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "bounce")) {
+        ent->modeldata.bounce = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "antigrab")) {
+        ent->modeldata.antigrab = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "nodrop")) {
+        ent->modeldata.nodrop = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "nopain")) {
+        ent->modeldata.nopain = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "no_adjust_base")) {
+        ent->modeldata.no_adjust_base = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "noaicontrol")) {
+        ent->noaicontrol = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "nodieblink")) {
+        ent->modeldata.nodieblink = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "falldie")) {
+        ent->modeldata.falldie = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(prop, "bounce")) {
+        ent->modeldata.bounce = (int)luaL_checkinteger(L, 3);
     } else {
         return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
     }
