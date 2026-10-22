@@ -267,7 +267,10 @@ static int lua_openborvariant(lua_State *L) {
     } else if (!strcmp(name, "models_cached")) {
         lua_pushinteger(L, (lua_Integer)models_cached);
     } else if (!strcmp(name, "maxplayers")) {
-        lua_pushinteger(L, maxplayers[current_set >= 0 ? current_set : 0]);
+        int set_index = current_set >= 0 ? current_set : 0;
+        if (set_index >= MAX_DIFFICULTIES)
+            return luaL_error(L, "openborvariant: 'maxplayers' current_set is out of range");
+        lua_pushinteger(L, maxplayers[set_index]);
     } else if (!strcmp(name, "player") || !strcmp(name, "player1")) {
         if (player[0].ent && player[0].ent->exists)
             bor_lua_push_entity(L, player[0].ent);
