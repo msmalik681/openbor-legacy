@@ -103,9 +103,10 @@ extern int pause;
 extern entity *textbox;
 extern entity *smartbomber;
 
-/* Entity handle helper is defined below the variant API. */
+/* Entity handle helpers are defined below the variant API. */
 static void bor_lua_push_entity(lua_State *L, entity *ent);
 static entity *bor_lua_get_live_entity(lua_State *L, int index);
+static entity *bor_lua_get_live_entity_ptr(entity *candidate);
 
 // openbor.log("message")
 static int lua_openbor_log(lua_State *L) {
@@ -271,16 +272,13 @@ static int lua_openborvariant(lua_State *L) {
         if (set_index >= MAX_DIFFICULTIES)
             return luaL_error(L, "openborvariant: 'maxplayers' current_set is out of range");
         lua_pushinteger(L, maxplayers[set_index]);
-    } else if (!strcmp(name, "player") || !strcmp(name, "player1")) {
-        if (player[0].ent && player[0].ent->exists)
-            bor_lua_push_entity(L, player[0].ent);
-        else
-            lua_pushnil(L);
-    } else if (!strcmp(name, "player2") || !strcmp(name, "player3") ||
+    } else if (!strcmp(name, "player") || !strcmp(name, "player1") ||
+               !strcmp(name, "player2") || !strcmp(name, "player3") ||
                !strcmp(name, "player4")) {
-        int index = name[6] - '1';
-        if (player[index].ent && player[index].ent->exists)
-            bor_lua_push_entity(L, player[index].ent);
+        int index = !strcmp(name, "player") ? 0 : name[6] - '1';
+        entity *player_ent = bor_lua_get_live_entity_ptr(player[index].ent);
+        if (player_ent && player_ent->exists)
+            bor_lua_push_entity(L, player_ent);
         else
             lua_pushnil(L);
     } else if (!strcmp(name, "count_enemies")) {
