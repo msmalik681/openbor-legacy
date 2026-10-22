@@ -784,15 +784,16 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!strcmp(prop, "alpha")) {
         ent->modeldata.alpha = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "guardpoints")) {
-        ent->modeldata.guardpoints = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.guardpoints[0] = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "maxguardpoints")) {
-        ent->modeldata.guardpoints = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.guardpoints[1] = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "jugglepoints")) {
-        ent->modeldata.jugglepoints = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.jugglepoints[0] = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "maxjugglepoints")) {
-        ent->modeldata.jugglepoints = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.jugglepoints[1] = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "komap")) {
-        ent->modeldata.komap = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.komap[0] = (char)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.komap[1] = (char)luaL_checkinteger(L, 4);
     } else if (!strcmp(prop, "antigravity")) {
         ent->modeldata.antigravity = (int)luaL_checkinteger(L, 3);
     } else if (!strcmp(prop, "maptime")) {
@@ -850,8 +851,14 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     else if (!strcmp(prop, "projectile"))        ent->projectile = (int)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "damage_on_landing")) ent->damage_on_landing = (int)luaL_checkinteger(L, 3);
     else if (!strcmp(prop, "stalltime"))         ent->stalltime = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "staydown"))          ent->staydown = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "stealth"))           ent->modeldata.stealth = (int)luaL_checkinteger(L, 3);
+    else if (!strcmp(prop, "staydown")) {
+        ent->staydown[0] = (int)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->staydown[1] = (int)luaL_checkinteger(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->staydown[2] = (int)luaL_checkinteger(L, 5);
+    } else if (!strcmp(prop, "stealth")) {
+        ent->modeldata.stealth[0] = (short)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.stealth[1] = (short)luaL_checkinteger(L, 4);
+    }
     else if (!strcmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)luaL_checkinteger(L, 3);
     else {
         return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
