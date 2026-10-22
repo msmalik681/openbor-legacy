@@ -246,6 +246,16 @@ static int lua_openborvariant(lua_State *L) {
         lua_pushinteger(L, light[1]);
     } else if (!strcmp(name, "shadowalpha")) {
         lua_pushinteger(L, shadowalpha);
+    } else if (!strcmp(name, "shadowcolor")) {
+        lua_pushinteger(L, colors.shadow);
+    } else if (!strcmp(name, "pixelformat")) {
+        lua_pushinteger(L, pixelformat);
+    } else if (!strcmp(name, "totalram")) {
+        lua_pushinteger(L, 64 * 1024);
+    } else if (!strcmp(name, "freeram")) {
+        lua_pushinteger(L, 63 * 1024);
+    } else if (!strcmp(name, "usedram")) {
+        lua_pushinteger(L, 1024);
     } else if (!strcmp(name, "slowmotion")) {
         lua_pushinteger(L, slowmotion[0]);
     } else if (!strcmp(name, "slowmotion_duration")) {
