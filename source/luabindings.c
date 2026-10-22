@@ -86,6 +86,9 @@ extern float lasthitz;
 extern float lasthita;
 extern int lasthitt;
 extern int lasthitc;
+extern float blockade;
+extern float scrollminz;
+extern float scrollmaxz;
 extern int light[2];
 extern int shadowalpha;
 extern unsigned char slowmotion[3];
@@ -110,6 +113,50 @@ static int lua_openbor_get_time(lua_State *L) {
     return 1;
 }
 
+
+// changeopenborvariant(name, value)
+// Implements the numeric legacy system-property setters.
+static int lua_changeopenborvariant(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+    lua_Integer value = luaL_checkinteger(L, 2);
+
+    if (!strcmp(name, "elapsed_time")) {
+        borTime = (u32)value;
+    } else if (!strcmp(name, "levelpos")) {
+        if (!level)
+            return luaL_error(L, "changeopenborvariant: 'levelpos' requires a loaded level");
+        level->pos = (int)value;
+    } else if (!strcmp(name, "xpos")) {
+        advancex = (float)value;
+    } else if (!strcmp(name, "ypos")) {
+        advancey = (float)value;
+    } else if (!strcmp(name, "scrollminz")) {
+        scrollminz = (float)value;
+    } else if (!strcmp(name, "scrollmaxz")) {
+        scrollmaxz = (float)value;
+    } else if (!strcmp(name, "blockade")) {
+        blockade = (float)value;
+    } else if (!strcmp(name, "slowmotion")) {
+        slowmotion[0] = (unsigned char)value;
+    } else if (!strcmp(name, "slowmotion_duration")) {
+        slowmotion[1] = (unsigned char)value;
+    } else if (!strcmp(name, "lasthitx")) {
+        lasthitx = (float)value;
+    } else if (!strcmp(name, "lasthitz")) {
+        lasthitz = (float)value;
+    } else if (!strcmp(name, "lasthita")) {
+        lasthita = (float)value;
+    } else if (!strcmp(name, "lasthitc")) {
+        lasthitc = (int)value;
+    } else if (!strcmp(name, "lasthitt")) {
+        lasthitt = (int)value;
+    } else {
+        return luaL_error(L, "changeopenborvariant: unsupported or unimplemented property '%s'", name);
+    }
+
+    lua_pushboolean(L, 1);
+    return 1;
+}
 
 // openborvariant(name)
 // First compatibility milestone: read-only legacy system properties.
@@ -1330,6 +1377,9 @@ void openbor_register_lua_api(void) {
     /* Legacy property access is also available as a lowercase global. */
     lua_pushcfunction(g_lua_engine_state, lua_openborvariant);
     lua_setglobal(g_lua_engine_state, "openborvariant");
+
+    lua_pushcfunction(g_lua_engine_state, lua_changeopenborvariant);
+    lua_setglobal(g_lua_engine_state, "changeopenborvariant");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityproperty);
     lua_setglobal(g_lua_engine_state, "getentityproperty");
