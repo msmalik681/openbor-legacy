@@ -6960,7 +6960,9 @@ void unload_level() {
 		free_level(level);
 		level = NULL;
 		printf("[UNLOAD DEBUG] free_level returned; starting model unload\n"); fflush(stdout);
+		printf("[UNLOAD DEBUG] before getFirstModel()\n"); fflush(stdout);
 		temp = getFirstModel();
+		printf("[UNLOAD DEBUG] after getFirstModel(): temp=%p\n", (void *)temp); fflush(stdout);
 		do {
 			if(!temp)
 				break;
