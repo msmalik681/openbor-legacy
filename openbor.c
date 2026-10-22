@@ -6934,6 +6934,7 @@ void free_level(s_level * lv) {
 
 void unload_level() {
 	s_model *temp;
+	int model_unload;
 	printf("[UNLOAD DEBUG] unload_level: begin\n"); fflush(stdout);
 	printf("[UNLOAD DEBUG] unload_background begin\n"); fflush(stdout);
 	unload_background();
@@ -6966,13 +6967,21 @@ void unload_level() {
 		do {
 			if(!temp)
 				break;
-			if(temp->unload) {
-				printf("[UNLOAD DEBUG] freeing model '%s' ptr=%p\n", temp->name ? temp->name : "(null)", (void *)temp); fflush(stdout);
+			printf("[UNLOAD DEBUG] before reading temp->unload; temp=%p\n", (void *)temp); fflush(stdout);
+			model_unload = temp->unload;
+			printf("[UNLOAD DEBUG] after reading temp->unload: %d\n", model_unload); fflush(stdout);
+			if(model_unload) {
+				printf("[UNLOAD DEBUG] before free_model; temp=%p\n", (void *)temp); fflush(stdout);
 				free_model(temp);
 				printf("[UNLOAD DEBUG] free_model returned\n"); fflush(stdout);
+				printf("[UNLOAD DEBUG] before getCurrentModel()\n"); fflush(stdout);
 				temp = getCurrentModel();
-			} else
+				printf("[UNLOAD DEBUG] after getCurrentModel(): temp=%p\n", (void *)temp); fflush(stdout);
+			} else {
+				printf("[UNLOAD DEBUG] before getNextModel()\n"); fflush(stdout);
 				temp = getNextModel();
+				printf("[UNLOAD DEBUG] after getNextModel(): temp=%p\n", (void *)temp); fflush(stdout);
+			}
 		} while(temp);
 		printf("[UNLOAD DEBUG] model unload loop complete\n"); fflush(stdout);
 		printf("Done.\n"); fflush(stdout);
