@@ -101,6 +101,9 @@ extern int gfx_y_offset;
 extern int panel_height;
 extern int pause;
 
+/* Entity handle helper is defined below the variant API. */
+static void bor_lua_push_entity(lua_State *L, entity *ent);
+
 // openbor.log("message")
 static int lua_openbor_log(lua_State *L) {
     const char *message = luaL_checkstring(L, 1);
