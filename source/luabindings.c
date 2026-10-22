@@ -105,6 +105,7 @@ extern entity *smartbomber;
 
 /* Entity handle helper is defined below the variant API. */
 static void bor_lua_push_entity(lua_State *L, entity *ent);
+static entity *bor_lua_get_live_entity(lua_State *L, int index);
 
 // openbor.log("message")
 static int lua_openbor_log(lua_State *L) {
@@ -125,7 +126,28 @@ static int lua_openbor_get_time(lua_State *L) {
 // Implements the numeric legacy system-property setters.
 static int lua_changeopenborvariant(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
-    lua_Integer value = luaL_checkinteger(L, 2);
+    lua_Integer value;
+
+    /* The legacy API accepts entity pointers for these two properties. */
+    if (!strcmp(name, "smartbomber") || !strcmp(name, "textbox")) {
+        entity *ent = NULL;
+
+        if (!lua_isnil(L, 2)) {
+            ent = bor_lua_get_live_entity(L, 2);
+            if (!ent || !ent->exists)
+                return luaL_error(L, "changeopenborvariant: '%s' expects a live entity or nil", name);
+        }
+
+        if (!strcmp(name, "smartbomber"))
+            smartbomber = ent;
+        else
+            textbox = ent;
+
+        lua_pushboolean(L, 1);
+        return 1;
+    }
+
+    value = luaL_checkinteger(L, 2);
 
     if (!strcmp(name, "elapsed_time")) {
         borTime = (u32)value;
