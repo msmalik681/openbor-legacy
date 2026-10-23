@@ -1378,6 +1378,42 @@ static int lua_openbor_get_self(lua_State *L) {
  * This first pass covers the static constants defined by this engine version;
  * dynamically allocated animation names are handled separately.
  */
+/* ASCII case-insensitive comparisons, independent of platform stricmp APIs. */
+static int bor_lua_ascii_lower(int ch)
+{
+    if (ch >= 'A' && ch <= 'Z')
+        return ch - 'A' + 'a';
+    return ch;
+}
+
+static int bor_lua_strnicmp(const char *left, const char *right, size_t count)
+{
+    size_t i;
+
+    for (i = 0; i < count; ++i) {
+        int a = bor_lua_ascii_lower((unsigned char)left[i]);
+        int b = bor_lua_ascii_lower((unsigned char)right[i]);
+
+        if (a != b)
+            return a - b;
+        if (a == '\0')
+            return 0;
+    }
+
+    return 0;
+}
+
+static int bor_lua_stricmp(const char *left, const char *right)
+{
+    size_t length = strlen(left);
+    int result = bor_lua_strnicmp(left, right, length);
+
+    if (result != 0)
+        return result;
+    return left[length] == '\0' && right[length] == '\0' ? 0 :
+           (left[length] == '\0' ? -1 : 1);
+}
+
 static int lua_openborconstant(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
@@ -1387,7 +1423,7 @@ static int lua_openborconstant(lua_State *L)
 
     /* Keep this list aligned with the legacy constant map and openbor.h. */
 #define BOR_LUA_CONSTANT(symbol) \
-    if (!strcmp(name, #symbol)) { lua_pushinteger(L, (lua_Integer)(symbol)); return 1; }
+    if (bor_lua_stricmp(name, #symbol) == 0) { lua_pushinteger(L, (lua_Integer)(symbol)); return 1; }
     BOR_LUA_CONSTANT(COMPATIBLEVERSION);
     BOR_LUA_CONSTANT(CV_SAVED_GAME);
     BOR_LUA_CONSTANT(CV_HIGH_SCORE);
@@ -1410,6 +1446,8 @@ static int lua_openborconstant(lua_State *L)
     BOR_LUA_CONSTANT(MAX_FOLLOWS);
     BOR_LUA_CONSTANT(MAX_PLAYERS);
     BOR_LUA_CONSTANT(MAX_ARG_LEN);
+    BOR_LUA_CONSTANT(MAX_ANIS);
+    BOR_LUA_CONSTANT(MAX_WALL_HEIGHT);
     BOR_LUA_CONSTANT(FLAG_ESC);
     BOR_LUA_CONSTANT(FLAG_START);
     BOR_LUA_CONSTANT(FLAG_MOVELEFT);
@@ -1708,7 +1746,7 @@ static int lua_openborconstant(lua_State *L)
             char *end = NULL;
             long animation_index;
 
-            if (strncmp(name, dynamic_constants[i].prefix, prefix_length) != 0 ||
+            if (bor_lua_strnicmp(name, dynamic_constants[i].prefix, prefix_length) != 0 ||
                 name[prefix_length] == '\0') {
                 continue;
             }
@@ -1720,8 +1758,23 @@ static int lua_openborconstant(lua_State *L)
                 continue;
             }
 
+            /*
+             * The legacy implementation offsets numbered RISE, RISEATTACK,
+             * PAIN, and DIE constants into the upper attack-animation slots.
+             */
+            if (i >= 7 && i <= 10) {
+                long first_slot = MAX_ATKS - STA_ATKS + 1;
+                if (animation_index < first_slot)
+                    animation_index = first_slot;
+            }
+
             if (!dynamic_constants[i].values) {
-                lua_pushnil(L);
+                lua_pushinteger(L, 0);
+                return 1;
+            }
+
+            if (animation_index > dynamic_constants[i].max_count) {
+                lua_pushinteger(L, 0);
                 return 1;
             }
 
@@ -1730,7 +1783,8 @@ static int lua_openborconstant(lua_State *L)
         }
     }
 
-    lua_pushnil(L);
+    /* Legacy openborconstant() resolves unknown names to integer zero. */
+    lua_pushinteger(L, 0);
     return 1;
 }
 
