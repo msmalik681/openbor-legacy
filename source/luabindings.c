@@ -1894,6 +1894,93 @@ static int lua_openbor_changelevelproperty(lua_State *L) {
     return 1;
 }
 
+// playerkeys(playerindex, newkey?, key1, key2, ...)
+// Preserve legacy button names, key-state selection, and bitmask return values.
+static int lua_openbor_playerkeys(lua_State *L) {
+    static const struct {
+        const char *name;
+        u32 flag;
+    } buttons[] = {
+        {"anybutton", FLAG_ANYBUTTON},
+        {"attack", FLAG_ATTACK},
+        {"attack2", FLAG_ATTACK2},
+        {"attack3", FLAG_ATTACK3},
+        {"attack4", FLAG_ATTACK4},
+        {"esc", FLAG_ESC},
+        {"jump", FLAG_JUMP},
+        {"movedown", FLAG_MOVEDOWN},
+        {"moveleft", FLAG_MOVELEFT},
+        {"moveright", FLAG_MOVERIGHT},
+        {"moveup", FLAG_MOVEUP},
+        {"screenshot", FLAG_SCREENSHOT},
+        {"special", FLAG_SPECIAL},
+        {"start", FLAG_START}
+    };
+    int top = lua_gettop(L);
+    int index = 0;
+    int newkey = 0;
+    int i;
+    u32 keys;
+
+    if (top < 3) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    if (lua_isnumber(L, 1))
+        index = (int)lua_tointeger(L, 1);
+    if (lua_isnumber(L, 2))
+        newkey = (int)lua_tointeger(L, 2);
+
+    /* The legacy code did not validate the player index; guard it in Lua. */
+    if (index < 0 || index >= MAX_PLAYERS) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    if (newkey == 1)
+        keys = player[index].newkeys;
+    else if (newkey == 2)
+        keys = player[index].releasekeys;
+    else
+        keys = player[index].keys;
+
+    for (i = 3; i <= top; i++) {
+        lua_Integer button = -1;
+        u32 flag = 0;
+        int j;
+
+        if (lua_isnumber(L, i)) {
+            button = lua_tointeger(L, i);
+        } else if (lua_type(L, i) == LUA_TSTRING) {
+            const char *name = lua_tostring(L, i);
+            for (j = 0; j < (int)(sizeof(buttons) / sizeof(buttons[0])); j++) {
+                if (!stricmp(name, buttons[j].name)) {
+                    flag = buttons[j].flag;
+                    button = j;
+                    break;
+                }
+            }
+        }
+
+        if (button >= 0 && button < (lua_Integer)(sizeof(buttons) / sizeof(buttons[0]))) {
+            if (!flag)
+                flag = buttons[button].flag;
+            lua_pushinteger(L, (lua_Integer)(keys & flag));
+        } else {
+            lua_pushinteger(L, 0);
+        }
+
+        if (lua_tointeger(L, -1) == 0)
+            return 1;
+        /* Keep the last checked button's bitmask, as the legacy API does. */
+        if (i < top)
+            lua_remove(L, -1);
+    }
+
+    return 1;
+}
+
 // Global table registration index called during startup()
 void openbor_register_lua_api(void) {
     if (!g_lua_engine_state) return;
@@ -1988,4 +2075,7 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changelevelproperty);
     lua_setglobal(g_lua_engine_state, "changelevelproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_playerkeys);
+    lua_setglobal(g_lua_engine_state, "playerkeys");
 }
