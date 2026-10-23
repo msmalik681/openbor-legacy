@@ -1761,6 +1761,9 @@ void openbor_register_lua_api(void) {
     lua_pushcfunction(g_lua_engine_state, lua_changeopenborvariant);
     lua_setglobal(g_lua_engine_state, "changeopenborvariant");
 
+    lua_pushcfunction(g_lua_engine_state, lua_openborconstant);
+    lua_setglobal(g_lua_engine_state, "openborconstant");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityproperty);
     lua_setglobal(g_lua_engine_state, "getentityproperty");
 }
