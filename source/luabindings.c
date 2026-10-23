@@ -1797,12 +1797,12 @@ static int lua_openborconstant(lua_State *L)
             }
 
             if (!dynamic_constants[i].values) {
-                lua_pushinteger(L, 0);
+                lua_pushnil(L);
                 return 1;
             }
 
             if (animation_index > dynamic_constants[i].max_count) {
-                lua_pushinteger(L, 0);
+                lua_pushnil(L);
                 return 1;
             }
 
@@ -1812,8 +1812,8 @@ static int lua_openborconstant(lua_State *L)
     }
 
     /* Legacy openborconstant() resolves unknown names to integer zero. */
-    lua_pushinteger(L, 0);
-    return 1;
+    lua_pushnil(L);
+                return 1;
 }
 
 // Global table registration index called during startup()
