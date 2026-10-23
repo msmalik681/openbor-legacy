@@ -1811,9 +1811,9 @@ static int lua_openborconstant(lua_State *L)
         }
     }
 
-    /* Legacy openborconstant() resolves unknown names to integer zero. */
+    /* The legacy implementation clears the result when no constant matches. */
     lua_pushnil(L);
-                return 1;
+    return 1;
 }
 
 // Global table registration index called during startup()
