@@ -1772,21 +1772,15 @@ static int lua_openborconstant(lua_State *L)
                 continue;
 
             /*
-             * ANI_ATTACK is the first attack slot in this engine's naming
-             * scheme; numbered variants start at ANI_ATTACK2.
+             * The legacy lookup requires a numeric suffix for dynamic
+             * animation names, including ANI_ATTACK1 and ANI_FREESPECIAL1.
              */
-            if (name[prefix_length] == '\0') {
-                if (i != 10)
-                    continue;
-                animation_index = 1;
-            } else {
-                if (name[prefix_length] < '0' || name[prefix_length] > '9')
-                    continue;
+            if (name[prefix_length] < '0' || name[prefix_length] > '9')
+                continue;
 
-                animation_index = strtol(name + prefix_length, &end, 10);
-                if (end == name + prefix_length || *end != '\0')
-                    continue;
-            }
+            animation_index = strtol(name + prefix_length, &end, 10);
+            if (end == name + prefix_length || *end != '\0')
+                continue;
             if (animation_index < 1 ||
                 animation_index > dynamic_constants[i].max_count) {
                 continue;
