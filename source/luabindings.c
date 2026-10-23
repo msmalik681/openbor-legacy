@@ -1434,9 +1434,19 @@ static int lua_openborconstant(lua_State *L)
 
     name = luaL_checkstring(L, 1);
 
-    /* Keep this list aligned with the legacy constant map and openbor.h. */
+    /* The legacy engine exposed this default as a global integer. */
+    if (bor_lua_stricmp(name, "MAX_WALL_HEIGHT") == 0) {
+        lua_pushinteger(L, 1000);
+        return 1;
+    }
+
+    /* Keep this list aligned with the legacy constant map and engine headers. */
 #define BOR_LUA_CONSTANT(symbol) \
     if (bor_lua_stricmp(name, #symbol) == 0) { lua_pushinteger(L, (lua_Integer)(symbol)); return 1; }
+    BOR_LUA_CONSTANT(PIXEL_8);
+    BOR_LUA_CONSTANT(PIXEL_x8);
+    BOR_LUA_CONSTANT(PIXEL_16);
+    BOR_LUA_CONSTANT(PIXEL_32);
     BOR_LUA_CONSTANT(COMPATIBLEVERSION);
     BOR_LUA_CONSTANT(CV_SAVED_GAME);
     BOR_LUA_CONSTANT(CV_HIGH_SCORE);
