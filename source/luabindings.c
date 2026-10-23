@@ -1416,10 +1416,23 @@ static int bor_lua_stricmp(const char *left, const char *right)
 
 static int lua_openborconstant(lua_State *L)
 {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
 
-    if (lua_gettop(L) != 1)
-        return luaL_error(L, "openborconstant expects exactly 1 argument");
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "openborconstant expects a constant name");
+
+    /* The legacy function passes integer arguments through unchanged. */
+    if (lua_type(L, 1) == LUA_TNUMBER) {
+        lua_Number number = lua_tonumber(L, 1);
+        lua_Integer integer = lua_tointeger(L, 1);
+
+        if (number != (lua_Number)integer)
+            return luaL_error(L, "openborconstant expects a string or integer");
+        lua_pushinteger(L, integer);
+        return 1;
+    }
+
+    name = luaL_checkstring(L, 1);
 
     /* Keep this list aligned with the legacy constant map and openbor.h. */
 #define BOR_LUA_CONSTANT(symbol) \
@@ -1447,7 +1460,6 @@ static int lua_openborconstant(lua_State *L)
     BOR_LUA_CONSTANT(MAX_PLAYERS);
     BOR_LUA_CONSTANT(MAX_ARG_LEN);
     BOR_LUA_CONSTANT(MAX_ANIS);
-    BOR_LUA_CONSTANT(MAX_WALL_HEIGHT);
     BOR_LUA_CONSTANT(FLAG_ESC);
     BOR_LUA_CONSTANT(FLAG_START);
     BOR_LUA_CONSTANT(FLAG_MOVELEFT);
@@ -1750,6 +1762,9 @@ static int lua_openborconstant(lua_State *L)
                 name[prefix_length] == '\0') {
                 continue;
             }
+
+            if (name[prefix_length] < '0' || name[prefix_length] > '9')
+                continue;
 
             animation_index = strtol(name + prefix_length, &end, 10);
             if (end == name + prefix_length || *end != '\0' ||
