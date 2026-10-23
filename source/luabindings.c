@@ -1816,6 +1816,84 @@ static int lua_openborconstant(lua_State *L)
     return 1;
 }
 
+// getlevelproperty(name)
+// Preserve the legacy getter's case-insensitive property lookup and integer results.
+static int lua_openbor_getlevelproperty(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+
+    if (!level)
+        return luaL_error(L, "getlevelproperty requires a loaded level");
+
+    if (!stricmp(name, "bgspeed"))
+        lua_pushinteger(L, (lua_Integer)level->bgspeed);
+    else if (!stricmp(name, "cameraxoffset"))
+        lua_pushinteger(L, level->cameraxoffset);
+    else if (!stricmp(name, "camerazoffset"))
+        lua_pushinteger(L, level->camerazoffset);
+    else
+        return luaL_error(L, "Property name '%s' is not supported by function getlevelproperty", name);
+
+    return 1;
+}
+
+// changelevelproperty(name, value)
+// Preserve the legacy setter's case-sensitive names and return behavior.
+static int lua_openbor_changelevelproperty(lua_State *L) {
+    const char *name;
+    lua_Integer value;
+
+    if (lua_gettop(L) < 2) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (lua_type(L, 1) != LUA_TSTRING) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    name = lua_tostring(L, 1);
+    if (!level)
+        return luaL_error(L, "changelevelproperty requires a loaded level");
+
+    /* The legacy setter reports success for unknown names without changing anything. */
+    lua_pushinteger(L, 1);
+    if (!strcmp(name, "rock")) {
+        if (lua_isnumber(L, 2)) {
+            value = lua_tointeger(L, 2);
+            level->rocking = (int)value;
+        } else {
+            lua_pop(L, 1);
+            lua_pushinteger(L, 0);
+        }
+    } else if (!strcmp(name, "bgspeed")) {
+        if (lua_isnumber(L, 2)) {
+            value = lua_tointeger(L, 2);
+            level->bgspeed = (float)value;
+        } else {
+            lua_pop(L, 1);
+            lua_pushinteger(L, 0);
+        }
+    } else if (!strcmp(name, "cameraxoffset")) {
+        if (lua_isnumber(L, 2)) {
+            value = lua_tointeger(L, 2);
+            level->cameraxoffset = (int)value;
+        } else {
+            lua_pop(L, 1);
+            lua_pushinteger(L, 0);
+        }
+    } else if (!strcmp(name, "camerazoffset")) {
+        if (lua_isnumber(L, 2)) {
+            value = lua_tointeger(L, 2);
+            level->camerazoffset = (int)value;
+        } else {
+            lua_pop(L, 1);
+            lua_pushinteger(L, 0);
+        }
+    }
+
+    return 1;
+}
+
 // Global table registration index called during startup()
 void openbor_register_lua_api(void) {
     if (!g_lua_engine_state) return;
@@ -1904,4 +1982,10 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityproperty);
     lua_setglobal(g_lua_engine_state, "getentityproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getlevelproperty);
+    lua_setglobal(g_lua_engine_state, "getlevelproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changelevelproperty);
+    lua_setglobal(g_lua_engine_state, "changelevelproperty");
 }
