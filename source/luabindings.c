@@ -3,6 +3,7 @@
 #include "luabindings.h"
 #include <lauxlib.h>
 #include <string.h>
+#include <stdlib.h>
 extern int sprite_map_max_items;
 /*
  * Common Lua -> C execution boundary.
@@ -1674,6 +1675,61 @@ static int lua_openborconstant(lua_State *L)
     BOR_LUA_CONSTANT(ANI_RISEATTACKB);
     BOR_LUA_CONSTANT(ANI_RISEATTACKS);
 #undef BOR_LUA_CONSTANT
+
+    /*
+     * Legacy scripts also use numbered animation constants such as
+     * ANI_ATTACK1 and ANI_FREESPECIAL2. These map through the engine's
+     * dynamic animation-index tables rather than directly to enum values.
+     */
+    {
+        struct bor_lua_dynamic_constant {
+            const char *prefix;
+            const int *values;
+            int max_count;
+        } dynamic_constants[] = {
+            {"ANI_DOWN", dyn_anims.animdowns ? dyn_anims.animdowns : default_dyn_anims.animdowns, MAX_DOWNS},
+            {"ANI_UP", dyn_anims.animups ? dyn_anims.animups : default_dyn_anims.animups, MAX_UPS},
+            {"ANI_BACKWALK", dyn_anims.animbackwalks ? dyn_anims.animbackwalks : default_dyn_anims.animbackwalks, MAX_BACKWALKS},
+            {"ANI_WALK", dyn_anims.animwalks ? dyn_anims.animwalks : default_dyn_anims.animwalks, MAX_WALKS},
+            {"ANI_IDLE", dyn_anims.animidles ? dyn_anims.animidles : default_dyn_anims.animidles, MAX_IDLES},
+            {"ANI_FALL", dyn_anims.animfalls ? dyn_anims.animfalls : default_dyn_anims.animfalls, MAX_ATKS},
+            {"ANI_RISE", dyn_anims.animrises ? dyn_anims.animrises : default_dyn_anims.animrises, MAX_ATKS},
+            {"ANI_RISEATTACK", dyn_anims.animriseattacks ? dyn_anims.animriseattacks : default_dyn_anims.animriseattacks, MAX_ATKS},
+            {"ANI_PAIN", dyn_anims.animpains ? dyn_anims.animpains : default_dyn_anims.animpains, MAX_ATKS},
+            {"ANI_DIE", dyn_anims.animdies ? dyn_anims.animdies : default_dyn_anims.animdies, MAX_ATKS},
+            {"ANI_ATTACK", dyn_anims.animattacks ? dyn_anims.animattacks : default_dyn_anims.animattacks, MAX_ATTACKS},
+            {"ANI_FOLLOW", dyn_anims.animfollows ? dyn_anims.animfollows : default_dyn_anims.animfollows, MAX_FOLLOWS},
+            {"ANI_FREESPECIAL", dyn_anims.animspecials ? dyn_anims.animspecials : default_dyn_anims.animspecials, MAX_SPECIALS}
+        };
+        size_t i;
+
+        for (i = 0; i < sizeof(dynamic_constants) / sizeof(dynamic_constants[0]); ++i) {
+            size_t prefix_length = strlen(dynamic_constants[i].prefix);
+            char *end = NULL;
+            long animation_index;
+
+            if (strncmp(name, dynamic_constants[i].prefix, prefix_length) != 0 ||
+                name[prefix_length] == '\0') {
+                continue;
+            }
+
+            animation_index = strtol(name + prefix_length, &end, 10);
+            if (end == name + prefix_length || *end != '\0' ||
+                animation_index < 1 ||
+                animation_index > dynamic_constants[i].max_count) {
+                continue;
+            }
+
+            if (!dynamic_constants[i].values) {
+                lua_pushnil(L);
+                return 1;
+            }
+
+            lua_pushinteger(L, (lua_Integer)dynamic_constants[i].values[animation_index - 1]);
+            return 1;
+        }
+    }
+
     lua_pushnil(L);
     return 1;
 }
