@@ -1768,17 +1768,26 @@ static int lua_openborconstant(lua_State *L)
             char *end = NULL;
             long animation_index;
 
-            if (bor_lua_strnicmp(name, dynamic_constants[i].prefix, prefix_length) != 0 ||
-                name[prefix_length] == '\0') {
+            if (bor_lua_strnicmp(name, dynamic_constants[i].prefix, prefix_length) != 0)
                 continue;
+
+            /*
+             * ANI_ATTACK is the first attack slot in this engine's naming
+             * scheme; numbered variants start at ANI_ATTACK2.
+             */
+            if (name[prefix_length] == '\0') {
+                if (i != 10)
+                    continue;
+                animation_index = 1;
+            } else {
+                if (name[prefix_length] < '0' || name[prefix_length] > '9')
+                    continue;
+
+                animation_index = strtol(name + prefix_length, &end, 10);
+                if (end == name + prefix_length || *end != '\0')
+                    continue;
             }
-
-            if (name[prefix_length] < '0' || name[prefix_length] > '9')
-                continue;
-
-            animation_index = strtol(name + prefix_length, &end, 10);
-            if (end == name + prefix_length || *end != '\0' ||
-                animation_index < 1 ||
+            if (animation_index < 1 ||
                 animation_index > dynamic_constants[i].max_count) {
                 continue;
             }
@@ -1787,7 +1796,7 @@ static int lua_openborconstant(lua_State *L)
              * The legacy implementation offsets numbered RISE, RISEATTACK,
              * PAIN, and DIE constants into the upper attack-animation slots.
              */
-            if (i >= 7 && i <= 10) {
+            if (i >= 6 && i <= 9) {
                 long first_slot = MAX_ATKS - STA_ATKS + 1;
                 if (animation_index < first_slot)
                     animation_index = first_slot;
