@@ -1697,9 +1697,9 @@ static int lua_openborconstant(lua_State *L)
             {"ANI_RISEATTACK", dyn_anims.animriseattacks ? dyn_anims.animriseattacks : default_dyn_anims.animriseattacks, MAX_ATKS},
             {"ANI_PAIN", dyn_anims.animpains ? dyn_anims.animpains : default_dyn_anims.animpains, MAX_ATKS},
             {"ANI_DIE", dyn_anims.animdies ? dyn_anims.animdies : default_dyn_anims.animdies, MAX_ATKS},
-            {"ANI_ATTACK", dyn_anims.animattacks ? dyn_anims.animattacks : default_dyn_anims.animattacks, MAX_ATTACKS},
-            {"ANI_FOLLOW", dyn_anims.animfollows ? dyn_anims.animfollows : default_dyn_anims.animfollows, MAX_FOLLOWS},
-            {"ANI_FREESPECIAL", dyn_anims.animspecials ? dyn_anims.animspecials : default_dyn_anims.animspecials, MAX_SPECIALS}
+            {"ANI_ATTACK", dyn_anims.animattacks ? dyn_anims.animattacks : default_dyn_anims.animattacks, dyn_anims.animattacks ? MAX_ATTACKS : 4},
+            {"ANI_FOLLOW", dyn_anims.animfollows ? dyn_anims.animfollows : default_dyn_anims.animfollows, dyn_anims.animfollows ? MAX_FOLLOWS : 4},
+            {"ANI_FREESPECIAL", dyn_anims.animspecials ? dyn_anims.animspecials : default_dyn_anims.animspecials, dyn_anims.animspecials ? MAX_SPECIALS : 8}
         };
         size_t i;
 
