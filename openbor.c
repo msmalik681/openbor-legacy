@@ -479,13 +479,49 @@ int load_script(char *file) {
     if(buffer_pakfile(file, &buf, &size) != 1)
         return 0;
 
+    /*
+     * keyall.lua uses main() as an event callback, not as the per-frame
+     * main() function. Preserve any existing global main while loading it.
+     */
+    const char *script_basename = strrchr(file, '/');
+    int is_keyall_script;
+    int previous_main_ref = LUA_NOREF;
+
+    script_basename = script_basename ? script_basename + 1 : file;
+    is_keyall_script = strcmp(script_basename, "keyall.lua") == 0;
+
+    if (is_keyall_script) {
+        lua_getglobal(g_lua_engine_state, "main");
+        previous_main_ref = luaL_ref(g_lua_engine_state, LUA_REGISTRYINDEX);
+    }
+
     if(bor_lua_runbuffer(g_lua_engine_state, buf, size, file) != LUA_OK) {
         printf("[LUA COMPILE ERROR] Failed on file '%s': %s\n",
                file,
                lua_tostring(g_lua_engine_state, -1));
+        if (is_keyall_script) {
+            lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+            lua_setglobal(g_lua_engine_state, "main");
+            luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+        }
         freeAndNull((void**) &buf);
         shutdown(1, "Critical: Embedded Lua processing failed.\n");
         return 0;
+    }
+
+    if (is_keyall_script) {
+        lua_getglobal(g_lua_engine_state, "main");
+        if (lua_isfunction(g_lua_engine_state, -1)) {
+            lua_setglobal(g_lua_engine_state, "keyall_main");
+        } else {
+            lua_pop(g_lua_engine_state, 1);
+            lua_pushnil(g_lua_engine_state);
+            lua_setglobal(g_lua_engine_state, "keyall_main");
+        }
+
+        lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+        lua_setglobal(g_lua_engine_state, "main");
+        luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
     }
 
     freeAndNull((void**) &buf);
@@ -862,7 +898,33 @@ void execute_level_key_script(int player_nr) {
 }
 
 void execute_key_script_all(int player_nr) {
-    bor_lua_call_player_event(player_nr, "keyscriptall", "keyscriptall");
+    entity *previous_self;
+    entity *player_ent = NULL;
+
+    if (!g_lua_engine_state)
+        return;
+
+    lua_getglobal(g_lua_engine_state, "keyall_main");
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        /* Keep compatibility with scripts using the explicit event name. */
+        bor_lua_call_player_event(player_nr, "keyscriptall", "keyscriptall");
+        return;
+    }
+
+    if (player_nr >= 0 && player_nr < MAX_PLAYERS &&
+        player[player_nr].ent && player[player_nr].ent->exists) {
+        player_ent = player[player_nr].ent;
+    }
+
+    previous_self = self;
+    self = player_ent;
+
+    /* keyall_main is called with no arguments; get_self() provides the player. */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "keyall main") != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+
+    self = previous_self;
 }
 
 void execute_timetick_script(int time, int gotime) {
