@@ -1426,6 +1426,54 @@ static int lua_openbor_getlocalvar(lua_State *L) {
 }
 
 /*
+ * Legacy global-variable API.
+ * Values are kept in a Lua registry table so entity userdata and other Lua
+ * values retain their identity when stored and retrieved across callbacks.
+ */
+#define BOR_LUA_GLOBAL_VARS "OpenBOR.GlobalVars"
+
+static int lua_openbor_globalvar(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    lua_pushstring(L, name);
+    lua_rawget(L, -2);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        lua_pushstring(L, name);
+        lua_pushinteger(L, 0);
+        lua_rawset(L, -3);
+    } else {
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    return 0;
+}
+
+static int lua_openbor_getglobalvar(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    lua_pushstring(L, name);
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+    return 1;
+}
+
+static int lua_openbor_setglobalvar(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    luaL_checkany(L, 2);
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    lua_pushstring(L, name);
+    lua_pushvalue(L, 2);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+/*
  * Resolve legacy OpenBOR constants by name for Lua scripts.
  * This first pass covers the static constants defined by this engine version;
  * dynamically allocated animation names are handled separately.
@@ -2053,6 +2101,10 @@ void openbor_register_lua_api(void) {
     lua_setmetatable(g_lua_engine_state, -2);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
 
+    /* Strong-value storage for legacy global variables. */
+    lua_newtable(g_lua_engine_state);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+
     /*
      * Register the API as global Lua functions. Scripts should call
      * spawn(...), get_self(), log(), etc., without an openbor. prefix.
@@ -2089,6 +2141,15 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getlocalvar);
     lua_setglobal(g_lua_engine_state, "getlocalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_globalvar);
+    lua_setglobal(g_lua_engine_state, "globalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getglobalvar);
+    lua_setglobal(g_lua_engine_state, "getglobalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setglobalvar);
+    lua_setglobal(g_lua_engine_state, "setglobalvar");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changeentityproperty);
     lua_setglobal(g_lua_engine_state, "changeentityproperty");
