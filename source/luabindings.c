@@ -422,9 +422,10 @@ static void bor_lua_push_entity(lua_State *L, entity *ent)
     /* cache[ent] = wrapper */
     lua_pushlightuserdata(L, ent);
     lua_pushvalue(L, -2);
-    lua_rawset(L, -4);
+    lua_rawset(L, -5);
 
     lua_remove(L, -3); /* cache table */
+    lua_remove(L, -2); /* cache key */
 }
 
 static entity *bor_lua_get_live_entity(lua_State *L, int index)
