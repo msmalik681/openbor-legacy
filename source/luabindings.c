@@ -74,6 +74,7 @@ int bor_lua_runbuffer(lua_State *L, const char *buffer, size_t size,
 extern lua_State *g_lua_engine_state;
 extern s_level *level;
 extern entity *self;
+extern int g_lua_current_player_index;
 extern u32 borTime;
 extern char branch_name[MAX_NAME_LEN + 1];
 extern int current_set;
@@ -1374,6 +1375,33 @@ static int lua_openbor_get_self(lua_State *L) {
 }
 
 /*
+ * Legacy getlocalvar() compatibility for the current entity and key player.
+ * Other local-variable names are not synthesized by this compatibility layer.
+ */
+static int lua_openbor_getlocalvar(lua_State *L) {
+    const char *name = luaL_checkstring(L, 1);
+
+    if (!strcmp(name, "self")) {
+        if (self && self->exists)
+            bor_lua_push_entity(L, self);
+        else
+            lua_pushnil(L);
+        return 1;
+    }
+
+    if (!strcmp(name, "player")) {
+        if (g_lua_current_player_index >= 0)
+            lua_pushinteger(L, (lua_Integer)g_lua_current_player_index);
+        else
+            lua_pushnil(L);
+        return 1;
+    }
+
+    lua_pushnil(L);
+    return 1;
+}
+
+/*
  * Resolve legacy OpenBOR constants by name for Lua scripts.
  * This first pass covers the static constants defined by this engine version;
  * dynamically allocated animation names are handled separately.
@@ -2026,6 +2054,9 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_get_self);
     lua_setglobal(g_lua_engine_state, "get_self");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getlocalvar);
+    lua_setglobal(g_lua_engine_state, "getlocalvar");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changeentityproperty);
     lua_setglobal(g_lua_engine_state, "changeentityproperty");
