@@ -393,6 +393,7 @@ typedef struct bor_lua_entity_handle {
 static void bor_lua_push_entity(lua_State *L, entity *ent)
 {
     bor_lua_entity_handle *handle;
+    int cache_index;
 
     if (!ent) {
         lua_pushnil(L);
@@ -406,10 +407,11 @@ static void bor_lua_push_entity(lua_State *L, entity *ent)
      * The registry table uses weak values so it does not keep wrappers alive.
      */
     lua_getfield(L, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
+    cache_index = lua_gettop(L);
     lua_pushlightuserdata(L, ent);
-    lua_rawget(L, -2);
+    lua_rawget(L, cache_index);
     if (!lua_isnil(L, -1)) {
-        lua_remove(L, -2); /* cache table */
+        lua_remove(L, cache_index); /* cache table; leave the wrapper */
         return;
     }
     lua_pop(L, 1); /* cache miss */
@@ -422,10 +424,9 @@ static void bor_lua_push_entity(lua_State *L, entity *ent)
     /* cache[ent] = wrapper */
     lua_pushlightuserdata(L, ent);
     lua_pushvalue(L, -2);
-    lua_rawset(L, -5);
+    lua_rawset(L, cache_index);
 
-    lua_remove(L, -3); /* cache table */
-    lua_remove(L, -2); /* cache key */
+    lua_remove(L, cache_index); /* leave only the new wrapper on the stack */
 }
 
 static entity *bor_lua_get_live_entity(lua_State *L, int index)
