@@ -399,10 +399,32 @@ static void bor_lua_push_entity(lua_State *L, entity *ent)
         return;
     }
 
+    /*
+     * Reuse the Lua wrapper while it is still referenced. This preserves
+     * Lua identity (including references stored in global variables) when
+     * the same live engine entity is returned by different API functions.
+     * The registry table uses weak values so it does not keep wrappers alive.
+     */
+    lua_getfield(L, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
+    lua_pushlightuserdata(L, ent);
+    lua_rawget(L, -2);
+    if (!lua_isnil(L, -1)) {
+        lua_remove(L, -2); /* cache table */
+        return;
+    }
+    lua_pop(L, 1); /* cache miss */
+
     handle = (bor_lua_entity_handle *)lua_newuserdata(L, sizeof(*handle));
     handle->ptr = ent;
     luaL_getmetatable(L, BOR_LUA_ENTITY_METATABLE);
     lua_setmetatable(L, -2);
+
+    /* cache[ent] = wrapper */
+    lua_pushlightuserdata(L, ent);
+    lua_pushvalue(L, -2);
+    lua_rawset(L, -4);
+
+    lua_remove(L, -3); /* cache table */
 }
 
 static entity *bor_lua_get_live_entity(lua_State *L, int index)
@@ -2020,6 +2042,14 @@ void openbor_register_lua_api(void) {
     lua_pushcfunction(g_lua_engine_state, lua_openbor_entity_newindex);
     lua_setfield(g_lua_engine_state, -2, "__newindex");
     lua_pop(g_lua_engine_state, 1);
+
+    /* Weak-value cache: stable wrapper identity without retaining dead wrappers. */
+    lua_newtable(g_lua_engine_state);
+    lua_newtable(g_lua_engine_state);
+    lua_pushstring(g_lua_engine_state, "v");
+    lua_setfield(g_lua_engine_state, -2, "__mode");
+    lua_setmetatable(g_lua_engine_state, -2);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
 
     /*
      * Register the API as global Lua functions. Scripts should call
