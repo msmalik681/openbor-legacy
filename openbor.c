@@ -76,6 +76,7 @@ List *modelstxtcmdlist = NULL;
 List *levelcmdlist = NULL;
 List *levelordercmdlist = NULL;
 lua_State *g_lua_engine_state = NULL;
+int g_lua_current_player_index = -1;
 
 char *custBkgrds = NULL;
 char *custLevels = NULL;
@@ -900,17 +901,10 @@ void execute_level_key_script(int player_nr) {
 void execute_key_script_all(int player_nr) {
     entity *previous_self;
     entity *player_ent = NULL;
+    int previous_player_index;
 
     if (!g_lua_engine_state)
         return;
-
-    lua_getglobal(g_lua_engine_state, "keyall_main");
-    if (!lua_isfunction(g_lua_engine_state, -1)) {
-        lua_pop(g_lua_engine_state, 1);
-        /* Keep compatibility with scripts using the explicit event name. */
-        bor_lua_call_player_event(player_nr, "keyscriptall", "keyscriptall");
-        return;
-    }
 
     if (player_nr >= 0 && player_nr < MAX_PLAYERS &&
         player[player_nr].ent && player[player_nr].ent->exists) {
@@ -918,13 +912,24 @@ void execute_key_script_all(int player_nr) {
     }
 
     previous_self = self;
+    previous_player_index = g_lua_current_player_index;
     self = player_ent;
+    g_lua_current_player_index =
+        (player_nr >= 0 && player_nr < MAX_PLAYERS) ? player_nr : -1;
 
-    /* keyall_main is called with no arguments; get_self() provides the player. */
-    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "keyall main") != LUA_OK)
+    lua_getglobal(g_lua_engine_state, "keyall_main");
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        /* Keep compatibility with scripts using the explicit event name. */
+        bor_lua_call_player_event(player_nr, "keyscriptall", "keyscriptall");
+    } else {
+        /* keyall_main is called with no arguments; legacy localvars provide context. */
+        if (bor_lua_pcall(g_lua_engine_state, 0, 0, "keyall main") != LUA_OK)
+            lua_pop(g_lua_engine_state, 1);
+    }
 
     self = previous_self;
+    g_lua_current_player_index = previous_player_index;
 }
 
 void execute_timetick_script(int time, int gotime) {
