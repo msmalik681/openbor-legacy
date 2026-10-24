@@ -42,9 +42,8 @@ INCS += $(INCLUDES)
 
 ADPCM           = source/adpcmlib/adpcm.o
 
-# Lua 5.4 core plus only the standard libraries exposed to gameplay scripts.
-# ldebug.o is part of the Lua VM core; ldblib.o is the optional debug library
-# and is intentionally omitted. Likewise io/os are not exposed.
+# Lua 5.4 core plus the standard libraries retained for gameplay scripts.
+# Coroutine, UTF-8 helper, package/require, io, os, and debug libraries are omitted.
 LUALIB          = source/lualib/lapi.o \
 				source/lualib/lcode.o \
 				source/lualib/lctype.o \
@@ -67,12 +66,9 @@ LUALIB          = source/lualib/lapi.o \
 				source/lualib/lzio.o \
 				source/lualib/lauxlib.o \
 				source/lualib/lbaselib.o \
-				source/lualib/lcorolib.o \
 				source/lualib/lmathlib.o \
 				source/lualib/lstrlib.o \
 				source/lualib/ltablib.o \
-				source/lualib/lutf8lib.o \
-				source/lualib/loadlib.o
 
 ifdef BUILD_GFX
 GFX           = source/gfxlib/2xSaI.o source/gfxlib/bilinear.o source/gfxlib/dotmatrix.o source/gfxlib/gfx.o source/gfxlib/hq2x.o source/gfxlib/motionblur.o source/gfxlib/scale2x.o source/gfxlib/scanline.o source/gfxlib/simple2x.o source/gfxlib/tv2x.o
