@@ -537,20 +537,64 @@ void load_scripts() {
     }
 }
 
+static void bor_lua_set_localvar_entity(const char *name, entity *value)
+{
+    if (!g_lua_engine_state)
+        return;
+    if (value && value->exists)
+        lua_pushlightuserdata(g_lua_engine_state, (void *)value);
+    else
+        lua_pushnil(g_lua_engine_state);
+    bor_lua_set_localvar(g_lua_engine_state, name, -1);
+    lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_set_localvar_int(const char *name, int value)
+{
+    if (!g_lua_engine_state)
+        return;
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)value);
+    bor_lua_set_localvar(g_lua_engine_state, name, -1);
+    lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_set_localvar_number(const char *name, double value)
+{
+    if (!g_lua_engine_state)
+        return;
+    lua_pushnumber(g_lua_engine_state, (lua_Number)value);
+    bor_lua_set_localvar(g_lua_engine_state, name, -1);
+    lua_pop(g_lua_engine_state, 1);
+}
+
+static void bor_lua_begin_entity_localvars(entity *ent)
+{
+    bor_lua_clear_localvars(g_lua_engine_state);
+    bor_lua_set_localvar_entity("self", ent);
+}
+
+static void bor_lua_end_localvars(void)
+{
+    bor_lua_clear_localvars(g_lua_engine_state);
+}
+
 static void bor_lua_call_entity_event(entity *ent, const char *event, const char *context)
 {
     if (!g_lua_engine_state || !ent || !ent->exists)
         return;
 
+    bor_lua_begin_entity_localvars(ent);
     lua_getglobal(g_lua_engine_state, event);
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         return;
     }
 
     lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
     if (bor_lua_pcall(g_lua_engine_state, 1, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 static void bor_lua_call_entity_pair_event(entity *ent, entity *other,
@@ -559,9 +603,13 @@ static void bor_lua_call_entity_pair_event(entity *ent, entity *other,
     if (!g_lua_engine_state || !ent || !ent->exists)
         return;
 
+    bor_lua_begin_entity_localvars(ent);
+    bor_lua_set_localvar_entity("other", other);
+    bor_lua_set_localvar_entity("obstacle", other);
     lua_getglobal(g_lua_engine_state, event);
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         return;
     }
 
@@ -573,6 +621,7 @@ static void bor_lua_call_entity_pair_event(entity *ent, entity *other,
 
     if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 static void bor_lua_call_entity_int_event(entity *ent, int value,
@@ -600,9 +649,13 @@ static void bor_lua_call_entity_int2_event(entity *ent, int value1, int value2,
     if (!g_lua_engine_state || !ent || !ent->exists)
         return;
 
+    bor_lua_begin_entity_localvars(ent);
+    bor_lua_set_localvar_int("attacktype", value1);
+    bor_lua_set_localvar_int("reset", value2);
     lua_getglobal(g_lua_engine_state, event);
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         return;
     }
 
@@ -612,6 +665,7 @@ static void bor_lua_call_entity_int2_event(entity *ent, int value1, int value2,
 
     if (bor_lua_pcall(g_lua_engine_state, 3, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 static void bor_lua_call_player_event(int player_nr, const char *event, const char *context)
