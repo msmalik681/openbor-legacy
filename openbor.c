@@ -9082,13 +9082,37 @@ void update_frame(entity * ent, int f) {
         
 		self->nextanim = borTime + iDelay;
 
-		// Bypassed legacy execution function pass: execute_animation_script(self);
+		/*
+		 * Run the legacy animationscript callback with its animation context.
+		 * getlocalvar("self") uses the engine's current self; animnum and frame
+		 * are supplied through the callback-scoped local-variable table.
+		 */
+		if (g_lua_engine_state) {
+			bor_lua_clear_localvars(g_lua_engine_state);
+			lua_pushinteger(g_lua_engine_state, self->animnum);
+			bor_lua_set_localvar(g_lua_engine_state, "animnum", -1);
+			lua_pop(g_lua_engine_state, 1);
+			lua_pushinteger(g_lua_engine_state, f);
+			bor_lua_set_localvar(g_lua_engine_state, "frame", -1);
+			lua_pop(g_lua_engine_state, 1);
+		}
+		execute_animation_script(self);
+		if (g_lua_engine_state)
+			bor_lua_clear_localvars(g_lua_engine_state);
 
 		// --- NATIVE LUA TIMELINE FRAME DISPATCHER ---
 		if (g_lua_engine_state) {
-			char lookup_func[256]; 
+			char lookup_func[256];
+			bor_lua_clear_localvars(g_lua_engine_state);
+			lua_pushinteger(g_lua_engine_state, self->animnum);
+			bor_lua_set_localvar(g_lua_engine_state, "animnum", -1);
+			lua_pop(g_lua_engine_state, 1);
+			lua_pushinteger(g_lua_engine_state, f);
+			bor_lua_set_localvar(g_lua_engine_state, "frame", -1);
+			lua_pop(g_lua_engine_state, 1);
+
 			snprintf(lookup_func, sizeof(lookup_func), "char_%s_anim_%d_frame_%d", self->modeldata.name, self->animnum, self->animpos);
-			
+
 			lua_getglobal(g_lua_engine_state, lookup_func);
 			if (lua_isfunction(g_lua_engine_state, -1)) {
 				if (bor_lua_pcall(g_lua_engine_state, 0, 0, "animation frame") != LUA_OK) {
@@ -9098,6 +9122,7 @@ void update_frame(entity * ent, int f) {
 			} else {
 				lua_pop(g_lua_engine_state, 1); // Clears lookup nil cleanly
 			}
+			bor_lua_clear_localvars(g_lua_engine_state);
 		}
 	}
 
