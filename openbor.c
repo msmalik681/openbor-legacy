@@ -921,15 +921,19 @@ void execute_key_script_all(int player_nr) {
     g_lua_current_player_index =
         (player_nr >= 0 && player_nr < MAX_PLAYERS) ? player_nr : -1;
 
+    bor_lua_begin_entity_localvars(player_ent);
+    bor_lua_set_localvar_int("player", player_nr);
     lua_getglobal(g_lua_engine_state, "keyall_main");
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         /* Keep compatibility with scripts using the explicit event name. */
         bor_lua_call_player_event(player_nr, "keyscriptall", "keyscriptall");
     } else {
         /* keyall_main is called with no arguments; legacy localvars provide context. */
         if (bor_lua_pcall(g_lua_engine_state, 0, 0, "keyall main") != LUA_OK)
             lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
     }
 
     self = previous_self;
