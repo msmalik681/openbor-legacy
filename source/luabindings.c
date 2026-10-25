@@ -1399,11 +1399,56 @@ static int lua_openbor_get_self(lua_State *L) {
 }
 
 /*
- * Legacy getlocalvar() compatibility for the current entity and key player.
- * Other local-variable names are not synthesized by this compatibility layer.
+ * Callback-scoped legacy local variables.
+ * These values are installed by the engine immediately around a callback.
+ */
+#define BOR_LUA_LOCAL_VARS "OpenBOR.LocalVars"
+
+void bor_lua_clear_localvars(lua_State *L)
+{
+    if (!L) return;
+    lua_pushnil(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+}
+
+void bor_lua_set_localvar(lua_State *L, const char *name, int index)
+{
+    int abs_index;
+
+    if (!L || !name) return;
+    abs_index = (index > 0 || index <= LUA_REGISTRYINDEX)
+        ? index : lua_gettop(L) + index + 1;
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    }
+
+    lua_pushvalue(L, abs_index);
+    lua_setfield(L, -2, name);
+    lua_pop(L, 1);
+}
+
+/*
+ * Legacy getlocalvar() compatibility. Callback-scoped values take precedence;
+ * self and player retain their existing fallback behavior.
  */
 static int lua_openbor_getlocalvar(lua_State *L) {
     const char *name = luaL_checkstring(L, 1);
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        lua_getfield(L, -1, name);
+        if (!lua_isnil(L, -1)) {
+            lua_remove(L, -2);
+            return 1;
+        }
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
 
     if (!strcmp(name, "self")) {
         if (self && self->exists)
