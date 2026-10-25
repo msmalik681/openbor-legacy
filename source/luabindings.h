@@ -9,6 +9,8 @@ void openbor_register_lua_api(void);
 
 /* Execute Lua code through the common protected boundary. */
 int bor_lua_pcall(lua_State *L, int nargs, int nresults, const char *context);
+void bor_lua_clear_localvars(lua_State *L);
+void bor_lua_set_localvar(lua_State *L, const char *name, int index);
 int bor_lua_runbuffer(lua_State *L, const char *buffer, size_t size, const char *source);
 
 /*
