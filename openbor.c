@@ -670,24 +670,33 @@ static void bor_lua_call_entity_int2_event(entity *ent, int value1, int value2,
 
 static void bor_lua_call_player_event(int player_nr, const char *event, const char *context)
 {
+    entity *player_ent = NULL;
+
     if (!g_lua_engine_state)
         return;
 
+    if (player_nr >= 0 && player_nr < MAX_PLAYERS && player[player_nr].ent &&
+        player[player_nr].ent->exists)
+        player_ent = player[player_nr].ent;
+
+    bor_lua_begin_entity_localvars(player_ent);
+    bor_lua_set_localvar_int("player", player_nr);
     lua_getglobal(g_lua_engine_state, event);
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         return;
     }
 
     lua_pushinteger(g_lua_engine_state, (lua_Integer)player_nr);
-    if (player_nr >= 0 && player_nr < MAX_PLAYERS && player[player_nr].ent &&
-        player[player_nr].ent->exists)
-        lua_pushlightuserdata(g_lua_engine_state, (void *)player[player_nr].ent);
+    if (player_ent)
+        lua_pushlightuserdata(g_lua_engine_state, (void *)player_ent);
     else
         lua_pushnil(g_lua_engine_state);
 
     if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 static void bor_lua_call_timetick_event(int time, int gotime)
@@ -695,9 +704,13 @@ static void bor_lua_call_timetick_event(int time, int gotime)
     if (!g_lua_engine_state)
         return;
 
+    bor_lua_clear_localvars(g_lua_engine_state);
+    bor_lua_set_localvar_int("time", time);
+    bor_lua_set_localvar_int("gotime", gotime);
     lua_getglobal(g_lua_engine_state, "timetickscript");
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         return;
     }
 
@@ -706,6 +719,7 @@ static void bor_lua_call_timetick_event(int time, int gotime)
 
     if (bor_lua_pcall(g_lua_engine_state, 2, 0, "timetickscript") != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 static void execute_takedamage_script_i(entity* victim, entity* attacker, int damage, int type) {
@@ -938,9 +952,13 @@ void execute_onblockw_script(entity * ent, int plane, float height) {
     if (!g_lua_engine_state || !ent || !ent->exists)
         return;
 
+    bor_lua_begin_entity_localvars(ent);
+    bor_lua_set_localvar_int("plane", plane);
+    bor_lua_set_localvar_number("height", height);
     lua_getglobal(g_lua_engine_state, "onblockwscript");
     if (!lua_isfunction(g_lua_engine_state, -1)) {
         lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
         return;
     }
 
@@ -949,6 +967,7 @@ void execute_onblockw_script(entity * ent, int plane, float height) {
     lua_pushnumber(g_lua_engine_state, (lua_Number)height);
     if (bor_lua_pcall(g_lua_engine_state, 3, 0, "onblockwscript") != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 void execute_onblocko_script(entity * ent, entity * other) {
