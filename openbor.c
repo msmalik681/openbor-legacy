@@ -722,166 +722,81 @@ static void bor_lua_call_timetick_event(int time, int gotime)
     bor_lua_end_localvars();
 }
 
-static void execute_takedamage_script_i(entity* victim, entity* attacker, int damage, int type) {
-	if (g_lua_engine_state) {
-			if (victim && victim->exists) {
-			lua_getglobal(g_lua_engine_state, "takedamagescript");
-			if (lua_isfunction(g_lua_engine_state, -1)) {
-				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
-				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "takedamagescript") != LUA_OK) {
-					lua_pop(g_lua_engine_state, 1);
-				}
-			} else { lua_pop(g_lua_engine_state, 1); }
-		}
-	}
-}
+static void bor_lua_call_combat_event(entity *ent, entity *other, int damage, int type,
+                                      int drop, int noblock, int guardcost,
+                                      int jugglecost, int pauseadd,
+                                      const char *other_var, const char *event)
+{
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
 
-static void execute_onfall_script_i(entity* victim, entity* attacker, int damage, int type) {
-	if (g_lua_engine_state) {
-		if (victim && victim->exists) {
-			lua_getglobal(g_lua_engine_state, "onfallscript");
-			if (lua_isfunction(g_lua_engine_state, -1)) {
-				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
-				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "onfallscript") != LUA_OK) {
-					lua_pop(g_lua_engine_state, 1);
-				}
-			} else { lua_pop(g_lua_engine_state, 1); }
-		}
-	}
-}
+    bor_lua_begin_entity_localvars(ent);
+    bor_lua_set_localvar_entity(other_var, other);
+    bor_lua_set_localvar_int("damage", damage);
+    bor_lua_set_localvar_int("attacktype", type);
+    bor_lua_set_localvar_int("drop", drop);
+    bor_lua_set_localvar_int("noblock", noblock);
+    bor_lua_set_localvar_int("guardcost", guardcost);
+    bor_lua_set_localvar_int("jugglecost", jugglecost);
+    bor_lua_set_localvar_int("pauseadd", pauseadd);
 
-static void execute_ondeath_script_i(entity* victim, entity* attacker, int damage, int type) {
-	if (g_lua_engine_state) {
-		if (victim && victim->exists) {
-			lua_getglobal(g_lua_engine_state, "ondeathscript");
-			if (lua_isfunction(g_lua_engine_state, -1)) {
-				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
-				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "ondeathscript") != LUA_OK) {
-					lua_pop(g_lua_engine_state, 1);
-				}
-			} else { lua_pop(g_lua_engine_state, 1); }
-		}
-	}
-}
+    lua_getglobal(g_lua_engine_state, event);
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
+        return;
+    }
 
-static void execute_didblock_script_i(entity* victim, entity* attacker, int damage, int type) {
-	if (g_lua_engine_state) {
-		if (victim && victim->exists) {
-			lua_getglobal(g_lua_engine_state, "didblockscript");
-			if (lua_isfunction(g_lua_engine_state, -1)) {
-				lua_pushlightuserdata(g_lua_engine_state, (void*)victim);
-				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "didblockscript") != LUA_OK) {
-					lua_pop(g_lua_engine_state, 1);
-				}
-			} else { lua_pop(g_lua_engine_state, 1); }
-		}
-	}
-}
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    if (other && other->exists)
+        lua_pushlightuserdata(g_lua_engine_state, (void *)other);
+    else
+        lua_pushnil(g_lua_engine_state);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
+    lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
 
-static void execute_ondoattack_script_i(entity* attacker, entity* other, int damage, int type) {
-	if (g_lua_engine_state) {
-		if (attacker && attacker->exists) {
-			lua_getglobal(g_lua_engine_state, "ondoattackscript");
-			if (lua_isfunction(g_lua_engine_state, -1)) {
-				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
-				lua_pushlightuserdata(g_lua_engine_state, (void*)other);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "ondoattackscript") != LUA_OK) {
-					lua_pop(g_lua_engine_state, 1);
-				}
-			} else { lua_pop(g_lua_engine_state, 1); }
-		}
-	}
-}
-
-static void execute_didhit_script_i(entity* attacker, entity* damagetaker, int damage, int type) {
-	if (g_lua_engine_state) {
-		if (attacker && attacker->exists) {
-			lua_getglobal(g_lua_engine_state, "didhitscript");
-			if (lua_isfunction(g_lua_engine_state, -1)) {
-				lua_pushlightuserdata(g_lua_engine_state, (void*)attacker);
-				lua_pushlightuserdata(g_lua_engine_state, (void*)damagetaker);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-				lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-				if (bor_lua_pcall(g_lua_engine_state, 4, 0, "didhitscript") != LUA_OK) {
-					lua_pop(g_lua_engine_state, 1);
-				}
-			} else { lua_pop(g_lua_engine_state, 1); }
-		}
-	}
+    if (bor_lua_pcall(g_lua_engine_state, 4, 0, event) != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 void execute_takedamage_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                                int jugglecost, int pauseadd) {
-	(void)drop;
-	(void)noblock;
-	(void)guardcost;
-	(void)jugglecost;
-	(void)pauseadd;
-	execute_takedamage_script_i(ent, other, force, type);
+    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
+                              jugglecost, pauseadd, "attacker", "takedamagescript");
 }
 
 void execute_ondeath_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                             int jugglecost, int pauseadd) {
-	(void)drop;
-	(void)noblock;
-	(void)guardcost;
-	(void)jugglecost;
-	(void)pauseadd;
-	execute_ondeath_script_i(ent, other, force, type);
+    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
+                              jugglecost, pauseadd, "attacker", "ondeathscript");
 }
+
 void execute_onfall_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                            int jugglecost, int pauseadd) {
-	(void)drop;
-	(void)noblock;
-	(void)guardcost;
-	(void)jugglecost;
-	(void)pauseadd;
-	execute_onfall_script_i(ent, other, force, type);
+    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
+                              jugglecost, pauseadd, "attacker", "onfallscript");
 }
 
 void execute_didblock_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                              int jugglecost, int pauseadd) {
-	(void)drop;
-	(void)noblock;
-	(void)guardcost;
-	(void)jugglecost;
-	(void)pauseadd;
-	execute_didblock_script_i(ent, other, force, type);
+    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
+                              jugglecost, pauseadd, "attacker", "didblockscript");
 }
+
 void execute_ondoattack_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                                int jugglecost, int pauseadd, int iWhich, int iAtkID) {
-	(void)drop;
-	(void)noblock;
-	(void)guardcost;
-	(void)jugglecost;
-	(void)pauseadd;
-	(void)iWhich;
-	(void)iAtkID;
-	execute_ondoattack_script_i(ent, other, force, type);
+    (void)iWhich;
+    (void)iAtkID;
+    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
+                              jugglecost, pauseadd, "other", "ondoattackscript");
 }
+
 void execute_didhit_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                            int jugglecost, int pauseadd, int blocked) {
-	(void)drop;
-	(void)noblock;
-	(void)guardcost;
-	(void)jugglecost;
-	(void)pauseadd;
-	(void)blocked;
-	execute_didhit_script_i(ent, other, force, type);
+    (void)blocked;
+    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
+                              jugglecost, pauseadd, "damagetaker", "didhitscript");
 }
 
 void execute_animation_script(entity * ent) {
