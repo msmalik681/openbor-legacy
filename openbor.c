@@ -871,7 +871,23 @@ void execute_didhit_script(entity * ent, entity * other, int force, int drop, in
 }
 
 void execute_animation_script(entity * ent) {
-    bor_lua_call_entity_event(ent, "animationscript", "animationscript");
+    if (!g_lua_engine_state || !ent || !ent->exists)
+        return;
+
+    bor_lua_begin_entity_localvars(ent);
+    bor_lua_set_localvar_int("animnum", ent->animnum);
+    bor_lua_set_localvar_int("frame", ent->animpos);
+    lua_getglobal(g_lua_engine_state, "animationscript");
+    if (!lua_isfunction(g_lua_engine_state, -1)) {
+        lua_pop(g_lua_engine_state, 1);
+        bor_lua_end_localvars();
+        return;
+    }
+
+    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
+    if (bor_lua_pcall(g_lua_engine_state, 1, 0, "animationscript") != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 void execute_onblocks_script(entity * ent) {
