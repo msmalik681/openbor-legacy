@@ -21,4 +21,8 @@ int bor_lua_runbuffer(lua_State *L, const char *buffer, size_t size, const char 
 void bor_lua_openlibs(lua_State *L);
 #define luaL_openlibs bor_lua_openlibs
 
+struct entity;
+void bor_lua_clear_entity_vars(struct entity *ent);
+void bor_lua_clear_all_entity_vars(void);
+
 #endif
