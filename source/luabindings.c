@@ -1473,6 +1473,52 @@ static int lua_openbor_getlocalvar(lua_State *L) {
 }
 
 #define BOR_LUA_GLOBAL_VARS "OpenBOR.GlobalVars"
+#define BOR_LUA_INDEXED_VARS "OpenBOR.IndexedVars"
+
+static int lua_openbor_getindexedvar(lua_State *L)
+{
+    lua_Integer index = luaL_checkinteger(L, 1);
+
+    if (index < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
+    lua_pushinteger(L, index);
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+    return 1;
+}
+
+static int lua_openbor_setindexedvar(lua_State *L)
+{
+    lua_Integer index = luaL_checkinteger(L, 1);
+
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "setindexedvar expects an index and value");
+    if (index < 0) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
+    lua_pushinteger(L, index);
+    lua_pushvalue(L, 2);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int lua_openbor_clearindexedvar(lua_State *L)
+{
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
+    return 0;
+}
+
 /* Legacy utility and variable functions retained from the original script API. */
 static int lua_openbor_isempty(lua_State *L)
 {
@@ -2555,6 +2601,10 @@ void openbor_register_lua_api(void) {
     lua_setmetatable(g_lua_engine_state, -2);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
 
+    /* Indexed variables use a Lua table with legacy zero-based indices. */
+    lua_newtable(g_lua_engine_state);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
+
     /* Strong-value storage for legacy global variables. */
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
@@ -2628,6 +2678,15 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_checkplatformbelow);
     lua_setglobal(g_lua_engine_state, "checkplatformbelow");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getindexedvar);
+    lua_setglobal(g_lua_engine_state, "getindexedvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setindexedvar);
+    lua_setglobal(g_lua_engine_state, "setindexedvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_clearindexedvar);
+    lua_setglobal(g_lua_engine_state, "clearindexedvar");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_log);
     lua_setglobal(g_lua_engine_state, "log");
