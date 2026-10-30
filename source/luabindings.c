@@ -73,6 +73,7 @@ int bor_lua_runbuffer(lua_State *L, const char *buffer, size_t size,
 // Bring in the global execution pointer declared in openbor.c
 extern lua_State *g_lua_engine_state;
 extern s_level *level;
+static int bor_lua_stricmp(const char *left, const char *right);
 extern int noshare;
 extern int credits;
 extern entity *self;
@@ -1639,6 +1640,233 @@ static int lua_openbor_setglobalvar(lua_State *L)
     return 1;
 }
 
+/* File-stream helpers retain the original level-scoped stream handles. */
+static s_filestream *bor_lua_get_filestream(lua_State *L, int arg)
+{
+    lua_Integer index = luaL_checkinteger(L, arg);
+
+    if (!level)
+        luaL_error(L, "file stream operation requires a loaded level");
+    if (index < 0 || index >= level->numfilestreams ||
+        index >= LEVEL_MAX_FILESTREAMS || !level->filestreams[index].buf)
+        luaL_error(L, "invalid file stream index");
+
+    return &level->filestreams[index];
+}
+
+static int lua_openbor_openfilestream(lua_State *L)
+{
+    const char *filename = luaL_checkstring(L, 1);
+    int location = (int)luaL_optinteger(L, 2, 0);
+    s_filestream *stream;
+    char path[512] = {0};
+    char *buffer = NULL;
+    size_t size = 0;
+
+    if (!level)
+        return luaL_error(L, "openfilestream requires a loaded level");
+    if (level->numfilestreams >= LEVEL_MAX_FILESTREAMS)
+        return luaL_error(L, "maximum file streams exceeded");
+
+    if (location) {
+        FILE *handle;
+        long file_size;
+
+        getBasePath(path, "Saves", 0);
+        if (strlen(path) + strlen(filename) + 2 >= sizeof(path))
+            return luaL_error(L, "file stream path is too long");
+        strcat(path, "/");
+        strcat(path, filename);
+
+        handle = fopen(path, "rb");
+        if (!handle)
+            return luaL_error(L, "openfilestream could not open '%s'", path);
+        if (fseek(handle, 0, SEEK_END) != 0 ||
+            (file_size = ftell(handle)) < 0 ||
+            fseek(handle, 0, SEEK_SET) != 0) {
+            fclose(handle);
+            return luaL_error(L, "openfilestream could not read '%s'", path);
+        }
+
+        size = (size_t)file_size;
+        buffer = (char *)malloc(size + 1);
+        if (!buffer) {
+            fclose(handle);
+            return luaL_error(L, "openfilestream ran out of memory");
+        }
+        if (size && fread(buffer, 1, size, handle) != size) {
+            free(buffer);
+            fclose(handle);
+            return luaL_error(L, "openfilestream could not read '%s'", path);
+        }
+        fclose(handle);
+        buffer[size] = '\0';
+    } else {
+        if (buffer_pakfile((char *)filename, &buffer, &size) != 1 || !buffer)
+            return luaL_error(L, "invalid filename for openfilestream: '%s'", filename);
+        if (size == 0)
+            size = strlen(buffer);
+    }
+
+    stream = &level->filestreams[level->numfilestreams];
+    stream->buf = buffer;
+    stream->size = size;
+    stream->pos = 0;
+    lua_pushinteger(L, level->numfilestreams);
+    ++level->numfilestreams;
+    return 1;
+}
+
+static int lua_openbor_createfilestream(lua_State *L)
+{
+    s_filestream *stream;
+
+    (void)L;
+    if (!level)
+        return luaL_error(L, "createfilestream requires a loaded level");
+    if (level->numfilestreams >= LEVEL_MAX_FILESTREAMS)
+        return luaL_error(L, "maximum file streams exceeded");
+
+    stream = &level->filestreams[level->numfilestreams];
+    stream->buf = (char *)malloc(1);
+    if (!stream->buf)
+        return luaL_error(L, "createfilestream ran out of memory");
+    stream->buf[0] = '\0';
+    stream->size = 0;
+    stream->pos = 0;
+
+    lua_pushinteger(L, level->numfilestreams);
+    ++level->numfilestreams;
+    return 1;
+}
+
+static int lua_openbor_getfilestreamline(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    size_t end;
+
+    if (stream->pos < 0 || (size_t)stream->pos > stream->size)
+        return luaL_error(L, "file stream position is out of range");
+    end = (size_t)stream->pos;
+
+    while (end < stream->size && stream->buf[end] != '\n' &&
+           stream->buf[end] != '\r')
+        ++end;
+
+    lua_pushlstring(L, stream->buf + stream->pos, end - (size_t)stream->pos);
+    return 1;
+}
+
+static int lua_openbor_getfilestreamargument(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    lua_Integer argument = luaL_checkinteger(L, 2);
+    const char *type = luaL_checkstring(L, 3);
+    size_t end = (size_t)stream->pos;
+    char *line;
+    char *value;
+
+    if (stream->pos < 0 || (size_t)stream->pos > stream->size)
+        return luaL_error(L, "file stream position is out of range");
+    if (argument < 0)
+        return luaL_error(L, "file stream argument index cannot be negative");
+
+    while (end < stream->size && stream->buf[end] != '\n' &&
+           stream->buf[end] != '\r')
+        ++end;
+    line = (char *)malloc(end - (size_t)stream->pos + 1);
+    if (!line)
+        return luaL_error(L, "getfilestreamargument ran out of memory");
+    memcpy(line, stream->buf + stream->pos, end - (size_t)stream->pos);
+    line[end - (size_t)stream->pos] = '\0';
+
+    value = findarg(line, (int)argument);
+    if (bor_lua_stricmp(type, "string") == 0) {
+        lua_pushstring(L, value ? value : "");
+    } else if (bor_lua_stricmp(type, "int") == 0) {
+        lua_pushinteger(L, value ? (lua_Integer)atoi(value) : 0);
+    } else if (bor_lua_stricmp(type, "float") == 0) {
+        lua_pushnumber(L, value ? (lua_Number)atof(value) : 0);
+    } else {
+        free(line);
+        return luaL_error(L, "getfilestreamargument type must be string, int, or float");
+    }
+
+    free(line);
+    return 1;
+}
+
+static int lua_openbor_filestreamnextline(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    size_t pos;
+
+    if (stream->pos < 0 || (size_t)stream->pos > stream->size)
+        return luaL_error(L, "file stream position is out of range");
+
+    pos = (size_t)stream->pos;
+    while (pos < stream->size && stream->buf[pos] != '\n' &&
+           stream->buf[pos] != '\r')
+        ++pos;
+    while (pos < stream->size && (stream->buf[pos] == '\n' ||
+           stream->buf[pos] == '\r'))
+        ++pos;
+
+    stream->pos = (int)pos;
+    return 0;
+}
+
+static int lua_openbor_getfilestreamposition(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    lua_pushinteger(L, stream->pos);
+    return 1;
+}
+
+static int lua_openbor_setfilestreamposition(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    lua_Integer position = luaL_checkinteger(L, 2);
+
+    if (position < 0 || (lua_Unsigned)position > stream->size)
+        return luaL_error(L, "file stream position is out of range");
+    stream->pos = (int)position;
+    return 0;
+}
+
+static int lua_openbor_filestreamappend(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    size_t append_length;
+    size_t extra;
+    const char *append;
+    char *new_buffer;
+    int append_type = (int)luaL_checkinteger(L, 3);
+
+    if (append_type != 0 && append_type != 1)
+        return luaL_error(L, "filestreamappend type must be 0 or 1");
+
+    luaL_tolstring(L, 2, &append_length);
+    append = lua_tostring(L, -1);
+    extra = append_length + (append_type == 0 ? 3 : 1);
+
+    new_buffer = (char *)realloc(stream->buf, stream->size + extra + 1);
+    if (!new_buffer)
+        return luaL_error(L, "filestreamappend ran out of memory");
+    stream->buf = new_buffer;
+
+    if (append_type == 0) {
+        stream->buf[stream->size++] = '\r';
+        stream->buf[stream->size++] = '\n';
+    }
+    memcpy(stream->buf + stream->size, append, append_length);
+    stream->size += append_length;
+    stream->buf[stream->size++] = ' ';
+    stream->buf[stream->size] = '\0';
+    lua_pop(L, 1);
+    return 0;
+}
+
 /* Legacy player property accessors. */
 static int lua_openbor_getplayerproperty(lua_State *L)
 {
@@ -2678,6 +2906,30 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_checkplatformbelow);
     lua_setglobal(g_lua_engine_state, "checkplatformbelow");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_openfilestream);
+    lua_setglobal(g_lua_engine_state, "openfilestream");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_createfilestream);
+    lua_setglobal(g_lua_engine_state, "createfilestream");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getfilestreamline);
+    lua_setglobal(g_lua_engine_state, "getfilestreamline");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getfilestreamargument);
+    lua_setglobal(g_lua_engine_state, "getfilestreamargument");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_filestreamnextline);
+    lua_setglobal(g_lua_engine_state, "filestreamnextline");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getfilestreamposition);
+    lua_setglobal(g_lua_engine_state, "getfilestreamposition");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setfilestreamposition);
+    lua_setglobal(g_lua_engine_state, "setfilestreamposition");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_filestreamappend);
+    lua_setglobal(g_lua_engine_state, "filestreamappend");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getindexedvar);
     lua_setglobal(g_lua_engine_state, "getindexedvar");
