@@ -405,6 +405,7 @@ typedef struct bor_lua_entity_handle {
 
 static void bor_lua_retain_resource(lua_State *L, int index)
 {
+    index = lua_absindex(L, index);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_RESOURCES);
     lua_pushvalue(L, index);
     lua_pushboolean(L, 1);
@@ -414,6 +415,7 @@ static void bor_lua_retain_resource(lua_State *L, int index)
 
 static void bor_lua_release_resource(lua_State *L, int index)
 {
+    index = lua_absindex(L, index);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_RESOURCES);
     lua_pushvalue(L, index);
     lua_pushnil(L);
