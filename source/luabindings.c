@@ -73,6 +73,8 @@ int bor_lua_runbuffer(lua_State *L, const char *buffer, size_t size,
 // Bring in the global execution pointer declared in openbor.c
 extern lua_State *g_lua_engine_state;
 extern s_level *level;
+extern int noshare;
+extern int credits;
 extern entity *self;
 extern int g_lua_current_player_index;
 extern u32 borTime;
@@ -1591,6 +1593,96 @@ static int lua_openbor_setglobalvar(lua_State *L)
     return 1;
 }
 
+/* Legacy player property accessors. */
+static int lua_openbor_getplayerproperty(lua_State *L)
+{
+    extern s_player player[4];
+    int index = (int)luaL_optinteger(L, 1, 0);
+    const char *property = luaL_checkstring(L, 2);
+    entity *ent;
+
+    if (index < 0 || index >= 4)
+        return luaL_error(L, "getplayerproperty player index is out of range");
+
+    ent = player[index].ent;
+    if (!ent) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    if (!strcmp(property, "ent") || !strcmp(property, "entity")) {
+        bor_lua_push_entity(L, ent);
+    } else if (!strcmp(property, "name")) {
+        lua_pushstring(L, player[index].name);
+    } else if (!strcmp(property, "score")) {
+        lua_pushinteger(L, (lua_Integer)player[index].score);
+    } else if (!strcmp(property, "lives")) {
+        lua_pushinteger(L, (lua_Integer)player[index].lives);
+    } else if (!strcmp(property, "playkeys")) {
+        lua_pushinteger(L, (lua_Integer)player[index].playkeys);
+    } else if (!strcmp(property, "keys")) {
+        lua_pushinteger(L, (lua_Integer)player[index].keys);
+    } else if (!strcmp(property, "credits")) {
+        lua_pushinteger(L, noshare ? player[index].credits : credits);
+    } else if (!strcmp(property, "weaponum")) {
+        lua_pushinteger(L, (lua_Integer)player[index].weapnum);
+    } else {
+        return luaL_error(L, "getplayerproperty: unsupported property '%s'", property);
+    }
+
+    return 1;
+}
+
+static int lua_openbor_changeplayerproperty(lua_State *L)
+{
+    extern s_player player[4];
+    int index = (int)luaL_optinteger(L, 1, 0);
+    const char *property = luaL_checkstring(L, 2);
+    entity *ent;
+    lua_Integer value;
+
+    if (lua_gettop(L) < 3)
+        return luaL_error(L, "changeplayerproperty expects player, property, and value");
+    if (index < 0 || index >= 4)
+        return luaL_error(L, "changeplayerproperty player index is out of range");
+
+    ent = player[index].ent;
+    if (!ent) {
+        lua_pushinteger(L, 1);
+        return 1;
+    }
+
+    if (!strcmp(property, "weapon")) {
+        int weapon = (int)luaL_checkinteger(L, 3);
+        int animation = (int)luaL_optinteger(L, 4, 0);
+        set_weapon(ent, weapon, animation);
+    } else if (!strcmp(property, "name")) {
+        const char *name = luaL_checkstring(L, 3);
+        strncpy(player[index].name, name, sizeof(player[index].name) - 1);
+        player[index].name[sizeof(player[index].name) - 1] = '\0';
+    } else if (!strcmp(property, "score")) {
+        value = luaL_checkinteger(L, 3);
+        if (value < 0) value = 0;
+        if (value > 999999999) value = 999999999;
+        player[index].score = (unsigned int)value;
+    } else if (!strcmp(property, "lives")) {
+        player[index].lives = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(property, "playkeys")) {
+        player[index].playkeys = (int)luaL_checkinteger(L, 3);
+    } else if (!strcmp(property, "credits")) {
+        value = luaL_checkinteger(L, 3);
+        if (noshare)
+            player[index].credits = (int)value;
+        else
+            credits = (int)value;
+    } else {
+        return luaL_error(L, "changeplayerproperty: unsupported property '%s'", property);
+    }
+
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
 /* Legacy entity targeting, collision queries, and toss helper. */
 static int lua_openbor_tossentity(lua_State *L)
 {
@@ -2512,6 +2604,12 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_rgbcolor);
     lua_setglobal(g_lua_engine_state, "rgbcolor");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getplayerproperty);
+    lua_setglobal(g_lua_engine_state, "getplayerproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changeplayerproperty);
+    lua_setglobal(g_lua_engine_state, "changeplayerproperty");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_tossentity);
     lua_setglobal(g_lua_engine_state, "tossentity");
