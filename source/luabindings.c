@@ -3110,9 +3110,15 @@ static int lua_openbor_changefglayerproperty(lua_State *L)
 static int lua_openbor_getplayerproperty(lua_State *L)
 {
     extern s_player player[4];
-    int index = (int)luaL_optinteger(L, 1, 0);
-    const char *property = luaL_checkstring(L, 2);
+    int is_number = 0;
+    lua_Integer requested_index = lua_tointegerx(L, 1, &is_number);
+    int index = is_number ? (int)requested_index : 0;
+    const char *property;
     entity *ent;
+
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "getplayerproperty expects a player index and property name");
+    property = luaL_checkstring(L, 2);
 
     if (index < 0 || index >= 4)
         return luaL_error(L, "getplayerproperty player index is out of range");
@@ -3123,21 +3129,21 @@ static int lua_openbor_getplayerproperty(lua_State *L)
         return 1;
     }
 
-    if (!strcmp(property, "ent") || !strcmp(property, "entity")) {
+    if (!bor_lua_stricmp(property, "ent") || !bor_lua_stricmp(property, "entity")) {
         bor_lua_push_entity(L, ent);
-    } else if (!strcmp(property, "name")) {
+    } else if (!bor_lua_stricmp(property, "name")) {
         lua_pushstring(L, player[index].name);
-    } else if (!strcmp(property, "score")) {
+    } else if (!bor_lua_stricmp(property, "score")) {
         lua_pushinteger(L, (lua_Integer)player[index].score);
-    } else if (!strcmp(property, "lives")) {
+    } else if (!bor_lua_stricmp(property, "lives")) {
         lua_pushinteger(L, (lua_Integer)player[index].lives);
-    } else if (!strcmp(property, "playkeys")) {
+    } else if (!bor_lua_stricmp(property, "playkeys")) {
         lua_pushinteger(L, (lua_Integer)player[index].playkeys);
-    } else if (!strcmp(property, "keys")) {
+    } else if (!bor_lua_stricmp(property, "keys")) {
         lua_pushinteger(L, (lua_Integer)player[index].keys);
-    } else if (!strcmp(property, "credits")) {
+    } else if (!bor_lua_stricmp(property, "credits")) {
         lua_pushinteger(L, noshare ? player[index].credits : credits);
-    } else if (!strcmp(property, "weaponum")) {
+    } else if (!bor_lua_stricmp(property, "weaponum")) {
         lua_pushinteger(L, (lua_Integer)player[index].weapnum);
     } else {
         return luaL_error(L, "getplayerproperty: unsupported property '%s'", property);
@@ -3149,13 +3155,16 @@ static int lua_openbor_getplayerproperty(lua_State *L)
 static int lua_openbor_changeplayerproperty(lua_State *L)
 {
     extern s_player player[4];
-    int index = (int)luaL_optinteger(L, 1, 0);
-    const char *property = luaL_checkstring(L, 2);
+    int is_number = 0;
+    lua_Integer requested_index = lua_tointegerx(L, 1, &is_number);
+    int index = is_number ? (int)requested_index : 0;
+    const char *property;
     entity *ent;
     lua_Integer value;
 
-    if (lua_gettop(L) < 3)
-        return luaL_error(L, "changeplayerproperty expects player, property, and value");
+    if (lua_gettop(L) < 3 || lua_gettop(L) > 4)
+        return luaL_error(L, "changeplayerproperty expects player, property, value, and optional weapon animation");
+    property = luaL_checkstring(L, 2);
     if (index < 0 || index >= 4)
         return luaL_error(L, "changeplayerproperty player index is out of range");
 
@@ -3165,24 +3174,24 @@ static int lua_openbor_changeplayerproperty(lua_State *L)
         return 1;
     }
 
-    if (!strcmp(property, "weapon")) {
+    if (!bor_lua_stricmp(property, "weapon")) {
         int weapon = (int)luaL_checkinteger(L, 3);
         int animation = (int)luaL_optinteger(L, 4, 0);
         set_weapon(ent, weapon, animation);
-    } else if (!strcmp(property, "name")) {
+    } else if (!bor_lua_stricmp(property, "name")) {
         const char *name = luaL_checkstring(L, 3);
         strncpy(player[index].name, name, sizeof(player[index].name) - 1);
         player[index].name[sizeof(player[index].name) - 1] = '\0';
-    } else if (!strcmp(property, "score")) {
+    } else if (!bor_lua_stricmp(property, "score")) {
         value = luaL_checkinteger(L, 3);
         if (value < 0) value = 0;
         if (value > 999999999) value = 999999999;
         player[index].score = (unsigned int)value;
-    } else if (!strcmp(property, "lives")) {
+    } else if (!bor_lua_stricmp(property, "lives")) {
         player[index].lives = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(property, "playkeys")) {
+    } else if (!bor_lua_stricmp(property, "playkeys")) {
         player[index].playkeys = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(property, "credits")) {
+    } else if (!bor_lua_stricmp(property, "credits")) {
         value = luaL_checkinteger(L, 3);
         if (noshare)
             player[index].credits = (int)value;
