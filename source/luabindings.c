@@ -1,5 +1,6 @@
 #include "openbor.h"
 #include "data.h"
+#include "models.h"
 #include "luabindings.h"
 #include <lauxlib.h>
 #include <string.h>
@@ -2095,7 +2096,6 @@ static int lua_openbor_setspawnentry(lua_State *L)
     const char *name;
     s_model *model;
     int value;
-    int i;
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setspawnentry expects a property and value");
@@ -2180,7 +2180,6 @@ static int lua_openbor_setspawnentry(lua_State *L)
             return luaL_error(L, "setspawnentry: unsupported property '%s'", property);
     }
 
-    for (i = 0; i < 1; ++i) { (void)i; }
     lua_pushinteger(L, 1);
     return 1;
 }
