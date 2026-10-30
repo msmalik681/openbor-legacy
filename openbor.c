@@ -9534,6 +9534,7 @@ void kill(entity * victim) {
 	ent_unlink(victim);
 	victim->weapent = NULL;
 	victim->health = 0;
+	bor_lua_clear_entity_vars(victim);
 	victim->exists = 0;
 	ent_count--;
 
@@ -9614,6 +9615,7 @@ void kill_all() {
 		e = ent_list[i];
 		if(e && e->exists)
 			execute_onkill_script(e);
+		bor_lua_clear_entity_vars(e);
 		e->exists = 0;	// well, no need to use kill function
 	}
 	textbox = smartbomber = NULL;
