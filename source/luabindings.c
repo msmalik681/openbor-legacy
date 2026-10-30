@@ -2211,6 +2211,116 @@ static int lua_openbor_projectile(lua_State *L)
     return 1;
 }
 
+/* Legacy model, sprite, and GIF helpers. */
+static int lua_openbor_loadmodel(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+    char unload = (char)luaL_optinteger(L, 2, 0);
+    s_model *model;
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+        return luaL_error(L, "loadmodel expects a model name and optional unload flag");
+
+    model = load_cached_model((char *)name, "lua_loadmodel", unload);
+    if (model)
+        lua_pushlightuserdata(L, model);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int lua_openbor_loadsprite(lua_State *L)
+{
+    const char *filename = luaL_checkstring(L, 1);
+    s_sprite *sprite;
+
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "loadsprite expects exactly 1 filename");
+    sprite = loadsprite2((char *)filename, NULL, NULL);
+    if (sprite)
+        lua_pushlightuserdata(L, sprite);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static int lua_openbor_playgif(lua_State *L)
+{
+    extern unsigned char pal[1024];
+    const char *filename = luaL_checkstring(L, 1);
+    int x = (int)luaL_optinteger(L, 2, 0);
+    int y = (int)luaL_optinteger(L, 3, 0);
+    int noskip = (int)luaL_optinteger(L, 4, 0);
+    int result;
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
+        return luaL_error(L, "playgif expects a filename and up to 3 optional integers");
+
+    result = playgif((char *)filename, x, y, noskip);
+    palette_set_corrected(pal, savedata.gamma, savedata.gamma, savedata.gamma,
+                          savedata.brightness, savedata.brightness, savedata.brightness);
+    lua_pushinteger(L, result);
+    return 1;
+}
+
+static int lua_openbor_getmodelproperty(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    int property = (int)luaL_checkinteger(L, 2);
+    s_modelcache *unused_cache_type = NULL;
+    (void)unused_cache_type;
+
+    if (index < 0 || (unsigned int)index >= models_cached || !model_cache) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    switch (property) {
+    case 0:
+        lua_pushinteger(L, model_cache[index].loadflag);
+        break;
+    case 1:
+        if (model_cache[index].model)
+            lua_pushlightuserdata(L, model_cache[index].model);
+        else
+            lua_pushnil(L);
+        break;
+    case 2:
+        lua_pushstring(L, model_cache[index].name ? model_cache[index].name : "");
+        break;
+    case 3:
+        lua_pushstring(L, model_cache[index].path ? model_cache[index].path : "");
+        break;
+    case 4:
+        lua_pushinteger(L, model_cache[index].selectable);
+        break;
+    default:
+        return luaL_error(L, "getmodelproperty: unknown property index %d", property);
+    }
+    return 1;
+}
+
+static int lua_openbor_changemodelproperty(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    int property = (int)luaL_checkinteger(L, 2);
+
+    if (lua_gettop(L) < 3)
+        return luaL_error(L, "changemodelproperty expects model index, property index, and value");
+    if (index < 0 || (unsigned int)index >= models_cached || !model_cache) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    if (property == 4)
+        model_cache[index].selectable = (char)luaL_checkinteger(L, 3);
+    else if (property < 0 || property > 4)
+        return luaL_error(L, "changemodelproperty: unknown property index %d", property);
+
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
 /* Legacy engine state and entity action helpers. */
 static int lua_openbor_changelight(lua_State *L)
 {
@@ -3665,6 +3775,21 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_projectile);
     lua_setglobal(g_lua_engine_state, "projectile");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_loadmodel);
+    lua_setglobal(g_lua_engine_state, "loadmodel");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_loadsprite);
+    lua_setglobal(g_lua_engine_state, "loadsprite");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_playgif);
+    lua_setglobal(g_lua_engine_state, "playgif");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getmodelproperty);
+    lua_setglobal(g_lua_engine_state, "getmodelproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changemodelproperty);
+    lua_setglobal(g_lua_engine_state, "changemodelproperty");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getplayerproperty);
     lua_setglobal(g_lua_engine_state, "getplayerproperty");
