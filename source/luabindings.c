@@ -2150,22 +2150,26 @@ static int lua_openbor_free(lua_State *L)
     bor_lua_screen_handle *screen;
     bor_lua_sprite_handle *sprite;
 
-    if (lua_gettop(L) < 1)
-        return luaL_error(L, "free expects at least 1 argument");
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "free expects exactly 1 allocated screen or sprite handle");
 
     screen = (bor_lua_screen_handle *)luaL_testudata(L, 1, BOR_LUA_SCREEN_METATABLE);
-    if (screen && screen->screen)
+    if (screen && screen->screen) {
         freescreen(&screen->screen);
+        lua_pushinteger(L, 0);
+        return 1;
+    }
 
     sprite = (bor_lua_sprite_handle *)luaL_testudata(L, 1, BOR_LUA_SPRITE_METATABLE);
     if (sprite && sprite->sprite) {
         free(sprite->sprite);
         sprite->sprite = NULL;
+        lua_pushinteger(L, 0);
+        return 1;
     }
 
-    /* Lua owns script values; explicit legacy free requests trigger collection. */
-    lua_gc(L, LUA_GCCOLLECT, 0);
-    return 0;
+    lua_pushinteger(L, -1);
+    return 1;
 }
 
 static int lua_openbor_fadeout(lua_State *L)
@@ -2627,7 +2631,7 @@ static int lua_openbor_loadmodel(lua_State *L)
     if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
         return luaL_error(L, "loadmodel expects a model name and optional unload flag");
 
-    model = load_cached_model((char *)name, "lua_loadmodel", unload);
+    model = load_cached_model((char *)name, "openbor_loadmodel", unload);
     if (model)
         lua_pushlightuserdata(L, model);
     else
@@ -3231,6 +3235,8 @@ static int lua_openbor_checkrange(lua_State *L)
     }
 
     animation = lua_isnoneornil(L, 3) ? ent->animnum : (int)luaL_checkinteger(L, 3);
+    if (animation < 0 || animation >= dyn_anim_custom_maxvalues.max_animations)
+        return luaL_error(L, "checkrange animation index is out of range");
     lua_pushinteger(L, check_range(ent, target, animation));
     return 1;
 }
