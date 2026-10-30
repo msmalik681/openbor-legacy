@@ -1596,6 +1596,88 @@ static int lua_openbor_setscriptvar(lua_State *L)
     return 1;
 }
 
+#define BOR_LUA_ENTITY_VARS "OpenBOR.EntityVars"
+
+void bor_lua_clear_entity_vars(struct entity *ent)
+{
+    lua_State *L = g_lua_engine_state;
+    if (!L || !ent)
+        return;
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+    if (lua_istable(L, -1)) {
+        lua_pushlightuserdata(L, ent);
+        lua_pushnil(L);
+        lua_rawset(L, -3);
+    }
+    lua_pop(L, 1);
+}
+
+void bor_lua_clear_all_entity_vars(void)
+{
+    lua_State *L = g_lua_engine_state;
+    if (!L)
+        return;
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+}
+
+static int lua_openbor_getentityvar(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    lua_Integer index = luaL_checkinteger(L, 2);
+
+    if (!ent || index < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+    lua_pushlightuserdata(L, ent);
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 2);
+        lua_pushnil(L);
+        return 1;
+    }
+
+    lua_pushinteger(L, index);
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+    lua_remove(L, -2);
+    return 1;
+}
+
+static int lua_openbor_setentityvar(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    lua_Integer index = luaL_checkinteger(L, 2);
+
+    if (lua_gettop(L) < 3)
+        return luaL_error(L, "setentityvar expects an entity, index, and value");
+    if (!ent || index < 0) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+    lua_pushlightuserdata(L, ent);
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushlightuserdata(L, ent);
+        lua_pushvalue(L, -2);
+        lua_rawset(L, -4);
+    }
+
+    lua_pushinteger(L, index);
+    lua_pushvalue(L, 3);
+    lua_rawset(L, -3);
+    lua_pop(L, 2);
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
 /* Legacy utility and variable functions retained from the original script API. */
 static int lua_openbor_isempty(lua_State *L)
 {
@@ -3687,6 +3769,9 @@ void openbor_register_lua_api(void) {
     lua_setmetatable(g_lua_engine_state, -2);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
 
+    lua_newtable(g_lua_engine_state);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+
     /* Script variables are isolated by the Lua source file that calls the API. */
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
@@ -3902,6 +3987,12 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_filestreamappend);
     lua_setglobal(g_lua_engine_state, "filestreamappend");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getentityvar);
+    lua_setglobal(g_lua_engine_state, "getentityvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setentityvar);
+    lua_setglobal(g_lua_engine_state, "setentityvar");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getscriptvar);
     lua_setglobal(g_lua_engine_state, "getscriptvar");
