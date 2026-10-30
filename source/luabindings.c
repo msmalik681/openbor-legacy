@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 extern int sprite_map_max_items;
+static s_spawn_entry bor_lua_spawnentry;
 /*
  * Common Lua -> C execution boundary.
  *
@@ -1361,7 +1362,16 @@ static int lua_openbor_changeanimation(lua_State *L) {
 // openbor.spawn(model, x, z, a, direction)
 // The public Lua API uses a model name; x/z/a match OpenBOR's native spawn().
 static int lua_openbor_spawn(lua_State *L) {
-    const char *model = luaL_checkstring(L, 1);
+    const char *model;
+    if (lua_gettop(L) == 0) {
+        entity *configured;
+        if (!level)
+            return luaL_error(L, "spawn called without an active level");
+        configured = smartspawn(&bor_lua_spawnentry);
+        bor_lua_push_entity(L, configured);
+        return 1;
+    }
+    model = luaL_checkstring(L, 1);
     float x = (float)luaL_optnumber(L, 2, 0.0);
     float z = (float)luaL_optnumber(L, 3, 0.0);
     float a = (float)luaL_optnumber(L, 4, 0.0);
@@ -2066,6 +2076,140 @@ static int lua_openbor_unloadsample(lua_State *L)
         return luaL_error(L, "unloadsample expects exactly 1 integer argument");
     sound_unload_sample((int)luaL_checkinteger(L, 1));
     return 0;
+}
+
+/* Legacy spawn-entry configuration API. */
+static int lua_openbor_clearspawnentry(lua_State *L)
+{
+    (void)L;
+    memset(&bor_lua_spawnentry, 0, sizeof(bor_lua_spawnentry));
+    bor_lua_spawnentry.index = -1;
+    bor_lua_spawnentry.itemindex = -1;
+    bor_lua_spawnentry.weaponindex = -1;
+    return 0;
+}
+
+static int lua_openbor_setspawnentry(lua_State *L)
+{
+    const char *property = luaL_checkstring(L, 1);
+    const char *name;
+    s_model *model;
+    int value;
+    int i;
+
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "setspawnentry expects a property and value");
+
+    if (bor_lua_stricmp(property, "name") == 0) {
+        name = luaL_checkstring(L, 2);
+        bor_lua_spawnentry.model = findmodel((char *)name);
+        if (!bor_lua_spawnentry.model)
+            return luaL_error(L, "setspawnentry: model '%s' was not found", name);
+    } else if (bor_lua_stricmp(property, "alias") == 0) {
+        name = luaL_checkstring(L, 2);
+        strncpy(bor_lua_spawnentry.alias, name, sizeof(bor_lua_spawnentry.alias) - 1);
+        bor_lua_spawnentry.alias[sizeof(bor_lua_spawnentry.alias) - 1] = '\0';
+    } else if (bor_lua_stricmp(property, "item") == 0) {
+        name = luaL_checkstring(L, 2);
+        model = findmodel((char *)name);
+        if (!model) return luaL_error(L, "setspawnentry: item model '%s' was not found", name);
+        bor_lua_spawnentry.itemmodel = model;
+        bor_lua_spawnentry.item = model->name;
+        bor_lua_spawnentry.itemindex = get_cached_model_index(bor_lua_spawnentry.item);
+        bor_lua_spawnentry.itemplayer_count = 0;
+    } else if (bor_lua_stricmp(property, "2pitem") == 0 ||
+               bor_lua_stricmp(property, "3pitem") == 0 ||
+               bor_lua_stricmp(property, "4pitem") == 0) {
+        name = luaL_checkstring(L, 2);
+        model = findmodel((char *)name);
+        bor_lua_spawnentry.itemmodel = model;
+        bor_lua_spawnentry.item = model ? model->name : NULL;
+        bor_lua_spawnentry.itemplayer_count =
+            bor_lua_stricmp(property, "2pitem") == 0 ? 1 :
+            (bor_lua_stricmp(property, "3pitem") == 0 ? 2 : 3);
+    } else if (bor_lua_stricmp(property, "itemalias") == 0) {
+        name = luaL_checkstring(L, 2);
+        strncpy(bor_lua_spawnentry.itemalias, name, sizeof(bor_lua_spawnentry.itemalias) - 1);
+        bor_lua_spawnentry.itemalias[sizeof(bor_lua_spawnentry.itemalias) - 1] = '\0';
+    } else if (bor_lua_stricmp(property, "weapon") == 0) {
+        name = luaL_checkstring(L, 2);
+        bor_lua_spawnentry.weaponmodel = findmodel((char *)name);
+        if (!bor_lua_spawnentry.weaponmodel)
+            return luaL_error(L, "setspawnentry: weapon model '%s' was not found", name);
+    } else if (bor_lua_stricmp(property, "coords") == 0) {
+        bor_lua_spawnentry.x = (float)luaL_checknumber(L, 2);
+        if (!lua_isnoneornil(L, 3)) bor_lua_spawnentry.z = (float)luaL_checknumber(L, 3);
+        if (!lua_isnoneornil(L, 4)) bor_lua_spawnentry.a = (float)luaL_checknumber(L, 4);
+    } else if (bor_lua_stricmp(property, "dying") == 0) {
+        bor_lua_spawnentry.dying = (char)luaL_checkinteger(L, 2);
+        if (!lua_isnoneornil(L, 3)) bor_lua_spawnentry.per1 = (char)luaL_checkinteger(L, 3);
+        if (!lua_isnoneornil(L, 4)) bor_lua_spawnentry.per2 = (char)luaL_checkinteger(L, 4);
+    } else {
+        value = (int)luaL_checkinteger(L, 2);
+        if (bor_lua_stricmp(property, "health") == 0)
+            bor_lua_spawnentry.health[0] = value;
+        else if (bor_lua_stricmp(property, "2phealth") == 0)
+            bor_lua_spawnentry.health[1] = value;
+        else if (bor_lua_stricmp(property, "3phealth") == 0)
+            bor_lua_spawnentry.health[2] = value;
+        else if (bor_lua_stricmp(property, "4phealth") == 0)
+            bor_lua_spawnentry.health[3] = value;
+        else if (bor_lua_stricmp(property, "itemhealth") == 0)
+            bor_lua_spawnentry.itemhealth = value;
+        else if (bor_lua_stricmp(property, "itemmap") == 0)
+            bor_lua_spawnentry.itemmap = (char)value;
+        else if (bor_lua_stricmp(property, "map") == 0)
+            bor_lua_spawnentry.colourmap = (char)value;
+        else if (bor_lua_stricmp(property, "mp") == 0)
+            bor_lua_spawnentry.mp = value;
+        else if (bor_lua_stricmp(property, "alpha") == 0)
+            bor_lua_spawnentry.alpha = (char)value;
+        else if (bor_lua_stricmp(property, "multiple") == 0)
+            bor_lua_spawnentry.multiple = value;
+        else if (bor_lua_stricmp(property, "nolife") == 0)
+            bor_lua_spawnentry.nolife = (char)value;
+        else if (bor_lua_stricmp(property, "boss") == 0)
+            bor_lua_spawnentry.boss = (char)value;
+        else if (bor_lua_stricmp(property, "flip") == 0)
+            bor_lua_spawnentry.flip = (char)value;
+        else if (bor_lua_stricmp(property, "credit") == 0)
+            bor_lua_spawnentry.credit = (unsigned char)value;
+        else if (bor_lua_stricmp(property, "aggression") == 0)
+            bor_lua_spawnentry.aggression = (short)value;
+        else
+            return luaL_error(L, "setspawnentry: unsupported property '%s'", property);
+    }
+
+    for (i = 0; i < 1; ++i) { (void)i; }
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int lua_openbor_projectile(lua_State *L)
+{
+    const char *name;
+    float x, z, a;
+    int direction, projectile_type, projectile_subtype, map;
+    entity *ent;
+
+    if (lua_gettop(L) != 8)
+        return luaL_error(L, "projectile expects 8 arguments");
+    name = luaL_checkstring(L, 1);
+    x = (float)luaL_checknumber(L, 2);
+    z = (float)luaL_checknumber(L, 3);
+    a = (float)luaL_checknumber(L, 4);
+    direction = (int)luaL_checkinteger(L, 5);
+    projectile_type = (int)luaL_checkinteger(L, 6);
+    projectile_subtype = (int)luaL_checkinteger(L, 7);
+    map = (int)luaL_checkinteger(L, 8);
+
+    if (projectile_type == 1)
+        ent = bomb_spawn((char *)name, -1, x, z, a, direction, map);
+    else
+        ent = knife_spawn((char *)name, -1, x, z, a, direction, projectile_subtype, map);
+
+    bor_lua_push_entity(L, ent);
+    return 1;
 }
 
 /* Legacy engine state and entity action helpers. */
@@ -3508,6 +3652,20 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changefglayerproperty);
     lua_setglobal(g_lua_engine_state, "changefglayerproperty");
+
+    memset(&bor_lua_spawnentry, 0, sizeof(bor_lua_spawnentry));
+    bor_lua_spawnentry.index = -1;
+    bor_lua_spawnentry.itemindex = -1;
+    bor_lua_spawnentry.weaponindex = -1;
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_clearspawnentry);
+    lua_setglobal(g_lua_engine_state, "clearspawnentry");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setspawnentry);
+    lua_setglobal(g_lua_engine_state, "setspawnentry");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_projectile);
+    lua_setglobal(g_lua_engine_state, "projectile");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getplayerproperty);
     lua_setglobal(g_lua_engine_state, "getplayerproperty");
