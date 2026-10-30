@@ -1591,6 +1591,92 @@ static int lua_openbor_setglobalvar(lua_State *L)
     return 1;
 }
 
+/* Legacy string and colour helpers. */
+static int lua_openbor_strinfirst(lua_State *L)
+{
+    const char *source = luaL_checkstring(L, 1);
+    const char *search = luaL_checkstring(L, 2);
+    const char *match = strstr(source, search);
+
+    if (match)
+        lua_pushstring(L, match);
+    else
+        lua_pushinteger(L, -1);
+    return 1;
+}
+
+static int lua_openbor_strinlast(lua_State *L)
+{
+    const char *source = luaL_checkstring(L, 1);
+    const char *search = luaL_checkstring(L, 2);
+    const char *match = NULL;
+    const char *cursor;
+
+    /* The original implementation searches for the first character of arg 2. */
+    if (*search) {
+        cursor = source;
+        while ((cursor = strchr(cursor, *search)) != NULL) {
+            match = cursor++;
+        }
+    }
+
+    if (match)
+        lua_pushstring(L, match);
+    else
+        lua_pushinteger(L, -1);
+    return 1;
+}
+
+static int lua_openbor_strleft(lua_State *L)
+{
+    const char *source = luaL_checkstring(L, 1);
+    lua_Integer count = luaL_checkinteger(L, 2);
+    size_t length = strlen(source);
+
+    if (count < 0)
+        return luaL_error(L, "strleft character count cannot be negative");
+    if ((lua_Unsigned)count > length)
+        count = (lua_Integer)length;
+
+    lua_pushlstring(L, source, (size_t)count);
+    return 1;
+}
+
+static int lua_openbor_strlength(lua_State *L)
+{
+    const char *source = luaL_checkstring(L, 1);
+    lua_pushinteger(L, (lua_Integer)strlen(source));
+    return 1;
+}
+
+static int lua_openbor_strright(lua_State *L)
+{
+    const char *source = luaL_checkstring(L, 1);
+    lua_Integer start = luaL_checkinteger(L, 2);
+    size_t length = strlen(source);
+
+    if (start < 0)
+        return luaL_error(L, "strright start position cannot be negative");
+    if ((lua_Unsigned)start > length)
+        start = (lua_Integer)length;
+
+    lua_pushstring(L, source + (size_t)start);
+    return 1;
+}
+
+static int lua_openbor_rgbcolor(lua_State *L)
+{
+    int red = (int)luaL_checkinteger(L, 1);
+    int green = (int)luaL_checkinteger(L, 2);
+    int blue = (int)luaL_checkinteger(L, 3);
+
+    if (lua_gettop(L) != 3)
+        return luaL_error(L, "rgbcolor expects exactly 3 arguments");
+
+    lua_pushinteger(L, (lua_Integer)_makecolour(red, green, blue));
+    return 1;
+}
+
 /*
  * Resolve legacy OpenBOR constants by name for Lua scripts.
  * This first pass covers the static constants defined by this engine version;
@@ -2244,6 +2330,24 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_clearglobalvar);
     lua_setglobal(g_lua_engine_state, "clearglobalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_strinfirst);
+    lua_setglobal(g_lua_engine_state, "strinfirst");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_strinlast);
+    lua_setglobal(g_lua_engine_state, "strinlast");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_strleft);
+    lua_setglobal(g_lua_engine_state, "strleft");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_strlength);
+    lua_setglobal(g_lua_engine_state, "strlength");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_strright);
+    lua_setglobal(g_lua_engine_state, "strright");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_rgbcolor);
+    lua_setglobal(g_lua_engine_state, "rgbcolor");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_log);
     lua_setglobal(g_lua_engine_state, "log");
