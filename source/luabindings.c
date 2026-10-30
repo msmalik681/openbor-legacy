@@ -2754,6 +2754,10 @@ static int lua_openbor_changemodelproperty(lua_State *L)
         model_cache[index].selectable = (char)luaL_checkinteger(L, 3);
     else if (property < 0 || property > 4)
         return luaL_error(L, "changemodelproperty: unknown property index %d", property);
+    else {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
 
     lua_pushinteger(L, 1);
     return 1;
@@ -2990,6 +2994,7 @@ static int lua_openbor_settextobj(lua_State *L)
     const char *text;
     s_textobj *obj;
     char *copy;
+    int x, y, font, z, time = 0;
 
     if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
         return luaL_error(L, "settextobj expects index, x, y, font, z, text, and optional time");
@@ -3000,19 +3005,26 @@ static int lua_openbor_settextobj(lua_State *L)
         return 1;
     }
 
+    x = (int)luaL_checkinteger(L, 2);
+    y = (int)luaL_checkinteger(L, 3);
+    font = (int)luaL_checkinteger(L, 4);
+    z = (int)luaL_checkinteger(L, 5);
     text = luaL_checkstring(L, 6);
+    if (lua_gettop(L) == 7)
+        time = (int)luaL_checkinteger(L, 7);
+
     copy = (char *)malloc(strlen(text) + 1);
     if (!copy)
         return luaL_error(L, "out of memory setting text object");
     strcpy(copy, text);
 
     obj = &level->textobjs[index];
-    obj->x = (int)luaL_checkinteger(L, 2);
-    obj->y = (int)luaL_checkinteger(L, 3);
-    obj->font = (int)luaL_checkinteger(L, 4);
-    obj->z = (int)luaL_checkinteger(L, 5);
+    obj->x = x;
+    obj->y = y;
+    obj->font = font;
+    obj->z = z;
     if (lua_gettop(L) == 7)
-        obj->t = (int)luaL_checkinteger(L, 7);
+        obj->t = time;
     free(obj->text);
     obj->text = copy;
 
@@ -3062,7 +3074,7 @@ static int bor_lua_layer_property(lua_State *L, int foreground, int change)
 #define BOR_LAYER_INT(field) \
     do { if (change) { value = (int)luaL_checkinteger(L, 3); if (foreground) level->fglayers[index].field = value; else level->bglayers[index].field = value; lua_pushinteger(L, 1); } else { lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
 #define BOR_LAYER_FLOAT(field) \
-    do { if (change) { decimal = (float)luaL_checknumber(L, 3); if (foreground) level->fglayers[index].field = decimal; else level->bglayers[index].field = decimal; lua_pushnumber(L, decimal); lua_pop(L, 1); lua_pushinteger(L, 1); } else { lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
+    do { if (change) { decimal = (float)luaL_checknumber(L, 3); if (foreground) level->fglayers[index].field = decimal; else level->bglayers[index].field = decimal; lua_pushinteger(L, 1); } else { lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
 
     if (bor_lua_stricmp(property, "alpha") == 0) BOR_LAYER_INT(alpha);
     if (bor_lua_stricmp(property, "amplitude") == 0) BOR_LAYER_INT(amplitude);
