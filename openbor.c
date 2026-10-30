@@ -3315,7 +3315,7 @@ void lcmHandleCommandScripts(ArgList * arglist, char *scriptname, char *filename
             lua_pop(g_lua_engine_state, 1);
             lua_pushnil(g_lua_engine_state);
             lua_setglobal(g_lua_engine_state, scriptname);
-            printf("[LUA WARNING] Script '%s' does not define function main().\\n",
+            printf("[LUA WARNING] Script '%s' does not define function main().\n",
                    target_script_file);
         }
 
