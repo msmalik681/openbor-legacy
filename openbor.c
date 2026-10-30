@@ -591,8 +591,8 @@ static void bor_lua_call_entity_event(entity *ent, const char *event, const char
         return;
     }
 
-    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
-    if (bor_lua_pcall(g_lua_engine_state, 1, 0, context) != LUA_OK)
+    /* Event scripts use main() with context supplied by getlocalvar(). */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -613,13 +613,8 @@ static void bor_lua_call_entity_pair_event(entity *ent, entity *other,
         return;
     }
 
-    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
-    if (other && other->exists)
-        lua_pushlightuserdata(g_lua_engine_state, (void *)other);
-    else
-        lua_pushnil(g_lua_engine_state);
-
-    if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
+    /* Entity and obstacle are available through getlocalvar(). */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -659,11 +654,8 @@ static void bor_lua_call_entity_int2_event(entity *ent, int value1, int value2,
         return;
     }
 
-    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)value1);
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)value2);
-
-    if (bor_lua_pcall(g_lua_engine_state, 3, 0, context) != LUA_OK)
+    /* attacktype and reset are available through getlocalvar(). */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -688,13 +680,8 @@ static void bor_lua_call_player_event(int player_nr, const char *event, const ch
         return;
     }
 
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)player_nr);
-    if (player_ent)
-        lua_pushlightuserdata(g_lua_engine_state, (void *)player_ent);
-    else
-        lua_pushnil(g_lua_engine_state);
-
-    if (bor_lua_pcall(g_lua_engine_state, 2, 0, context) != LUA_OK)
+    /* Player index and entity are available through getlocalvar(). */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, context) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -714,10 +701,8 @@ static void bor_lua_call_timetick_event(int time, int gotime)
         return;
     }
 
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)time);
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)gotime);
-
-    if (bor_lua_pcall(g_lua_engine_state, 2, 0, "timetickscript") != LUA_OK)
+    /* time and gotime are available through getlocalvar(). */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "timetickscript") != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -806,8 +791,7 @@ void execute_animation_script(entity * ent) {
         return;
     }
 
-    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
-    if (bor_lua_pcall(g_lua_engine_state, 1, 0, "animationscript") != LUA_OK)
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "animationscript") != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -870,10 +854,7 @@ void execute_onblockw_script(entity * ent, int plane, float height) {
         return;
     }
 
-    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)plane);
-    lua_pushnumber(g_lua_engine_state, (lua_Number)height);
-    if (bor_lua_pcall(g_lua_engine_state, 3, 0, "onblockwscript") != LUA_OK)
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "onblockwscript") != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -4650,7 +4631,7 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 					break;
 				case CMD_MODEL_SCRIPT:
 					//load the update script
-					lcmHandleCommandScripts(&arglist, "updateentityscript", filename);
+					lcmHandleCommandScripts(&arglist, "updatescript", filename);
 					break;
 				case CMD_MODEL_THINKSCRIPT:
 					lcmHandleCommandScripts(&arglist, "thinkscript", filename);
@@ -4707,19 +4688,39 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 					lcmHandleCommandScripts(&arglist, "onspawnscript", filename);
 					break;
 				case CMD_MODEL_ANIMATIONSCRIPT:
-					// --- FIXED: INITIALIZE CONTAINER POINTERS TO PREVENT NULL DEREFERENCES ---
 					value = GET_ARG(1);
-					printf("Lua Pipeline: Compiling Animation Script: '%s'\n", value);
-					
+					printf("Loading Lua Animation Script: '%s'\n", value);
+
 					size_t pak_size = 0;
 					char *pak_buffer = NULL;
 
 					if (buffer_pakfile(value, &pak_buffer, &pak_size) == 1) {
 						if (g_lua_engine_state) {
+							int previous_main_ref;
+							lua_getglobal(g_lua_engine_state, "main");
+							previous_main_ref = luaL_ref(g_lua_engine_state, LUA_REGISTRYINDEX);
+
 							if (bor_lua_runbuffer(g_lua_engine_state, pak_buffer, pak_size, value) != LUA_OK) {
 								printf("[LUA COMPILE ERROR] Execution failed on '%s': %s\n", value, lua_tostring(g_lua_engine_state, -1));
+								lua_pop(g_lua_engine_state, 1);
+								lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+								lua_setglobal(g_lua_engine_state, "main");
+								luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
 								freeAndNull((void**) &pak_buffer);
 								shutdown(1, "Critical: Native Lua compilation failed for animationscript!\n");
+							} else {
+								lua_getglobal(g_lua_engine_state, "main");
+								if (lua_isfunction(g_lua_engine_state, -1)) {
+									lua_setglobal(g_lua_engine_state, "animationscript");
+								} else {
+									lua_pop(g_lua_engine_state, 1);
+									lua_pushnil(g_lua_engine_state);
+									lua_setglobal(g_lua_engine_state, "animationscript");
+									printf("[LUA WARNING] Animation script '%s' does not define function main().\n", value);
+								}
+								lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+								lua_setglobal(g_lua_engine_state, "main");
+								luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
 							}
 						}
 						freeAndNull((void**) &pak_buffer);
@@ -4728,7 +4729,7 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 					}
 					break;
 				case CMD_MODEL_KEYSCRIPT:
-					lcmHandleCommandScripts(&arglist, "entitykeyscript", filename);
+					lcmHandleCommandScripts(&arglist, "keyscript", filename);
 					break;
 				case CMD_MODEL_ANIM:
 					frameset = 0;
