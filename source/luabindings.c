@@ -76,6 +76,11 @@ extern s_level *level;
 static int bor_lua_stricmp(const char *left, const char *right);
 extern int noshare;
 extern int credits;
+extern s_savedata savedata;
+extern char musicname[128];
+extern float musicfade[2];
+extern int musicloop;
+extern u32 musicoffset;
 extern entity *self;
 extern int g_lua_current_player_index;
 extern u32 borTime;
@@ -1867,6 +1872,106 @@ static int lua_openbor_filestreamappend(lua_State *L)
     return 0;
 }
 
+/* Legacy music and sample controls. */
+static int lua_openbor_playmusic(lua_State *L)
+{
+    if (lua_gettop(L) == 0) {
+        sound_close_music();
+        return 0;
+    }
+    if (lua_gettop(L) > 3)
+        return luaL_error(L, "playmusic expects a filename and up to 2 optional arguments");
+
+    music((char *)luaL_checkstring(L, 1),
+          lua_toboolean(L, 2),
+          (long)luaL_optinteger(L, 3, 0));
+    return 0;
+}
+
+static int lua_openbor_fademusic(lua_State *L)
+{
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
+        return luaL_error(L, "fademusic expects a fade value and optional filename, loop, and offset");
+
+    musicfade[0] = (float)luaL_checknumber(L, 1);
+    musicfade[1] = (float)savedata.musicvol;
+
+    if (lua_gettop(L) == 4) {
+        const char *name = luaL_checkstring(L, 2);
+        strncpy(musicname, name, sizeof(musicname) - 1);
+        musicname[sizeof(musicname) - 1] = '\0';
+        musicloop = (int)luaL_checkinteger(L, 3);
+        musicoffset = (u32)luaL_checkinteger(L, 4);
+    }
+    return 0;
+}
+
+static int lua_openbor_setmusicvolume(lua_State *L)
+{
+    int left;
+    int right;
+
+    if (lua_gettop(L) == 0)
+        return 0;
+    if (lua_gettop(L) > 2)
+        return luaL_error(L, "setmusicvolume expects 1 or 2 integer values");
+
+    left = (int)luaL_checkinteger(L, 1);
+    right = (int)luaL_optinteger(L, 2, left);
+    sound_volume_music(left, right);
+    return 0;
+}
+
+static int lua_openbor_setmusictempo(lua_State *L)
+{
+    if (lua_gettop(L) > 1)
+        return luaL_error(L, "setmusictempo expects at most 1 integer value");
+    if (lua_gettop(L) == 1)
+        sound_music_tempo((int)luaL_checkinteger(L, 1));
+    return 0;
+}
+
+static int lua_openbor_pausemusic(lua_State *L)
+{
+    if (lua_gettop(L) > 1)
+        return luaL_error(L, "pausemusic expects at most 1 boolean value");
+    if (lua_gettop(L) == 1)
+        sound_pause_music(lua_toboolean(L, 1));
+    return 0;
+}
+
+static int lua_openbor_playsample(lua_State *L)
+{
+    int id, priority, left, right, speed, loop;
+
+    if (lua_gettop(L) != 6)
+        return luaL_error(L, "playsample expects 6 integer arguments");
+
+    id = (int)luaL_checkinteger(L, 1);
+    priority = (int)luaL_checkinteger(L, 2);
+    left = (int)luaL_checkinteger(L, 3);
+    right = (int)luaL_checkinteger(L, 4);
+    speed = (int)luaL_checkinteger(L, 5);
+    loop = (int)luaL_checkinteger(L, 6);
+
+    if (id < 0)
+        return luaL_error(L, "playsample sample ID cannot be negative");
+
+    if (loop)
+        sound_loop_sample(id, (unsigned int)priority, left, right, (unsigned int)speed);
+    else
+        sound_play_sample(id, (unsigned int)priority, left, right, (unsigned int)speed);
+    return 0;
+}
+
+static int lua_openbor_unloadsample(lua_State *L)
+{
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "unloadsample expects exactly 1 integer argument");
+    sound_unload_sample((int)luaL_checkinteger(L, 1));
+    return 0;
+}
+
 /* Legacy engine state and entity action helpers. */
 static int lua_openbor_changelight(lua_State *L)
 {
@@ -3035,6 +3140,27 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_rgbcolor);
     lua_setglobal(g_lua_engine_state, "rgbcolor");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_playmusic);
+    lua_setglobal(g_lua_engine_state, "playmusic");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_fademusic);
+    lua_setglobal(g_lua_engine_state, "fademusic");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setmusicvolume);
+    lua_setglobal(g_lua_engine_state, "setmusicvolume");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setmusictempo);
+    lua_setglobal(g_lua_engine_state, "setmusictempo");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_pausemusic);
+    lua_setglobal(g_lua_engine_state, "pausemusic");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_playsample);
+    lua_setglobal(g_lua_engine_state, "playsample");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_unloadsample);
+    lua_setglobal(g_lua_engine_state, "unloadsample");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changelight);
     lua_setglobal(g_lua_engine_state, "changelight");
