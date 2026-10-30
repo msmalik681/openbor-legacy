@@ -1867,6 +1867,159 @@ static int lua_openbor_filestreamappend(lua_State *L)
     return 0;
 }
 
+/* Legacy engine state and entity action helpers. */
+static int lua_openbor_changelight(lua_State *L)
+{
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "changelight expects x and z values");
+
+    if (!lua_isnil(L, 1))
+        light[0] = (int)luaL_checkinteger(L, 1);
+    if (!lua_isnil(L, 2))
+        light[1] = (int)luaL_checkinteger(L, 2);
+    return 0;
+}
+
+static int lua_openbor_changeshadowcolor(lua_State *L)
+{
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+        return luaL_error(L, "changeshadowcolor expects a color and optional alpha");
+
+    colors.shadow = (int)luaL_checkinteger(L, 1);
+    if (!lua_isnoneornil(L, 2))
+        shadowalpha = (int)luaL_checkinteger(L, 2);
+    return 0;
+}
+
+static int lua_openbor_changepalette(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    change_system_palette(index);
+    return 0;
+}
+
+static int lua_openbor_jumptobranch(lua_State *L)
+{
+    extern int endgame;
+    const char *name = luaL_checkstring(L, 1);
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+        return luaL_error(L, "jumptobranch expects a branch name and optional immediate flag");
+
+    strncpy(branch_name, name, MAX_NAME_LEN);
+    branch_name[MAX_NAME_LEN] = '\0';
+    if (!lua_isnoneornil(L, 2))
+        endgame = (int)luaL_checkinteger(L, 2);
+    return 0;
+}
+
+static int lua_openbor_bindentity(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *other = bor_lua_get_live_entity(L, 2);
+    int i;
+    int values[5] = {0, 0, 0, 0, 0};
+    extern void adjust_bind(entity *e);
+
+    if (lua_gettop(L) < 2 || lua_gettop(L) > 7)
+        return luaL_error(L, "bindentity expects 2 entities and up to 5 optional offsets");
+
+    if (!ent || !ent->exists)
+        return 0;
+    if (!other || !other->exists) {
+        ent->bound = NULL;
+        return 0;
+    }
+
+    ent->bound = other;
+    for (i = 3; i <= lua_gettop(L); ++i) {
+        if (!lua_isnil(L, i))
+            values[i - 3] = (int)luaL_checkinteger(L, i);
+    }
+    if (lua_gettop(L) >= 3 && !lua_isnil(L, 3)) ent->bindoffset[0] = values[0];
+    if (lua_gettop(L) >= 4 && !lua_isnil(L, 4)) ent->bindoffset[1] = values[1];
+    if (lua_gettop(L) >= 5 && !lua_isnil(L, 5)) ent->bindoffset[2] = values[2];
+    if (lua_gettop(L) >= 6 && !lua_isnil(L, 6)) ent->bindoffset[3] = values[3];
+    if (lua_gettop(L) >= 7 && !lua_isnil(L, 7)) ent->bindanim = values[4];
+
+    adjust_bind(ent);
+    return 0;
+}
+
+static int lua_openbor_performattack(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    int animation;
+    int resetable;
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 3)
+        return luaL_error(L, "performattack expects an entity and up to 2 optional integers");
+    if (!ent || !ent->exists)
+        return luaL_error(L, "performattack expects a live entity");
+
+    ent->takeaction = common_attack_proc;
+    ent->attacking = 1;
+    ent->idling = 0;
+    ent->drop = 0;
+    ent->falling = 0;
+    ent->inpain = 0;
+    ent->blocking = 0;
+
+    if (lua_gettop(L) >= 2) {
+        animation = (int)luaL_checkinteger(L, 2);
+        resetable = (int)luaL_optinteger(L, 3, 0);
+        ent_set_anim(ent, animation, resetable);
+    }
+    return 0;
+}
+
+static int lua_openbor_setidle(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    int animation = 0;
+    int resetable = 0;
+    int stalladd = 0;
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
+        return luaL_error(L, "setidle expects an entity and up to 3 optional integers");
+    if (!ent || !ent->exists)
+        return luaL_error(L, "setidle expects a live entity");
+
+    ent->takeaction = NULL;
+    ent->attacking = 0;
+    ent->idling = 1;
+    ent->drop = 0;
+    ent->falling = 0;
+    ent->inpain = 0;
+    ent->blocking = 0;
+    ent->nograb = 0;
+
+    if (lua_gettop(L) >= 2) {
+        animation = (int)luaL_checkinteger(L, 2);
+        resetable = (int)luaL_optinteger(L, 3, 0);
+        stalladd = (int)luaL_optinteger(L, 4, 0);
+        ent_set_anim(ent, animation, resetable);
+    }
+    if (stalladd > 0)
+        ent->stalltime = borTime + (u32)stalladd;
+    return 0;
+}
+
+static int lua_openbor_updateframe(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    int frame = (int)luaL_checkinteger(L, 2);
+    void update_frame(entity *ent, int frame);
+
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "updateframe expects an entity and frame number");
+    if (!ent || !ent->exists)
+        return luaL_error(L, "updateframe expects a live entity");
+
+    update_frame(ent, frame);
+    return 0;
+}
+
 /* Legacy player property accessors. */
 static int lua_openbor_getplayerproperty(lua_State *L)
 {
@@ -2882,6 +3035,30 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_rgbcolor);
     lua_setglobal(g_lua_engine_state, "rgbcolor");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changelight);
+    lua_setglobal(g_lua_engine_state, "changelight");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changeshadowcolor);
+    lua_setglobal(g_lua_engine_state, "changeshadowcolor");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changepalette);
+    lua_setglobal(g_lua_engine_state, "changepalette");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_jumptobranch);
+    lua_setglobal(g_lua_engine_state, "jumptobranch");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_bindentity);
+    lua_setglobal(g_lua_engine_state, "bindentity");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_performattack);
+    lua_setglobal(g_lua_engine_state, "performattack");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setidle);
+    lua_setglobal(g_lua_engine_state, "setidle");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_updateframe);
+    lua_setglobal(g_lua_engine_state, "updateframe");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getplayerproperty);
     lua_setglobal(g_lua_engine_state, "getplayerproperty");
