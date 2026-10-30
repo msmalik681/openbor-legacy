@@ -399,6 +399,28 @@ typedef struct bor_lua_entity_handle {
 } bor_lua_entity_handle;
 
 #define BOR_LUA_ENTITY_METATABLE "OpenBOR.Entity"
+#define BOR_LUA_SCREEN_METATABLE "OpenBOR.Screen"
+
+typedef struct {
+    s_screen *screen;
+} bor_lua_screen_handle;
+
+static s_screen *bor_lua_check_screen(lua_State *L, int index)
+{
+    bor_lua_screen_handle *handle = (bor_lua_screen_handle *)luaL_checkudata(L, index, BOR_LUA_SCREEN_METATABLE);
+    if (!handle->screen)
+        luaL_error(L, "screen handle has already been freed");
+    return handle->screen;
+}
+
+static int bor_lua_screen_gc(lua_State *L)
+{
+    bor_lua_screen_handle *handle = (bor_lua_screen_handle *)luaL_checkudata(L, 1, BOR_LUA_SCREEN_METATABLE);
+    if (handle->screen)
+        freescreen(&handle->screen);
+    return 0;
+}
+
 
 static void bor_lua_push_entity(lua_State *L, entity *ent)
 {
@@ -2099,8 +2121,14 @@ static int lua_openbor_loadsample(lua_State *L)
 
 static int lua_openbor_free(lua_State *L)
 {
+    bor_lua_screen_handle *screen;
+
     if (lua_gettop(L) < 1)
         return luaL_error(L, "free expects at least 1 argument");
+
+    screen = (bor_lua_screen_handle *)luaL_testudata(L, 1, BOR_LUA_SCREEN_METATABLE);
+    if (screen && screen->screen)
+        freescreen(&screen->screen);
 
     /* Lua owns script values; explicit legacy free requests trigger collection. */
     lua_gc(L, LUA_GCCOLLECT, 0);
@@ -2351,6 +2379,211 @@ static int lua_openbor_projectile(lua_State *L)
 
     bor_lua_push_entity(L, ent);
     return 1;
+}
+
+/* Legacy screen allocation and drawing API. */
+static int lua_openbor_allocscreen(lua_State *L)
+{
+    int width;
+    int height;
+    s_screen *screen;
+    bor_lua_screen_handle *handle;
+
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "allocscreen expects width and height");
+    width = (int)luaL_checkinteger(L, 1);
+    height = (int)luaL_checkinteger(L, 2);
+    if (width <= 0 || height <= 0)
+        return luaL_error(L, "allocscreen dimensions must be positive");
+
+    screen = allocscreen(width, height, screenformat);
+    if (!screen)
+        return luaL_error(L, "allocscreen could not allocate %d x %d screen", width, height);
+    clearscreen(screen);
+
+    handle = (bor_lua_screen_handle *)lua_newuserdatauv(L, sizeof(*handle), 0);
+    handle->screen = screen;
+    luaL_getmetatable(L, BOR_LUA_SCREEN_METATABLE);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static int lua_openbor_clearscreen(lua_State *L)
+{
+    clearscreen(bor_lua_check_screen(L, 1));
+    return 0;
+}
+
+static int lua_openbor_drawstringtoscreen(lua_State *L)
+{
+    s_screen *screen = bor_lua_check_screen(L, 1);
+    int x = (int)luaL_checkinteger(L, 2);
+    int y = (int)luaL_checkinteger(L, 3);
+    int font = (int)luaL_checkinteger(L, 4);
+    const char *text = luaL_checkstring(L, 5);
+
+    if (lua_gettop(L) != 5)
+        return luaL_error(L, "drawstringtoscreen expects screen, x, y, font, and text");
+    screen_printf(screen, x, y, font, "%s", text);
+    return 0;
+}
+
+static int lua_openbor_drawboxtoscreen(lua_State *L)
+{
+    s_screen *screen = bor_lua_check_screen(L, 1);
+    int x = (int)luaL_checkinteger(L, 2);
+    int y = (int)luaL_checkinteger(L, 3);
+    int width = (int)luaL_checkinteger(L, 4);
+    int height = (int)luaL_checkinteger(L, 5);
+    int colour = (int)luaL_checkinteger(L, 6);
+    int lut = (int)luaL_optinteger(L, 7, -1);
+
+    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+        return luaL_error(L, "drawboxtoscreen expects screen, x, y, width, height, colour, and optional LUT");
+    if (lut >= 0) lut %= MAX_BLENDINGS + 1;
+
+    switch (screen->pixelformat) {
+    case PIXEL_8: drawbox(x, y, width, height, colour, screen, lut); break;
+    case PIXEL_16: drawbox16(x, y, width, height, (unsigned short)colour, screen, lut); break;
+    case PIXEL_24: drawbox24(x, y, width, height, (unsigned int)colour, screen, lut); break;
+    case PIXEL_32: drawbox32(x, y, width, height, (unsigned int)colour, screen, lut); break;
+    }
+    return 0;
+}
+
+static int lua_openbor_drawlinetoscreen(lua_State *L)
+{
+    s_screen *screen = bor_lua_check_screen(L, 1);
+    int x1 = (int)luaL_checkinteger(L, 2);
+    int y1 = (int)luaL_checkinteger(L, 3);
+    int x2 = (int)luaL_checkinteger(L, 4);
+    int y2 = (int)luaL_checkinteger(L, 5);
+    int colour = (int)luaL_checkinteger(L, 6);
+    int lut = (int)luaL_optinteger(L, 7, -1);
+
+    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+        return luaL_error(L, "drawlinetoscreen expects screen, 5 integers, and optional LUT");
+    if (lut >= 0) lut %= MAX_BLENDINGS + 1;
+
+    switch (screen->pixelformat) {
+    case PIXEL_8: line(x1, y1, x2, y2, colour, screen, lut); break;
+    case PIXEL_16: line16(x1, y1, x2, y2, colour, screen, lut); break;
+    case PIXEL_32: line32(x1, y1, x2, y2, colour, screen, lut); break;
+    }
+    return 0;
+}
+
+static int lua_openbor_drawdottoscreen(lua_State *L)
+{
+    s_screen *screen = bor_lua_check_screen(L, 1);
+    int x = (int)luaL_checkinteger(L, 2);
+    int y = (int)luaL_checkinteger(L, 3);
+    int colour = (int)luaL_checkinteger(L, 4);
+    int lut = (int)luaL_optinteger(L, 5, -1);
+
+    if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
+        return luaL_error(L, "drawdottoscreen expects screen, x, y, colour, and optional LUT");
+    if (lut >= 0) lut %= MAX_BLENDINGS + 1;
+
+    switch (screen->pixelformat) {
+    case PIXEL_8: putpixel(x, y, colour, screen, lut); break;
+    case PIXEL_16: putpixel16(x, y, colour, screen, lut); break;
+    case PIXEL_24: putpixel24(x, y, colour, screen, lut); break;
+    case PIXEL_32: putpixel32(x, y, colour, screen, lut); break;
+    }
+    return 0;
+}
+
+static int lua_openbor_drawscreen(lua_State *L)
+{
+    s_screen *screen = bor_lua_check_screen(L, 1);
+    int x = (int)luaL_checkinteger(L, 2);
+    int y = (int)luaL_checkinteger(L, 3);
+    int z = (int)luaL_checkinteger(L, 4);
+    s_drawmethod method;
+
+    if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
+        return luaL_error(L, "drawscreen expects screen, x, y, z, and optional LUT");
+    if (lua_gettop(L) == 4) {
+        method = drawmethod;
+    } else {
+        int lut = (int)luaL_checkinteger(L, 5);
+        method = plainmethod;
+        method.alpha = lut >= 0 ? lut % (MAX_BLENDINGS + 1) : lut;
+        method.transbg = 1;
+    }
+    spriteq_add_screen(x, y, z, screen, &method, 0);
+    return 0;
+}
+
+static int lua_openbor_drawsprite(lua_State *L)
+{
+    s_sprite *sprite = (s_sprite *)lua_touserdata(L, 1);
+    int x = (int)luaL_checkinteger(L, 2);
+    int y = (int)luaL_checkinteger(L, 3);
+    int z = (int)luaL_checkinteger(L, 4);
+    int sortid = (int)luaL_optinteger(L, 5, 0);
+
+    if (lua_gettop(L) < 4 || lua_gettop(L) > 5 || !sprite)
+        return luaL_error(L, "drawsprite expects a sprite handle, x, y, z, and optional sort ID");
+    spriteq_add_frame(x, y, z, sprite, &drawmethod, sortid);
+    return 0;
+}
+
+static int lua_openbor_drawspritetoscreen(lua_State *L)
+{
+    s_sprite *sprite = (s_sprite *)lua_touserdata(L, 1);
+    s_screen *screen = bor_lua_check_screen(L, 2);
+    int x = (int)luaL_checkinteger(L, 3);
+    int y = (int)luaL_checkinteger(L, 4);
+
+    if (lua_gettop(L) != 4 || !sprite)
+        return luaL_error(L, "drawspritetoscreen expects sprite, screen, x, and y");
+    putsprite(x, y, sprite, screen, &drawmethod);
+    return 0;
+}
+
+static int lua_openbor_setdrawmethod(lua_State *L)
+{
+    entity *ent = NULL;
+    s_drawmethod *method;
+    int values[12] = {0};
+    int i;
+
+    if (lua_gettop(L) < 2 || lua_gettop(L) > 14)
+        return luaL_error(L, "setdrawmethod expects an entity or nil, draw flags, and optional colourmap");
+    if (!lua_isnil(L, 1)) {
+        ent = bor_lua_get_live_entity(L, 1);
+        if (!ent || !ent->exists)
+            return luaL_error(L, "setdrawmethod expects a live entity or nil");
+    }
+    method = ent ? &ent->drawmethod : &drawmethod;
+
+    for (i = 2; i <= 13 && i <= lua_gettop(L); ++i) {
+        if (!lua_isnil(L, i))
+            values[i - 2] = (int)luaL_checkinteger(L, i);
+    }
+
+    method->flag = values[0];
+    method->scalex = values[1];
+    method->scaley = values[2];
+    method->flipx = values[3];
+    method->flipy = values[4];
+    method->shiftx = values[5];
+    method->alpha = values[6];
+    method->remap = values[7];
+    method->fillcolor = values[8];
+    method->rotate = values[9] % 360;
+    method->fliprotate = values[10];
+    method->transbg = values[11];
+    if (lua_gettop(L) >= 14) {
+        if (!lua_isnil(L, 14) && !lua_islightuserdata(L, 14))
+            return luaL_error(L, "setdrawmethod colourmap must be a lightuserdata pointer or nil");
+        method->table = (unsigned char *)lua_touserdata(L, 14);
+    }
+    if (method->rotate < 0)
+        method->rotate += 360;
+    return 0;
 }
 
 /* Legacy model, sprite, and GIF helpers. */
@@ -3754,6 +3987,12 @@ void openbor_register_lua_api(void) {
     if (!g_lua_engine_state) return;
 
     /* Register before any entity handles are created. */
+    luaL_newmetatable(g_lua_engine_state, BOR_LUA_SCREEN_METATABLE);
+    lua_pushcfunction(g_lua_engine_state, bor_lua_screen_gc);
+    lua_setfield(g_lua_engine_state, -2, "__gc");
+    lua_pop(g_lua_engine_state, 1);
+
+
     luaL_newmetatable(g_lua_engine_state, BOR_LUA_ENTITY_METATABLE);
     lua_pushcfunction(g_lua_engine_state, lua_openbor_entity_index);
     lua_setfield(g_lua_engine_state, -2, "__index");
@@ -3921,6 +4160,36 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_projectile);
     lua_setglobal(g_lua_engine_state, "projectile");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_allocscreen);
+    lua_setglobal(g_lua_engine_state, "allocscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_clearscreen);
+    lua_setglobal(g_lua_engine_state, "clearscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawstringtoscreen);
+    lua_setglobal(g_lua_engine_state, "drawstringtoscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawboxtoscreen);
+    lua_setglobal(g_lua_engine_state, "drawboxtoscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawlinetoscreen);
+    lua_setglobal(g_lua_engine_state, "drawlinetoscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawdottoscreen);
+    lua_setglobal(g_lua_engine_state, "drawdottoscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawscreen);
+    lua_setglobal(g_lua_engine_state, "drawscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawsprite);
+    lua_setglobal(g_lua_engine_state, "drawsprite");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawspritetoscreen);
+    lua_setglobal(g_lua_engine_state, "drawspritetoscreen");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setdrawmethod);
+    lua_setglobal(g_lua_engine_state, "setdrawmethod");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_loadmodel);
     lua_setglobal(g_lua_engine_state, "loadmodel");
