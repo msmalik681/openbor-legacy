@@ -2267,9 +2267,6 @@ static int lua_openbor_getmodelproperty(lua_State *L)
 {
     int index = (int)luaL_checkinteger(L, 1);
     int property = (int)luaL_checkinteger(L, 2);
-    s_modelcache *unused_cache_type = NULL;
-    (void)unused_cache_type;
-
     if (index < 0 || (unsigned int)index >= models_cached || !model_cache) {
         lua_pushnil(L);
         return 1;
