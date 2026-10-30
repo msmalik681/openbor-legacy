@@ -747,15 +747,8 @@ static void bor_lua_call_combat_event(entity *ent, entity *other, int damage, in
         return;
     }
 
-    lua_pushlightuserdata(g_lua_engine_state, (void *)ent);
-    if (other && other->exists)
-        lua_pushlightuserdata(g_lua_engine_state, (void *)other);
-    else
-        lua_pushnil(g_lua_engine_state);
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)damage);
-    lua_pushinteger(g_lua_engine_state, (lua_Integer)type);
-
-    if (bor_lua_pcall(g_lua_engine_state, 4, 0, event) != LUA_OK)
+    /* Event scripts use main() and read their context through getlocalvar(). */
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, event) != LUA_OK)
         lua_pop(g_lua_engine_state, 1);
     bor_lua_end_localvars();
 }
@@ -3285,8 +3278,25 @@ void lcmHandleCommandWeapons(ArgList * arglist, s_model * newchar) {
 
 void lcmHandleCommandScripts(ArgList * arglist, char *scriptname, char *filename) {
     char *target_script_file = GET_ARGP(1);
+    int previous_main_ref = LUA_NOREF;
+
+    /*
+     * Each OpenBOR script file exposes its callback as main().
+     * Preserve the global per-frame main while loading the event script,
+     * then publish that script's main() under its legacy event name so the
+     * existing engine dispatch can find it.
+     */
+    if (g_lua_engine_state) {
+        lua_getglobal(g_lua_engine_state, "main");
+        previous_main_ref = luaL_ref(g_lua_engine_state, LUA_REGISTRYINDEX);
+    }
 
     if(!load_script(target_script_file)) {
+        if (g_lua_engine_state && previous_main_ref != LUA_NOREF) {
+            lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+            lua_setglobal(g_lua_engine_state, "main");
+            luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+        }
         shutdown(
             1,
             "Unable to load Lua %s '%s' in file '%s'.\n",
@@ -3294,6 +3304,24 @@ void lcmHandleCommandScripts(ArgList * arglist, char *scriptname, char *filename
             target_script_file,
             filename
         );
+        return;
+    }
+
+    if (g_lua_engine_state) {
+        lua_getglobal(g_lua_engine_state, "main");
+        if (lua_isfunction(g_lua_engine_state, -1)) {
+            lua_setglobal(g_lua_engine_state, scriptname);
+        } else {
+            lua_pop(g_lua_engine_state, 1);
+            lua_pushnil(g_lua_engine_state);
+            lua_setglobal(g_lua_engine_state, scriptname);
+            printf("[LUA WARNING] Script '%s' does not define function main().\\n",
+                   target_script_file);
+        }
+
+        lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+        lua_setglobal(g_lua_engine_state, "main");
+        luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
     }
 }
 
