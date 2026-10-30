@@ -1591,6 +1591,125 @@ static int lua_openbor_setglobalvar(lua_State *L)
     return 1;
 }
 
+/* Legacy entity targeting, collision queries, and toss helper. */
+static int lua_openbor_tossentity(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    float height = (float)luaL_optnumber(L, 2, 0);
+    float speedx = (float)luaL_optnumber(L, 3, 0);
+    float speedz = (float)luaL_optnumber(L, 4, 0);
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
+        return luaL_error(L, "tossentity expects an entity and up to 3 optional numbers");
+
+    if (!ent || !ent->exists) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    ent->xdir = speedx;
+    ent->zdir = speedz;
+    toss(ent, height);
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int lua_openbor_findtarget(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *previous_self;
+    entity *target;
+    int animation = -1;
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+        return luaL_error(L, "findtarget expects an entity and an optional animation");
+
+    if (!ent || !ent->exists) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    if (!lua_isnoneornil(L, 2))
+        animation = (int)luaL_checkinteger(L, 2);
+
+    previous_self = self;
+    self = ent;
+    target = normal_find_target(animation);
+    self = previous_self;
+
+    bor_lua_push_entity(L, target);
+    return 1;
+}
+
+static int lua_openbor_checkrange(lua_State *L)
+{
+    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *target = bor_lua_get_live_entity(L, 2);
+    int animation;
+
+    if (lua_gettop(L) < 2 || lua_gettop(L) > 3)
+        return luaL_error(L, "checkrange expects 2 entities and an optional animation");
+
+    if (!ent || !target || !ent->exists || !target->exists) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    animation = lua_isnoneornil(L, 3) ? ent->animnum : (int)luaL_checkinteger(L, 3);
+    lua_pushinteger(L, check_range(ent, target, animation));
+    return 1;
+}
+
+static int lua_openbor_checkhole(lua_State *L)
+{
+    float x = (float)luaL_checknumber(L, 1);
+    float z = (float)luaL_checknumber(L, 2);
+
+    if (!level) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    lua_pushinteger(L, checkhole(x, z) && checkwall(x, z) < 0 ? 1 : 0);
+    return 1;
+}
+
+static int lua_openbor_checkwall(lua_State *L)
+{
+    float x = (float)luaL_checknumber(L, 1);
+    float z = (float)luaL_checknumber(L, 2);
+    int wall;
+
+    if (!level) {
+        lua_pushnumber(L, 0);
+        return 1;
+    }
+
+    wall = checkwall_below(x, z, 100000);
+    if (wall >= 0)
+        lua_pushnumber(L, level->walls[wall].alt);
+    else
+        lua_pushnumber(L, 0);
+    return 1;
+}
+
+static int lua_openbor_checkplatformbelow(lua_State *L)
+{
+    float x = (float)luaL_checknumber(L, 1);
+    float z = (float)luaL_checknumber(L, 2);
+    float a = (float)luaL_checknumber(L, 3);
+    entity *platform;
+
+    if (!level) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    platform = check_platform_below(x, z, a);
+    bor_lua_push_entity(L, platform);
+    return 1;
+}
+
 /* Legacy queued drawing primitives. */
 static int lua_openbor_drawline(lua_State *L)
 {
@@ -2393,6 +2512,24 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_rgbcolor);
     lua_setglobal(g_lua_engine_state, "rgbcolor");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_tossentity);
+    lua_setglobal(g_lua_engine_state, "tossentity");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_findtarget);
+    lua_setglobal(g_lua_engine_state, "findtarget");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_checkrange);
+    lua_setglobal(g_lua_engine_state, "checkrange");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_checkhole);
+    lua_setglobal(g_lua_engine_state, "checkhole");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_checkwall);
+    lua_setglobal(g_lua_engine_state, "checkwall");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_checkplatformbelow);
+    lua_setglobal(g_lua_engine_state, "checkplatformbelow");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_log);
     lua_setglobal(g_lua_engine_state, "log");
