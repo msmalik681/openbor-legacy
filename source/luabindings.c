@@ -1470,6 +1470,79 @@ static int lua_openbor_getlocalvar(lua_State *L) {
     return 1;
 }
 
+/* Legacy utility and variable functions retained from the original script API. */
+static int lua_openbor_isempty(lua_State *L)
+{
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "isempty expects exactly 1 argument");
+
+    lua_pushinteger(L, lua_isnil(L, 1) ? 1 : 0);
+    return 1;
+}
+
+static int lua_openbor_null(lua_State *L)
+{
+    (void)L;
+    lua_pushnil(L);
+    return 1;
+}
+
+static int lua_openbor_maxglobalvarindex(lua_State *L)
+{
+    int count = 0;
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    if (lua_istable(L, -1)) {
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0) {
+            ++count;
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_pushinteger(L, count - 1);
+    return 1;
+}
+
+static int lua_openbor_setlocalvar(lua_State *L)
+{
+    const char *name = luaL_checkstring(L, 1);
+
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "setlocalvar expects a name and value");
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    }
+
+    lua_pushstring(L, name);
+    lua_pushvalue(L, 2);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int lua_openbor_clearlocalvar(lua_State *L)
+{
+    lua_pushnil(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    return 0;
+}
+
+static int lua_openbor_clearglobalvar(lua_State *L)
+{
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    return 0;
+}
+
 /*
  * Legacy global-variable API.
  * Values are kept in a Lua registry table so entity userdata and other Lua
@@ -2154,6 +2227,24 @@ void openbor_register_lua_api(void) {
      * Register the API as global Lua functions. Scripts should call
      * spawn(...), get_self(), log(), etc., without an openbor. prefix.
      */
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_isempty);
+    lua_setglobal(g_lua_engine_state, "isempty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_null);
+    lua_setglobal(g_lua_engine_state, "NULL");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_maxglobalvarindex);
+    lua_setglobal(g_lua_engine_state, "maxglobalvarindex");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setlocalvar);
+    lua_setglobal(g_lua_engine_state, "setlocalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_clearlocalvar);
+    lua_setglobal(g_lua_engine_state, "clearlocalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_clearglobalvar);
+    lua_setglobal(g_lua_engine_state, "clearglobalvar");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_log);
     lua_setglobal(g_lua_engine_state, "log");
 
