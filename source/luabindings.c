@@ -401,6 +401,26 @@ typedef struct bor_lua_entity_handle {
 #define BOR_LUA_ENTITY_METATABLE "OpenBOR.Entity"
 #define BOR_LUA_SCREEN_METATABLE "OpenBOR.Screen"
 #define BOR_LUA_SPRITE_METATABLE "OpenBOR.Sprite"
+#define BOR_LUA_RESOURCES "OpenBOR.ScriptResources"
+
+static void bor_lua_retain_resource(lua_State *L, int index)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_RESOURCES);
+    lua_pushvalue(L, index);
+    lua_pushboolean(L, 1);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+}
+
+static void bor_lua_release_resource(lua_State *L, int index)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_RESOURCES);
+    lua_pushvalue(L, index);
+    lua_pushnil(L);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+}
+
 
 typedef struct {
     s_sprite *sprite;
@@ -2155,6 +2175,7 @@ static int lua_openbor_free(lua_State *L)
 
     screen = (bor_lua_screen_handle *)luaL_testudata(L, 1, BOR_LUA_SCREEN_METATABLE);
     if (screen && screen->screen) {
+        bor_lua_release_resource(L, 1);
         freescreen(&screen->screen);
         lua_pushinteger(L, 0);
         return 1;
@@ -2162,6 +2183,7 @@ static int lua_openbor_free(lua_State *L)
 
     sprite = (bor_lua_sprite_handle *)luaL_testudata(L, 1, BOR_LUA_SPRITE_METATABLE);
     if (sprite && sprite->sprite) {
+        bor_lua_release_resource(L, 1);
         free(sprite->sprite);
         sprite->sprite = NULL;
         lua_pushinteger(L, 0);
@@ -2442,6 +2464,7 @@ static int lua_openbor_allocscreen(lua_State *L)
     handle->screen = screen;
     luaL_getmetatable(L, BOR_LUA_SCREEN_METATABLE);
     lua_setmetatable(L, -2);
+    bor_lua_retain_resource(L, -1);
     return 1;
 }
 
@@ -2656,6 +2679,7 @@ static int lua_openbor_loadsprite(lua_State *L)
     handle->sprite = sprite;
     luaL_getmetatable(L, BOR_LUA_SPRITE_METATABLE);
     lua_setmetatable(L, -2);
+    bor_lua_retain_resource(L, -1);
     return 1;
 }
 
@@ -4056,6 +4080,9 @@ void openbor_register_lua_api(void) {
     lua_setfield(g_lua_engine_state, -2, "__mode");
     lua_setmetatable(g_lua_engine_state, -2);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
+
+    lua_newtable(g_lua_engine_state);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_RESOURCES);
 
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
