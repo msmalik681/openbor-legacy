@@ -1872,6 +1872,30 @@ static int lua_openbor_filestreamappend(lua_State *L)
     return 0;
 }
 
+static int lua_openbor_free(lua_State *L)
+{
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "free expects at least 1 argument");
+
+    /* Lua owns script values; explicit legacy free requests trigger collection. */
+    lua_gc(L, LUA_GCCOLLECT, 0);
+    return 0;
+}
+
+static int lua_openbor_fadeout(lua_State *L)
+{
+    int type;
+    int speed;
+
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "fadeout expects 2 integer arguments");
+
+    type = (int)luaL_checkinteger(L, 1);
+    speed = (int)luaL_checkinteger(L, 2);
+    fade_out(type, speed);
+    return 0;
+}
+
 /* Legacy music and sample controls. */
 static int lua_openbor_playmusic(lua_State *L)
 {
@@ -3140,6 +3164,12 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_rgbcolor);
     lua_setglobal(g_lua_engine_state, "rgbcolor");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_free);
+    lua_setglobal(g_lua_engine_state, "free");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_fadeout);
+    lua_setglobal(g_lua_engine_state, "fadeout");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_playmusic);
     lua_setglobal(g_lua_engine_state, "playmusic");
