@@ -2221,6 +2221,200 @@ static int lua_openbor_updateframe(lua_State *L)
     return 0;
 }
 
+/* Legacy level text-object and background/foreground layer properties. */
+static int lua_openbor_gettextobjproperty(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    const char *property = luaL_checkstring(L, 2);
+    s_textobj *obj;
+
+    if (!level)
+        return luaL_error(L, "gettextobjproperty requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    obj = &level->textobjs[index];
+
+    if (bor_lua_stricmp(property, "font") == 0)
+        lua_pushinteger(L, obj->font);
+    else if (bor_lua_stricmp(property, "text") == 0)
+        lua_pushstring(L, obj->text ? obj->text : "");
+    else if (bor_lua_stricmp(property, "time") == 0)
+        lua_pushinteger(L, obj->t);
+    else if (bor_lua_stricmp(property, "x") == 0)
+        lua_pushinteger(L, obj->x);
+    else if (bor_lua_stricmp(property, "y") == 0)
+        lua_pushinteger(L, obj->y);
+    else if (bor_lua_stricmp(property, "z") == 0)
+        lua_pushinteger(L, obj->z);
+    else
+        return luaL_error(L, "gettextobjproperty: unsupported property '%s'", property);
+    return 1;
+}
+
+static int lua_openbor_changetextobjproperty(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    const char *property = luaL_checkstring(L, 2);
+    s_textobj *obj;
+
+    if (lua_gettop(L) != 3)
+        return luaL_error(L, "changetextobjproperty expects index, property, and value");
+    if (!level)
+        return luaL_error(L, "changetextobjproperty requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    obj = &level->textobjs[index];
+
+    if (bor_lua_stricmp(property, "font") == 0)
+        obj->font = (int)luaL_checkinteger(L, 3);
+    else if (bor_lua_stricmp(property, "text") == 0) {
+        const char *value = luaL_checkstring(L, 3);
+        char *copy = (char *)malloc(strlen(value) + 1);
+        if (!copy) return luaL_error(L, "out of memory changing text object");
+        strcpy(copy, value);
+        free(obj->text);
+        obj->text = copy;
+    } else if (bor_lua_stricmp(property, "time") == 0)
+        obj->t = (int)luaL_checkinteger(L, 3);
+    else if (bor_lua_stricmp(property, "x") == 0)
+        obj->x = (int)luaL_checkinteger(L, 3);
+    else if (bor_lua_stricmp(property, "y") == 0)
+        obj->y = (int)luaL_checkinteger(L, 3);
+    else if (bor_lua_stricmp(property, "z") == 0)
+        obj->z = (int)luaL_checkinteger(L, 3);
+    else
+        return luaL_error(L, "changetextobjproperty: unsupported property '%s'", property);
+
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int lua_openbor_settextobj(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    const char *text;
+    s_textobj *obj;
+    char *copy;
+
+    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+        return luaL_error(L, "settextobj expects index, x, y, font, z, text, and optional time");
+    if (!level)
+        return luaL_error(L, "settextobj requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    text = luaL_checkstring(L, 6);
+    copy = (char *)malloc(strlen(text) + 1);
+    if (!copy)
+        return luaL_error(L, "out of memory setting text object");
+    strcpy(copy, text);
+
+    obj = &level->textobjs[index];
+    obj->x = (int)luaL_checkinteger(L, 2);
+    obj->y = (int)luaL_checkinteger(L, 3);
+    obj->font = (int)luaL_checkinteger(L, 4);
+    obj->z = (int)luaL_checkinteger(L, 5);
+    if (lua_gettop(L) == 7)
+        obj->t = (int)luaL_checkinteger(L, 7);
+    free(obj->text);
+    obj->text = copy;
+
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int lua_openbor_cleartextobj(lua_State *L)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    s_textobj *obj;
+
+    if (!level)
+        return luaL_error(L, "cleartextobj requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    obj = &level->textobjs[index];
+    obj->t = obj->x = obj->y = obj->font = obj->z = 0;
+    free(obj->text);
+    obj->text = NULL;
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
+static int bor_lua_layer_property(lua_State *L, int foreground, int change)
+{
+    int index = (int)luaL_checkinteger(L, 1);
+    const char *property = luaL_checkstring(L, 2);
+    int count;
+    int value;
+    float decimal;
+
+    if (!level)
+        return luaL_error(L, "layer property access requires a loaded level");
+    count = foreground ? level->numfglayers : level->numbglayers;
+    if (index < 0 || index >= count) {
+        if (change) lua_pushinteger(L, 0);
+        else lua_pushinteger(L, 0);
+        return 1;
+    }
+    if (change && lua_gettop(L) != 3)
+        return luaL_error(L, "layer property change expects index, property, and value");
+
+#define BOR_LAYER_INT(field) \
+    do { if (change) { value = (int)luaL_checkinteger(L, 3); if (foreground) level->fglayers[index].field = value; else level->bglayers[index].field = value; lua_pushinteger(L, 1); } else { lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
+#define BOR_LAYER_FLOAT(field) \
+    do { if (change) { decimal = (float)luaL_checknumber(L, 3); if (foreground) level->fglayers[index].field = decimal; else level->bglayers[index].field = decimal; lua_pushnumber(L, decimal); lua_pop(L, 1); lua_pushinteger(L, 1); } else { lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
+
+    if (bor_lua_stricmp(property, "alpha") == 0) BOR_LAYER_INT(alpha);
+    if (bor_lua_stricmp(property, "amplitude") == 0) BOR_LAYER_INT(amplitude);
+    if (bor_lua_stricmp(property, "bgspeedratio") == 0) BOR_LAYER_FLOAT(bgspeedratio);
+    if (bor_lua_stricmp(property, "enabled") == 0) BOR_LAYER_INT(enabled);
+    if (bor_lua_stricmp(property, "transparency") == 0) BOR_LAYER_INT(transparency);
+    if (bor_lua_stricmp(property, "watermode") == 0) BOR_LAYER_INT(watermode);
+    if (bor_lua_stricmp(property, "wavelength") == 0) BOR_LAYER_INT(wavelength);
+    if (bor_lua_stricmp(property, "wavespeed") == 0) BOR_LAYER_FLOAT(wavespeed);
+    if (bor_lua_stricmp(property, "xoffset") == 0) BOR_LAYER_INT(xoffset);
+    if (bor_lua_stricmp(property, "xratio") == 0) BOR_LAYER_FLOAT(xratio);
+    if (bor_lua_stricmp(property, "xrepeat") == 0) BOR_LAYER_INT(xrepeat);
+    if (bor_lua_stricmp(property, "xspacing") == 0) BOR_LAYER_INT(xspacing);
+    if (bor_lua_stricmp(property, "zoffset") == 0) BOR_LAYER_INT(zoffset);
+    if (bor_lua_stricmp(property, "zratio") == 0) BOR_LAYER_FLOAT(zratio);
+    if (bor_lua_stricmp(property, "zrepeat") == 0) BOR_LAYER_INT(zrepeat);
+    if (bor_lua_stricmp(property, "zspacing") == 0) BOR_LAYER_INT(zspacing);
+
+#undef BOR_LAYER_INT
+#undef BOR_LAYER_FLOAT
+    return luaL_error(L, "unsupported layer property '%s'", property);
+}
+
+static int lua_openbor_getbglayerproperty(lua_State *L)
+{
+    return bor_lua_layer_property(L, 0, 0);
+}
+
+static int lua_openbor_changebglayerproperty(lua_State *L)
+{
+    return bor_lua_layer_property(L, 0, 1);
+}
+
+static int lua_openbor_getfglayerproperty(lua_State *L)
+{
+    return bor_lua_layer_property(L, 1, 0);
+}
+
+static int lua_openbor_changefglayerproperty(lua_State *L)
+{
+    return bor_lua_layer_property(L, 1, 1);
+}
+
 /* Legacy player property accessors. */
 static int lua_openbor_getplayerproperty(lua_State *L)
 {
@@ -3290,6 +3484,30 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_updateframe);
     lua_setglobal(g_lua_engine_state, "updateframe");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_gettextobjproperty);
+    lua_setglobal(g_lua_engine_state, "gettextobjproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changetextobjproperty);
+    lua_setglobal(g_lua_engine_state, "changetextobjproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_settextobj);
+    lua_setglobal(g_lua_engine_state, "settextobj");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_cleartextobj);
+    lua_setglobal(g_lua_engine_state, "cleartextobj");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getbglayerproperty);
+    lua_setglobal(g_lua_engine_state, "getbglayerproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changebglayerproperty);
+    lua_setglobal(g_lua_engine_state, "changebglayerproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getfglayerproperty);
+    lua_setglobal(g_lua_engine_state, "getfglayerproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changefglayerproperty);
+    lua_setglobal(g_lua_engine_state, "changefglayerproperty");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getplayerproperty);
     lua_setglobal(g_lua_engine_state, "getplayerproperty");
