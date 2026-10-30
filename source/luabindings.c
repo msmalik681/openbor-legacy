@@ -400,6 +400,30 @@ typedef struct bor_lua_entity_handle {
 
 #define BOR_LUA_ENTITY_METATABLE "OpenBOR.Entity"
 #define BOR_LUA_SCREEN_METATABLE "OpenBOR.Screen"
+#define BOR_LUA_SPRITE_METATABLE "OpenBOR.Sprite"
+
+typedef struct {
+    s_sprite *sprite;
+} bor_lua_sprite_handle;
+
+static s_sprite *bor_lua_check_sprite(lua_State *L, int index)
+{
+    bor_lua_sprite_handle *handle = (bor_lua_sprite_handle *)luaL_checkudata(L, index, BOR_LUA_SPRITE_METATABLE);
+    if (!handle->sprite)
+        luaL_error(L, "sprite handle has already been freed");
+    return handle->sprite;
+}
+
+static int bor_lua_sprite_gc(lua_State *L)
+{
+    bor_lua_sprite_handle *handle = (bor_lua_sprite_handle *)luaL_checkudata(L, 1, BOR_LUA_SPRITE_METATABLE);
+    if (handle->sprite) {
+        free(handle->sprite);
+        handle->sprite = NULL;
+    }
+    return 0;
+}
+
 static s_drawmethod bor_lua_drawmethod;
 
 
@@ -2124,6 +2148,7 @@ static int lua_openbor_loadsample(lua_State *L)
 static int lua_openbor_free(lua_State *L)
 {
     bor_lua_screen_handle *screen;
+    bor_lua_sprite_handle *sprite;
 
     if (lua_gettop(L) < 1)
         return luaL_error(L, "free expects at least 1 argument");
@@ -2131,6 +2156,12 @@ static int lua_openbor_free(lua_State *L)
     screen = (bor_lua_screen_handle *)luaL_testudata(L, 1, BOR_LUA_SCREEN_METATABLE);
     if (screen && screen->screen)
         freescreen(&screen->screen);
+
+    sprite = (bor_lua_sprite_handle *)luaL_testudata(L, 1, BOR_LUA_SPRITE_METATABLE);
+    if (sprite && sprite->sprite) {
+        free(sprite->sprite);
+        sprite->sprite = NULL;
+    }
 
     /* Lua owns script values; explicit legacy free requests trigger collection. */
     lua_gc(L, LUA_GCCOLLECT, 0);
@@ -2518,7 +2549,7 @@ static int lua_openbor_drawscreen(lua_State *L)
 
 static int lua_openbor_drawsprite(lua_State *L)
 {
-    s_sprite *sprite = (s_sprite *)lua_touserdata(L, 1);
+    s_sprite *sprite = bor_lua_check_sprite(L, 1);
     int x = (int)luaL_checkinteger(L, 2);
     int y = (int)luaL_checkinteger(L, 3);
     int z = (int)luaL_checkinteger(L, 4);
@@ -2532,7 +2563,7 @@ static int lua_openbor_drawsprite(lua_State *L)
 
 static int lua_openbor_drawspritetoscreen(lua_State *L)
 {
-    s_sprite *sprite = (s_sprite *)lua_touserdata(L, 1);
+    s_sprite *sprite = bor_lua_check_sprite(L, 1);
     s_screen *screen = bor_lua_check_screen(L, 2);
     int x = (int)luaL_checkinteger(L, 3);
     int y = (int)luaL_checkinteger(L, 4);
@@ -2612,10 +2643,14 @@ static int lua_openbor_loadsprite(lua_State *L)
     if (lua_gettop(L) != 1)
         return luaL_error(L, "loadsprite expects exactly 1 filename");
     sprite = loadsprite2((char *)filename, NULL, NULL);
-    if (sprite)
-        lua_pushlightuserdata(L, sprite);
-    else
+    if (!sprite) {
         lua_pushnil(L);
+        return 1;
+    }
+    handle = (bor_lua_sprite_handle *)lua_newuserdatauv(L, sizeof(*handle), 0);
+    handle->sprite = sprite;
+    luaL_getmetatable(L, BOR_LUA_SPRITE_METATABLE);
+    lua_setmetatable(L, -2);
     return 1;
 }
 
@@ -3988,6 +4023,11 @@ void openbor_register_lua_api(void) {
 
     /* Register before any entity handles are created. */
     bor_lua_drawmethod = plainmethod;
+
+    luaL_newmetatable(g_lua_engine_state, BOR_LUA_SPRITE_METATABLE);
+    lua_pushcfunction(g_lua_engine_state, bor_lua_sprite_gc);
+    lua_setfield(g_lua_engine_state, -2, "__gc");
+    lua_pop(g_lua_engine_state, 1);
 
     luaL_newmetatable(g_lua_engine_state, BOR_LUA_SCREEN_METATABLE);
     lua_pushcfunction(g_lua_engine_state, bor_lua_screen_gc);
