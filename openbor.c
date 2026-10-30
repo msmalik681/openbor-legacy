@@ -542,7 +542,7 @@ static void bor_lua_set_localvar_entity(const char *name, entity *value)
     if (!g_lua_engine_state)
         return;
     if (value && value->exists)
-        lua_pushlightuserdata(g_lua_engine_state, (void *)value);
+        bor_lua_push_entity(g_lua_engine_state, value);
     else
         lua_pushnil(g_lua_engine_state);
     bor_lua_set_localvar(g_lua_engine_state, name, -1);
