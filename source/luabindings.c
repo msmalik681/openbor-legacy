@@ -1536,6 +1536,66 @@ static int lua_openbor_clearindexedvar(lua_State *L)
     return 0;
 }
 
+#define BOR_LUA_SCRIPT_VARS "OpenBOR.ScriptVars"
+
+static int bor_lua_push_script_var_table(lua_State *L)
+{
+    lua_Debug frame;
+
+    if (!lua_getstack(L, 1, &frame) || !lua_getinfo(L, "S", &frame) || !frame.source)
+        return luaL_error(L, "script variable access requires a Lua script caller");
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+    if (!lua_istable(L, -1))
+        return luaL_error(L, "script variable storage is not initialized");
+
+    lua_getfield(L, -1, frame.source);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -3, frame.source);
+    }
+    lua_remove(L, -2);
+    return 1;
+}
+
+static int lua_openbor_getscriptvar(lua_State *L)
+{
+    lua_Integer index = luaL_checkinteger(L, 1);
+
+    if (index < 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    bor_lua_push_script_var_table(L);
+    lua_pushinteger(L, index);
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+    return 1;
+}
+
+static int lua_openbor_setscriptvar(lua_State *L)
+{
+    lua_Integer index = luaL_checkinteger(L, 1);
+
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "setscriptvar expects an index and value");
+    if (index < 0) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    bor_lua_push_script_var_table(L);
+    lua_pushinteger(L, index);
+    lua_pushvalue(L, 2);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+    lua_pushinteger(L, 1);
+    return 1;
+}
+
 /* Legacy utility and variable functions retained from the original script API. */
 static int lua_openbor_isempty(lua_State *L)
 {
@@ -3627,6 +3687,10 @@ void openbor_register_lua_api(void) {
     lua_setmetatable(g_lua_engine_state, -2);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, "OpenBOR.EntityCache");
 
+    /* Script variables are isolated by the Lua source file that calls the API. */
+    lua_newtable(g_lua_engine_state);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+
     /* Indexed variables use a Lua table with legacy zero-based indices. */
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
@@ -3838,6 +3902,12 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_filestreamappend);
     lua_setglobal(g_lua_engine_state, "filestreamappend");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_getscriptvar);
+    lua_setglobal(g_lua_engine_state, "getscriptvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_setscriptvar);
+    lua_setglobal(g_lua_engine_state, "setscriptvar");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_getindexedvar);
     lua_setglobal(g_lua_engine_state, "getindexedvar");
