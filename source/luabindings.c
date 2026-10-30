@@ -116,7 +116,7 @@ extern entity *textbox;
 extern entity *smartbomber;
 
 /* Entity handle helpers are defined below the variant API. */
-static void bor_lua_push_entity(lua_State *L, entity *ent);
+void bor_lua_push_entity(lua_State *L, entity *ent);
 static entity *bor_lua_get_live_entity(lua_State *L, int index);
 static entity *bor_lua_get_live_entity_ptr(entity *candidate);
 
@@ -470,7 +470,7 @@ static int bor_lua_screen_gc(lua_State *L)
 }
 
 
-static void bor_lua_push_entity(lua_State *L, entity *ent)
+void bor_lua_push_entity(lua_State *L, entity *ent)
 {
     bor_lua_entity_handle *handle;
     int cache_index;
