@@ -400,6 +400,8 @@ typedef struct bor_lua_entity_handle {
 
 #define BOR_LUA_ENTITY_METATABLE "OpenBOR.Entity"
 #define BOR_LUA_SCREEN_METATABLE "OpenBOR.Screen"
+static s_drawmethod bor_lua_drawmethod;
+
 
 typedef struct {
     s_screen *screen;
@@ -2445,7 +2447,6 @@ static int lua_openbor_drawboxtoscreen(lua_State *L)
     switch (screen->pixelformat) {
     case PIXEL_8: drawbox(x, y, width, height, colour, screen, lut); break;
     case PIXEL_16: drawbox16(x, y, width, height, (unsigned short)colour, screen, lut); break;
-    case PIXEL_24: drawbox24(x, y, width, height, (unsigned int)colour, screen, lut); break;
     case PIXEL_32: drawbox32(x, y, width, height, (unsigned int)colour, screen, lut); break;
     }
     return 0;
@@ -2488,7 +2489,6 @@ static int lua_openbor_drawdottoscreen(lua_State *L)
     switch (screen->pixelformat) {
     case PIXEL_8: putpixel(x, y, colour, screen, lut); break;
     case PIXEL_16: putpixel16(x, y, colour, screen, lut); break;
-    case PIXEL_24: putpixel24(x, y, colour, screen, lut); break;
     case PIXEL_32: putpixel32(x, y, colour, screen, lut); break;
     }
     return 0;
@@ -2505,7 +2505,7 @@ static int lua_openbor_drawscreen(lua_State *L)
     if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
         return luaL_error(L, "drawscreen expects screen, x, y, z, and optional LUT");
     if (lua_gettop(L) == 4) {
-        method = drawmethod;
+        method = bor_lua_drawmethod;
     } else {
         int lut = (int)luaL_checkinteger(L, 5);
         method = plainmethod;
@@ -2526,7 +2526,7 @@ static int lua_openbor_drawsprite(lua_State *L)
 
     if (lua_gettop(L) < 4 || lua_gettop(L) > 5 || !sprite)
         return luaL_error(L, "drawsprite expects a sprite handle, x, y, z, and optional sort ID");
-    spriteq_add_frame(x, y, z, sprite, &drawmethod, sortid);
+    spriteq_add_frame(x, y, z, sprite, &bor_lua_drawmethod, sortid);
     return 0;
 }
 
@@ -2539,7 +2539,7 @@ static int lua_openbor_drawspritetoscreen(lua_State *L)
 
     if (lua_gettop(L) != 4 || !sprite)
         return luaL_error(L, "drawspritetoscreen expects sprite, screen, x, and y");
-    putsprite(x, y, sprite, screen, &drawmethod);
+    putsprite(x, y, sprite, screen, &bor_lua_drawmethod);
     return 0;
 }
 
@@ -2557,7 +2557,7 @@ static int lua_openbor_setdrawmethod(lua_State *L)
         if (!ent || !ent->exists)
             return luaL_error(L, "setdrawmethod expects a live entity or nil");
     }
-    method = ent ? &ent->drawmethod : &drawmethod;
+    method = ent ? &ent->drawmethod : &bor_lua_drawmethod;
 
     for (i = 2; i <= 13 && i <= lua_gettop(L); ++i) {
         if (!lua_isnil(L, i))
@@ -3987,6 +3987,8 @@ void openbor_register_lua_api(void) {
     if (!g_lua_engine_state) return;
 
     /* Register before any entity handles are created. */
+    bor_lua_drawmethod = plainmethod;
+
     luaL_newmetatable(g_lua_engine_state, BOR_LUA_SCREEN_METATABLE);
     lua_pushcfunction(g_lua_engine_state, bor_lua_screen_gc);
     lua_setfield(g_lua_engine_state, -2, "__gc");
