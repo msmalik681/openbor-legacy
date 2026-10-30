@@ -1839,6 +1839,64 @@ static int lua_openbor_setfilestreamposition(lua_State *L)
     return 0;
 }
 
+static int lua_openbor_savefilestream(lua_State *L)
+{
+    s_filestream *stream = bor_lua_get_filestream(L, 1);
+    const char *filename = luaL_checkstring(L, 2);
+    char path[512] = {0};
+    char modname[128] = {0};
+    const char *base;
+    const char *slash;
+    size_t mod_length;
+    FILE *handle;
+
+    if (lua_gettop(L) != 2)
+        return luaL_error(L, "savefilestream expects a stream index and filename");
+
+    base = strrchr(packfile, '/');
+    slash = strrchr(packfile, '\\');
+    if (!base || (slash && slash > base))
+        base = slash;
+    base = base ? base + 1 : packfile;
+
+    mod_length = strlen(base);
+    if (mod_length >= 4 && base[mod_length - 4] == '.')
+        mod_length -= 4;
+    if (mod_length >= sizeof(modname))
+        mod_length = sizeof(modname) - 1;
+    memcpy(modname, base, mod_length);
+    modname[mod_length] = '\0';
+
+    getBasePath(path, "Saves/", 0);
+    if (strlen(path) + strlen(modname) + 2 >= sizeof(path))
+        return luaL_error(L, "savefilestream path is too long");
+    if (path[0] && path[strlen(path) - 1] == '/')
+        path[strlen(path) - 1] = '\0';
+    strcat(path, "/");
+    strcat(path, modname);
+    dirExists(path, 1);
+
+    if (strlen(path) + strlen(filename) + 2 >= sizeof(path))
+        return luaL_error(L, "savefilestream path is too long");
+    strcat(path, "/");
+    strcat(path, filename);
+
+    handle = fopen(path, "wb");
+    if (!handle)
+        return luaL_error(L, "savefilestream could not open '%s' for writing", path);
+
+    if (stream->size && fwrite(stream->buf, 1, stream->size, handle) != stream->size) {
+        fclose(handle);
+        return luaL_error(L, "savefilestream could not write '%s'", path);
+    }
+    if (fwrite("\r\n", 1, 2, handle) != 2) {
+        fclose(handle);
+        return luaL_error(L, "savefilestream could not finish writing '%s'", path);
+    }
+    fclose(handle);
+    return 0;
+}
+
 static int lua_openbor_filestreamappend(lua_State *L)
 {
     s_filestream *stream = bor_lua_get_filestream(L, 1);
@@ -1870,6 +1928,20 @@ static int lua_openbor_filestreamappend(lua_State *L)
     stream->buf[stream->size] = '\0';
     lua_pop(L, 1);
     return 0;
+}
+
+static int lua_openbor_loadsample(lua_State *L)
+{
+    const char *filename = luaL_checkstring(L, 1);
+    int log_errors = (int)luaL_optinteger(L, 2, 0);
+    int sample;
+
+    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+        return luaL_error(L, "loadsample expects a filename and optional log flag");
+
+    sample = sound_load_sample((char *)filename, packfile, log_errors);
+    lua_pushinteger(L, sample);
+    return 1;
 }
 
 static int lua_openbor_free(lua_State *L)
@@ -3186,6 +3258,9 @@ void openbor_register_lua_api(void) {
     lua_pushcfunction(g_lua_engine_state, lua_openbor_pausemusic);
     lua_setglobal(g_lua_engine_state, "pausemusic");
 
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_loadsample);
+    lua_setglobal(g_lua_engine_state, "loadsample");
+
     lua_pushcfunction(g_lua_engine_state, lua_openbor_playsample);
     lua_setglobal(g_lua_engine_state, "playsample");
 
@@ -3260,6 +3335,9 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_setfilestreamposition);
     lua_setglobal(g_lua_engine_state, "setfilestreamposition");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_savefilestream);
+    lua_setglobal(g_lua_engine_state, "savefilestream");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_filestreamappend);
     lua_setglobal(g_lua_engine_state, "filestreamappend");
