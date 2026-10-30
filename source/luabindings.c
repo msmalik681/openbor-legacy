@@ -1470,6 +1470,7 @@ static int lua_openbor_getlocalvar(lua_State *L) {
     return 1;
 }
 
+#define BOR_LUA_GLOBAL_VARS "OpenBOR.GlobalVars"
 /* Legacy utility and variable functions retained from the original script API. */
 static int lua_openbor_isempty(lua_State *L)
 {
@@ -1548,7 +1549,6 @@ static int lua_openbor_clearglobalvar(lua_State *L)
  * Values are kept in a Lua registry table so entity userdata and other Lua
  * values retain their identity when stored and retrieved across callbacks.
  */
-#define BOR_LUA_GLOBAL_VARS "OpenBOR.GlobalVars"
 
 static int lua_openbor_globalvar(lua_State *L)
 {
