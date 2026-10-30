@@ -2498,16 +2498,16 @@ static int lua_openbor_drawboxtoscreen(lua_State *L)
     int width = (int)luaL_checkinteger(L, 4);
     int height = (int)luaL_checkinteger(L, 5);
     int colour = (int)luaL_checkinteger(L, 6);
-    int lut = (int)luaL_optinteger(L, 7, -1);
+    int blend_index = (int)luaL_optinteger(L, 7, -1);
 
     if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
         return luaL_error(L, "drawboxtoscreen expects screen, x, y, width, height, colour, and optional LUT");
-    if (lut >= 0) lut %= MAX_BLENDINGS + 1;
+    if (blend_index >= 0) blend_index %= MAX_BLENDINGS + 1;
 
     switch (screen->pixelformat) {
-    case PIXEL_8: drawbox(x, y, width, height, colour, screen, lut); break;
-    case PIXEL_16: drawbox16(x, y, width, height, (unsigned short)colour, screen, lut); break;
-    case PIXEL_32: drawbox32(x, y, width, height, (unsigned int)colour, screen, lut); break;
+    case PIXEL_8: drawbox(x, y, width, height, colour, screen, blend_index); break;
+    case PIXEL_16: drawbox16(x, y, width, height, (unsigned short)colour, screen, blend_index); break;
+    case PIXEL_32: drawbox32(x, y, width, height, (unsigned int)colour, screen, blend_index); break;
     }
     return 0;
 }
@@ -2520,16 +2520,16 @@ static int lua_openbor_drawlinetoscreen(lua_State *L)
     int x2 = (int)luaL_checkinteger(L, 4);
     int y2 = (int)luaL_checkinteger(L, 5);
     int colour = (int)luaL_checkinteger(L, 6);
-    int lut = (int)luaL_optinteger(L, 7, -1);
+    int blend_index = (int)luaL_optinteger(L, 7, -1);
 
     if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
         return luaL_error(L, "drawlinetoscreen expects screen, 5 integers, and optional LUT");
-    if (lut >= 0) lut %= MAX_BLENDINGS + 1;
+    if (blend_index >= 0) blend_index %= MAX_BLENDINGS + 1;
 
     switch (screen->pixelformat) {
-    case PIXEL_8: line(x1, y1, x2, y2, colour, screen, lut); break;
-    case PIXEL_16: line16(x1, y1, x2, y2, colour, screen, lut); break;
-    case PIXEL_32: line32(x1, y1, x2, y2, colour, screen, lut); break;
+    case PIXEL_8: line(x1, y1, x2, y2, colour, screen, blend_index); break;
+    case PIXEL_16: line16(x1, y1, x2, y2, colour, screen, blend_index); break;
+    case PIXEL_32: line32(x1, y1, x2, y2, colour, screen, blend_index); break;
     }
     return 0;
 }
@@ -2540,16 +2540,16 @@ static int lua_openbor_drawdottoscreen(lua_State *L)
     int x = (int)luaL_checkinteger(L, 2);
     int y = (int)luaL_checkinteger(L, 3);
     int colour = (int)luaL_checkinteger(L, 4);
-    int lut = (int)luaL_optinteger(L, 5, -1);
+    int blend_index = (int)luaL_optinteger(L, 5, -1);
 
     if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
         return luaL_error(L, "drawdottoscreen expects screen, x, y, colour, and optional LUT");
-    if (lut >= 0) lut %= MAX_BLENDINGS + 1;
+    if (blend_index >= 0) blend_index %= MAX_BLENDINGS + 1;
 
     switch (screen->pixelformat) {
-    case PIXEL_8: putpixel(x, y, colour, screen, lut); break;
-    case PIXEL_16: putpixel16(x, y, colour, screen, lut); break;
-    case PIXEL_32: putpixel32(x, y, colour, screen, lut); break;
+    case PIXEL_8: putpixel(x, y, colour, screen, blend_index); break;
+    case PIXEL_16: putpixel16(x, y, colour, screen, blend_index); break;
+    case PIXEL_32: putpixel32(x, y, colour, screen, blend_index); break;
     }
     return 0;
 }
@@ -2567,9 +2567,9 @@ static int lua_openbor_drawscreen(lua_State *L)
     if (lua_gettop(L) == 4) {
         method = bor_lua_drawmethod;
     } else {
-        int lut = (int)luaL_checkinteger(L, 5);
+        int blend_index = (int)luaL_checkinteger(L, 5);
         method = plainmethod;
-        method.alpha = lut >= 0 ? lut % (MAX_BLENDINGS + 1) : lut;
+        method.alpha = blend_index >= 0 ? blend_index % (MAX_BLENDINGS + 1) : blend_index;
         method.transbg = 1;
     }
     spriteq_add_screen(x, y, z, screen, &method, 0);
@@ -3347,15 +3347,15 @@ static int lua_openbor_drawline(lua_State *L)
     int y2 = (int)luaL_checkinteger(L, 4);
     int z = (int)luaL_checkinteger(L, 5);
     int color = (int)luaL_checkinteger(L, 6);
-    int lut = (int)luaL_optinteger(L, 7, -1);
+    int blend_index = (int)luaL_optinteger(L, 7, -1);
 
     if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
         return luaL_error(L, "drawline expects 6 required arguments and 1 optional LUT");
 
-    if (lut >= 0)
-        lut %= MAX_BLENDINGS + 1;
+    if (blend_index >= 0)
+        blend_index %= MAX_BLENDINGS + 1;
 
-    spriteq_add_line(x1, y1, x2, y2, z, color, lut);
+    spriteq_add_line(x1, y1, x2, y2, z, color, blend_index);
     return 0;
 }
 
@@ -3365,15 +3365,15 @@ static int lua_openbor_drawdot(lua_State *L)
     int y = (int)luaL_checkinteger(L, 2);
     int z = (int)luaL_checkinteger(L, 3);
     int color = (int)luaL_checkinteger(L, 4);
-    int lut = (int)luaL_optinteger(L, 5, -1);
+    int blend_index = (int)luaL_optinteger(L, 5, -1);
 
     if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
         return luaL_error(L, "drawdot expects 4 required arguments and 1 optional LUT");
 
-    if (lut >= 0)
-        lut %= MAX_BLENDINGS + 1;
+    if (blend_index >= 0)
+        blend_index %= MAX_BLENDINGS + 1;
 
-    spriteq_add_dot(x, y, z, color, lut);
+    spriteq_add_dot(x, y, z, color, blend_index);
     return 0;
 }
 
