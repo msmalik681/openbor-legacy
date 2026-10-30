@@ -138,7 +138,6 @@ void debug_printf(char *format, ...) {
 const char* savefile_exts[] = {
 	[ST_SAVE] = ".sav",
 	[ST_HISCORE] = ".hi",
-	[ST_SCRIPT] = ".scr",
 	[ST_INP] = ".inp",
 	[ST_CFG] = ".cfg",
 };
