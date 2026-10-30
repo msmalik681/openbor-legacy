@@ -2639,6 +2639,7 @@ static int lua_openbor_loadsprite(lua_State *L)
 {
     const char *filename = luaL_checkstring(L, 1);
     s_sprite *sprite;
+    bor_lua_sprite_handle *handle;
 
     if (lua_gettop(L) != 1)
         return luaL_error(L, "loadsprite expects exactly 1 filename");
