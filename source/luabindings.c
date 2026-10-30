@@ -1591,6 +1591,45 @@ static int lua_openbor_setglobalvar(lua_State *L)
     return 1;
 }
 
+/* Legacy queued drawing primitives. */
+static int lua_openbor_drawline(lua_State *L)
+{
+    int x1 = (int)luaL_checkinteger(L, 1);
+    int y1 = (int)luaL_checkinteger(L, 2);
+    int x2 = (int)luaL_checkinteger(L, 3);
+    int y2 = (int)luaL_checkinteger(L, 4);
+    int z = (int)luaL_checkinteger(L, 5);
+    int color = (int)luaL_checkinteger(L, 6);
+    int lut = (int)luaL_optinteger(L, 7, -1);
+
+    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+        return luaL_error(L, "drawline expects 6 required arguments and 1 optional LUT");
+
+    if (lut >= 0)
+        lut %= MAX_BLENDINGS + 1;
+
+    spriteq_add_line(x1, y1, x2, y2, z, color, lut);
+    return 0;
+}
+
+static int lua_openbor_drawdot(lua_State *L)
+{
+    int x = (int)luaL_checkinteger(L, 1);
+    int y = (int)luaL_checkinteger(L, 2);
+    int z = (int)luaL_checkinteger(L, 3);
+    int color = (int)luaL_checkinteger(L, 4);
+    int lut = (int)luaL_optinteger(L, 5, -1);
+
+    if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
+        return luaL_error(L, "drawdot expects 4 required arguments and 1 optional LUT");
+
+    if (lut >= 0)
+        lut %= MAX_BLENDINGS + 1;
+
+    spriteq_add_dot(x, y, z, color, lut);
+    return 0;
+}
+
 /* Legacy string and colour helpers. */
 static int lua_openbor_strinfirst(lua_State *L)
 {
@@ -2330,6 +2369,12 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_clearglobalvar);
     lua_setglobal(g_lua_engine_state, "clearglobalvar");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawline);
+    lua_setglobal(g_lua_engine_state, "drawline");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_drawdot);
+    lua_setglobal(g_lua_engine_state, "drawdot");
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_strinfirst);
     lua_setglobal(g_lua_engine_state, "strinfirst");
