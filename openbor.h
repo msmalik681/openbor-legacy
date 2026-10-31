@@ -877,6 +877,7 @@ typedef struct {
 	int diesound;
 	
 	int index;
+	int lua_ondoattack_ref; // Lua registry reference for this model's ondoattackscript (0 = unset).
 	// these are model id of various stuff
 	int project;
 	int rider;		// 7-1-2005 now every "biker" can have a new driver!
