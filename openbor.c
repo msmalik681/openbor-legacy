@@ -764,10 +764,32 @@ void execute_didblock_script(entity * ent, entity * other, int force, int drop, 
 
 void execute_ondoattack_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
                                int jugglecost, int pauseadd, int iWhich, int iAtkID) {
-    (void)iWhich;
-    (void)iAtkID;
-    bor_lua_call_combat_event(ent, other, force, type, drop, noblock, guardcost,
-                              jugglecost, pauseadd, "other", "ondoattackscript");
+    int script_ref;
+
+    if (!g_lua_engine_state || !ent || !ent->exists || !ent->model)
+        return;
+
+    script_ref = ent->model->lua_ondoattack_ref;
+    if (script_ref <= 0)
+        return;
+
+    bor_lua_begin_entity_localvars(ent);
+    bor_lua_set_localvar_entity("other", other);
+    bor_lua_set_localvar_int("damage", force);
+    bor_lua_set_localvar_int("attacktype", type);
+    bor_lua_set_localvar_int("drop", drop);
+    bor_lua_set_localvar_int("noblock", noblock);
+    bor_lua_set_localvar_int("guardcost", guardcost);
+    bor_lua_set_localvar_int("jugglecost", jugglecost);
+    bor_lua_set_localvar_int("pauseadd", pauseadd);
+    bor_lua_set_localvar_int("which", iWhich);
+    bor_lua_set_localvar_int("attackid", iAtkID);
+    bor_lua_set_localvar_int("attack_id", iAtkID);
+
+    lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, script_ref);
+    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "ondoattackscript") != LUA_OK)
+        lua_pop(g_lua_engine_state, 1);
+    bor_lua_end_localvars();
 }
 
 void execute_didhit_script(entity * ent, entity * other, int force, int drop, int type, int noblock, int guardcost,
@@ -2367,7 +2389,9 @@ int free_model(s_model * model) {
 		freeAndNull((void**) &model->smartbomb);
 	printf("[UNLOAD DEBUG] free_model: remaining model resources freed\n"); fflush(stdout);
 
-	if(hasFreetype(model, MF_SCRIPTS)) {
+	if(model->lua_ondoattack_ref > 0 && g_lua_engine_state) {
+		luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, model->lua_ondoattack_ref);
+		model->lua_ondoattack_ref = 0;
 	}
 
 	printf("[UNLOAD DEBUG] free_model: deleting model-list entry name='%s'\n", model->name ? model->name : "(null)"); fflush(stdout);
@@ -3304,6 +3328,50 @@ void lcmHandleCommandScripts(ArgList * arglist, char *scriptname, char *filename
         lua_setglobal(g_lua_engine_state, "main");
         luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
     }
+}
+
+/*
+ * ondoattackscript belongs to the model that declares it. Keep its Lua
+ * function in the registry instead of publishing one global callback:
+ * the engine invokes this event for both entities involved in a hit.
+ */
+void lcmHandleCommandDoAttackScript(ArgList *arglist, s_model *newchar, char *filename) {
+    char *target_script_file = GET_ARGP(1);
+    int previous_main_ref = LUA_NOREF;
+
+    if (!g_lua_engine_state || !newchar)
+        return;
+
+    if (newchar->lua_ondoattack_ref > 0) {
+        luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, newchar->lua_ondoattack_ref);
+        newchar->lua_ondoattack_ref = 0;
+    }
+
+    lua_getglobal(g_lua_engine_state, "main");
+    previous_main_ref = luaL_ref(g_lua_engine_state, LUA_REGISTRYINDEX);
+
+    if (!load_script(target_script_file)) {
+        lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+        lua_setglobal(g_lua_engine_state, "main");
+        luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+        shutdown(1, "Unable to load Lua ondoattackscript '%s' in file '%s'.\n",
+                 target_script_file, filename);
+        return;
+    }
+
+    lua_getglobal(g_lua_engine_state, "main");
+    if (lua_isfunction(g_lua_engine_state, -1)) {
+        newchar->lua_ondoattack_ref = luaL_ref(g_lua_engine_state, LUA_REGISTRYINDEX);
+    } else {
+        lua_pop(g_lua_engine_state, 1);
+        newchar->lua_ondoattack_ref = 0;
+        printf("[LUA WARNING] Script '%s' does not define function main().\n",
+               target_script_file);
+    }
+
+    lua_rawgeti(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
+    lua_setglobal(g_lua_engine_state, "main");
+    luaL_unref(g_lua_engine_state, LUA_REGISTRYINDEX, previous_main_ref);
 }
 
 void lcmSetCachedModelIndexOrMinusOne(char* value, int* dest) {
@@ -4679,7 +4747,7 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 					lcmHandleCommandScripts(&arglist, "didblockscript", filename);
 					break;
 				case CMD_MODEL_ONDOATTACKSCRIPT:
-					lcmHandleCommandScripts(&arglist, "ondoattackscript", filename);
+					lcmHandleCommandDoAttackScript(&arglist, newchar, filename);
 					break;
 				case CMD_MODEL_DIDHITSCRIPT:
 					lcmHandleCommandScripts(&arglist, "didhitscript", filename);
