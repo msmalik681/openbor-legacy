@@ -2845,8 +2845,8 @@ static int lua_openbor_getfilestreamline(lua_State *L)
         return luaL_error(L, "file stream position is out of range");
     end = (size_t)stream->pos;
 
-    while (end < stream->size && stream->buf[end] != '\n' &&
-           stream->buf[end] != '\r')
+    while (end < stream->size && stream->buf[end] != '\0' &&
+           stream->buf[end] != '\n' && stream->buf[end] != '\r')
         ++end;
 
     lua_pushlstring(L, stream->buf + stream->pos, end - (size_t)stream->pos);
@@ -2907,8 +2907,8 @@ static int lua_openbor_filestreamnextline(lua_State *L)
         return luaL_error(L, "file stream position is out of range");
 
     pos = (size_t)stream->pos;
-    while (pos < stream->size && stream->buf[pos] != '\n' &&
-           stream->buf[pos] != '\r')
+    while (pos < stream->size && stream->buf[pos] != '\0' &&
+           stream->buf[pos] != '\n' && stream->buf[pos] != '\r')
         ++pos;
     while (pos < stream->size && (stream->buf[pos] == '\n' ||
            stream->buf[pos] == '\r'))
