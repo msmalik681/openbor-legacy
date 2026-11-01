@@ -2383,15 +2383,21 @@ static int lua_openbor_setspawnentry(lua_State *L)
     property = lua_tostring(L, 1);
 
     if (bor_lua_stricmp(property, "name") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         /* Legacy stores the lookup result, including NULL for an unknown model. */
         bor_lua_spawnentry.model = findmodel((char *)name);
     } else if (bor_lua_stricmp(property, "alias") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         strncpy(bor_lua_spawnentry.alias, name, sizeof(bor_lua_spawnentry.alias) - 1);
         bor_lua_spawnentry.alias[sizeof(bor_lua_spawnentry.alias) - 1] = '\0';
     } else if (bor_lua_stricmp(property, "item") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         model = findmodel((char *)name);
         if (!model) {
             lua_pushinteger(L, 0);
@@ -2402,22 +2408,30 @@ static int lua_openbor_setspawnentry(lua_State *L)
         bor_lua_spawnentry.itemindex = get_cached_model_index(bor_lua_spawnentry.item);
         bor_lua_spawnentry.itemplayer_count = 0;
     } else if (bor_lua_stricmp(property, "2pitem") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         model = findmodel((char *)name);
         bor_lua_spawnentry.item = model ? model->name : NULL;
         bor_lua_spawnentry.itemplayer_count = 1;
     } else if (bor_lua_stricmp(property, "3pitem") == 0 ||
                bor_lua_stricmp(property, "4pitem") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         bor_lua_spawnentry.itemmodel = findmodel((char *)name);
         bor_lua_spawnentry.itemplayer_count =
             bor_lua_stricmp(property, "3pitem") == 0 ? 2 : 3;
     } else if (bor_lua_stricmp(property, "itemalias") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         strncpy(bor_lua_spawnentry.itemalias, name, sizeof(bor_lua_spawnentry.itemalias) - 1);
         bor_lua_spawnentry.itemalias[sizeof(bor_lua_spawnentry.itemalias) - 1] = '\0';
     } else if (bor_lua_stricmp(property, "weapon") == 0) {
-        name = luaL_checkstring(L, 2);
+        if (lua_type(L, 2) != LUA_TSTRING)
+            return luaL_error(L, "setspawnentry string property requires a string value");
+        name = lua_tostring(L, 2);
         bor_lua_spawnentry.weaponmodel = findmodel((char *)name);
     } else if (bor_lua_stricmp(property, "coords") == 0) {
         if (lua_type(L, 2) != LUA_TNUMBER) goto numeric_error;
