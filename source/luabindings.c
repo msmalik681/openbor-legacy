@@ -169,8 +169,7 @@ static int lua_changeopenborvariant(lua_State *L) {
         else
             textbox = ent;
 
-        lua_pushboolean(L, 1);
-        return 1;
+        return 0;
     }
 
     value = bor_lua_check_legacy_integer(L, 2, "changeopenborvariant");
@@ -209,8 +208,7 @@ static int lua_changeopenborvariant(lua_State *L) {
         return luaL_error(L, "changeopenborvariant: unsupported or unimplemented property '%s'", name);
     }
 
-    lua_pushboolean(L, 1);
-    return 1;
+    return 0;
 }
 
 // openborvariant(name)
@@ -240,9 +238,9 @@ static int lua_openborvariant(lua_State *L) {
         lua_pushinteger(L, ent_max);
     } else if (!strcmp(name, "in_level")) {
         /* Preserve the original legacy API's return semantics. */
-        lua_pushboolean(L, level == NULL);
+        lua_pushinteger(L, level == NULL ? 1 : 0);
     } else if (!strcmp(name, "in_selectscreen")) {
-        lua_pushboolean(L, selectScreen != 0);
+        lua_pushinteger(L, selectScreen);
     } else if (!strcmp(name, "xpos")) {
         if (!level) return luaL_error(L, "openborvariant: 'xpos' requires a loaded level");
         lua_pushnumber(L, advancex);
@@ -310,7 +308,7 @@ static int lua_openborvariant(lua_State *L) {
     } else if (!strcmp(name, "count_entities")) {
         lua_pushinteger(L, ent_count);
     } else if (!strcmp(name, "game_paused")) {
-        lua_pushboolean(L, pause != 0);
+        lua_pushinteger(L, pause);
     } else if (!strcmp(name, "levelwidth")) {
         if (!level) return luaL_error(L, "openborvariant: 'levelwidth' requires a loaded level");
         lua_pushinteger(L, level->width);
