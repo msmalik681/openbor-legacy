@@ -4876,15 +4876,11 @@ static int lua_openbor_getlevelproperty(lua_State *L)
 {
     const char *name;
 
-    if (lua_type(L, 1) != LUA_TSTRING) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "getlevelproperty expects a property name string");
     name = lua_tostring(L, 1);
-    if (!level) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (!level)
+        return luaL_error(L, "getlevelproperty requires a loaded level");
 
     if (!stricmp(name, "bgspeed"))
         lua_pushinteger(L, (lua_Integer)level->bgspeed);
@@ -4893,7 +4889,7 @@ static int lua_openbor_getlevelproperty(lua_State *L)
     else if (!stricmp(name, "camerazoffset"))
         lua_pushinteger(L, level->camerazoffset);
     else
-        lua_pushnil(L);
+        return luaL_error(L, "getlevelproperty: unsupported property '%s'", name);
 
     return 1;
 }
@@ -4905,10 +4901,8 @@ static int lua_openbor_changelevelproperty(lua_State *L)
     const char *name;
     int value;
 
-    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TSTRING) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "changelevelproperty expects a property name and value");
     name = lua_tostring(L, 1);
     if (!level) {
         lua_pushinteger(L, 0);
