@@ -576,8 +576,7 @@ static int lua_openbor_damageentity(lua_State *L) {
     int force = 1;
     int drop = 0;
     int type = ATK_NORMAL;
-    int is_number;
-    lua_Integer value;
+    lua_Number value;
 
     if (!ent || !ent->exists) {
         lua_pushinteger(L, 0);
@@ -594,29 +593,29 @@ static int lua_openbor_damageentity(lua_State *L) {
     }
 
     if (lua_gettop(L) >= 3) {
-        value = lua_tointegerx(L, 3, &is_number);
-        if (!is_number) {
+        if (lua_type(L, 3) != LUA_TNUMBER) {
             lua_pushinteger(L, 0);
             return 1;
         }
+        value = lua_tonumber(L, 3);
         force = (int)value;
     }
 
     if (lua_gettop(L) >= 4) {
-        value = lua_tointegerx(L, 4, &is_number);
-        if (!is_number) {
+        if (lua_type(L, 4) != LUA_TNUMBER) {
             lua_pushinteger(L, 0);
             return 1;
         }
+        value = lua_tonumber(L, 4);
         drop = (int)value;
     }
 
     if (lua_gettop(L) >= 5) {
-        value = lua_tointegerx(L, 5, &is_number);
-        if (!is_number) {
+        if (lua_type(L, 5) != LUA_TNUMBER) {
             lua_pushinteger(L, 0);
             return 1;
         }
+        value = lua_tonumber(L, 5);
         type = (int)value;
     }
 
