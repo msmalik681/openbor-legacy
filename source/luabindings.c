@@ -2921,13 +2921,12 @@ static int lua_openbor_bindentity(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
     entity *other = bor_lua_get_live_entity(L, 2);
-    int i;
     int values[5] = {0, 0, 0, 0, 0};
+    int i;
     extern void adjust_bind(entity *e);
 
-    if (lua_gettop(L) < 2 || lua_gettop(L) > 7)
-        return luaL_error(L, "bindentity expects 2 entities and up to 5 optional offsets");
-
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "bindentity expects an entity and target");
     if (!ent || !ent->exists)
         return 0;
     if (!other || !other->exists) {
@@ -2936,9 +2935,12 @@ static int lua_openbor_bindentity(lua_State *L)
     }
 
     ent->bound = other;
-    for (i = 3; i <= lua_gettop(L); ++i) {
-        if (!lua_isnil(L, i))
-            values[i - 3] = (int)luaL_checkinteger(L, i);
+    for (i = 3; i <= 7 && i <= lua_gettop(L); ++i) {
+        if (!lua_isnil(L, i)) {
+            if (lua_type(L, i) != LUA_TNUMBER)
+                return luaL_error(L, "bindentity offsets must be numeric or nil");
+            values[i - 3] = (int)lua_tonumber(L, i);
+        }
     }
     if (lua_gettop(L) >= 3 && !lua_isnil(L, 3)) ent->bindoffset[0] = values[0];
     if (lua_gettop(L) >= 4 && !lua_isnil(L, 4)) ent->bindoffset[1] = values[1];
@@ -2954,10 +2956,10 @@ static int lua_openbor_performattack(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
     int animation;
-    int resetable;
+    int resetable = 0;
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 3)
-        return luaL_error(L, "performattack expects an entity and up to 2 optional integers");
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "performattack expects an entity and optional integers");
     if (!ent || !ent->exists)
         return luaL_error(L, "performattack expects a live entity");
 
@@ -2969,9 +2971,15 @@ static int lua_openbor_performattack(lua_State *L)
     ent->inpain = 0;
     ent->blocking = 0;
 
-    if (lua_gettop(L) >= 2) {
-        animation = (int)luaL_checkinteger(L, 2);
-        resetable = (int)luaL_optinteger(L, 3, 0);
+    if (lua_gettop(L) > 1) {
+        if (lua_type(L, 2) != LUA_TNUMBER)
+            return luaL_error(L, "performattack animation must be numeric");
+        animation = (int)lua_tonumber(L, 2);
+        if (lua_gettop(L) > 2) {
+            if (lua_type(L, 3) != LUA_TNUMBER)
+                return luaL_error(L, "performattack resetable must be numeric");
+            resetable = (int)lua_tonumber(L, 3);
+        }
         ent_set_anim(ent, animation, resetable);
     }
     return 0;
@@ -2984,8 +2992,8 @@ static int lua_openbor_setidle(lua_State *L)
     int resetable = 0;
     int stalladd = 0;
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
-        return luaL_error(L, "setidle expects an entity and up to 3 optional integers");
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "setidle expects an entity and optional integers");
     if (!ent || !ent->exists)
         return luaL_error(L, "setidle expects a live entity");
 
@@ -2998,10 +3006,20 @@ static int lua_openbor_setidle(lua_State *L)
     ent->blocking = 0;
     ent->nograb = 0;
 
-    if (lua_gettop(L) >= 2) {
-        animation = (int)luaL_checkinteger(L, 2);
-        resetable = (int)luaL_optinteger(L, 3, 0);
-        stalladd = (int)luaL_optinteger(L, 4, 0);
+    if (lua_gettop(L) > 1) {
+        if (lua_type(L, 2) != LUA_TNUMBER)
+            return luaL_error(L, "setidle animation must be numeric");
+        animation = (int)lua_tonumber(L, 2);
+        if (lua_gettop(L) > 2) {
+            if (lua_type(L, 3) != LUA_TNUMBER)
+                return luaL_error(L, "setidle resetable must be numeric");
+            resetable = (int)lua_tonumber(L, 3);
+        }
+        if (lua_gettop(L) > 3) {
+            if (lua_type(L, 4) != LUA_TNUMBER)
+                return luaL_error(L, "setidle stalladd must be numeric");
+            stalladd = (int)lua_tonumber(L, 4);
+        }
         ent_set_anim(ent, animation, resetable);
     }
     if (stalladd > 0)
@@ -3012,19 +3030,21 @@ static int lua_openbor_setidle(lua_State *L)
 static int lua_openbor_updateframe(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
-    int frame = (int)luaL_checkinteger(L, 2);
+    int frame;
     void update_frame(entity *ent, int frame);
 
-    if (lua_gettop(L) != 2)
+    if (lua_gettop(L) < 2)
         return luaL_error(L, "updateframe expects an entity and frame number");
     if (!ent || !ent->exists)
         return luaL_error(L, "updateframe expects a live entity");
+    if (lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "updateframe frame number must be numeric");
 
+    frame = (int)lua_tonumber(L, 2);
     update_frame(ent, frame);
     return 0;
 }
 
-/* Legacy level text-object and background/foreground layer properties. */
 static int lua_openbor_gettextobjproperty(lua_State *L)
 {
     int index = (int)luaL_checkinteger(L, 1);
