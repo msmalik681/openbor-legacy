@@ -2453,9 +2453,9 @@ void bor_lua_clear_all_entity_vars(void)
 static int lua_openbor_getentityvar(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
-    lua_Integer index = bor_lua_check_legacy_integer(L, 2, "getentityvar");
+    lua_Integer index;
 
-    if (!ent || index < 0) {
+    if (!ent) {
         lua_pushnil(L);
         return 1;
     }
@@ -2464,6 +2464,15 @@ static int lua_openbor_getentityvar(lua_State *L)
     lua_pushlightuserdata(L, ent);
     lua_rawget(L, -2);
     if (!lua_istable(L, -1)) {
+        lua_pop(L, 2);
+        lua_pushnil(L);
+        return 1;
+    }
+
+    /* Legacy returns an empty value for entities without an allocated var list
+       before validating the requested index. */
+    index = bor_lua_check_legacy_integer(L, 2, "getentityvar");
+    if (index < 0) {
         lua_pop(L, 2);
         lua_pushnil(L);
         return 1;
