@@ -3635,11 +3635,11 @@ static int bor_lua_layer_property(lua_State *L, int foreground, int change)
         return luaL_error(L, "layer property access expects a numeric index and property name or ID");
     index = (int)lua_tonumber(L, 1);
     if (!level) return luaL_error(L, "layer property access requires a loaded level");
+    if (change && lua_gettop(L) < 3) return luaL_error(L, "layer property change expects a value");
     count = foreground ? level->numfglayers : level->numbglayers;
     if (index < 0 || index >= count) { lua_pushinteger(L, 0); return 1; }
     property = bor_lua_legacy_enum_index(L, 2, bor_lua_layer_properties, 16);
     if (property < 0) return luaL_error(L, "unsupported layer property");
-    if (change && lua_gettop(L) < 3) return luaL_error(L, "layer property change expects a value");
 #define BOR_LAYER_INT(field, id) do { \
     if (property == id) { \
         if (change) { \
