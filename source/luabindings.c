@@ -2400,8 +2400,7 @@ static int lua_openbor_free(lua_State *L)
     if (screen && screen->screen) {
         bor_lua_release_resource(L, 1);
         freescreen(&screen->screen);
-        lua_pushinteger(L, 0);
-        return 1;
+        return 0;
     }
 
     sprite = (bor_lua_sprite_handle *)luaL_testudata(L, 1, BOR_LUA_SPRITE_METATABLE);
@@ -2413,8 +2412,7 @@ static int lua_openbor_free(lua_State *L)
         return 1;
     }
 
-    lua_pushinteger(L, -1);
-    return 1;
+    return luaL_error(L, "free expects a live screen or sprite handle");
 }
 
 static int lua_openbor_fadeout(lua_State *L)
@@ -3365,7 +3363,7 @@ static int lua_openbor_cleartextobj(lua_State *L)
     obj->t = obj->x = obj->y = obj->font = obj->z = 0;
     free(obj->text);
     obj->text = NULL;
-    lua_pushinteger(L, 1);
+    lua_pushinteger(L, 0);
     return 1;
 }
 
