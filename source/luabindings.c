@@ -1383,8 +1383,11 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!lua_isnoneornil(L, 9)) ent->modeldata.defense_blockratio[which] = (float)luaL_checknumber(L, 9);
         if (!lua_isnoneornil(L, 10)) ent->modeldata.defense_blocktype[which] = (float)luaL_checknumber(L, 10);
     } else if (!bor_lua_stricmp(prop, "stats")) {
-        int which = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        int which;
         int index = (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
+        if (!lua_isinteger(L, 3))
+            return luaL_error(L, "changeentityproperty stats expects an integer stat table selector");
+        which = (int)lua_tointeger(L, 3);
         if (index < 0 || index >= 20) return luaL_error(L, "stats index out of range");
         if (which == 1) ent->stats[index] = (float)luaL_checknumber(L, 5);
         else ent->modeldata.stats[index] = (float)luaL_checknumber(L, 5);
@@ -1469,7 +1472,6 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     else if (!bor_lua_stricmp(prop, "staydown")) {
         ent->staydown[0] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (!lua_isnoneornil(L, 4)) ent->staydown[1] = (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
-        if (!lua_isnoneornil(L, 5)) ent->staydown[2] = (int)bor_lua_check_legacy_integer(L, 5, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "stealth")) {
         ent->modeldata.stealth[0] = (short)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (!lua_isnoneornil(L, 4)) ent->modeldata.stealth[1] = (short)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
