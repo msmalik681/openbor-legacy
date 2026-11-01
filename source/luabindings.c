@@ -84,6 +84,38 @@ static int bor_lua_check_legacy_integer(lua_State *L, int index, const char *fun
     return (int)lua_tonumber(L, index);
 }
 
+static void bor_lua_push_legacy_string(lua_State *L, int index)
+{
+    char buffer[256];
+    switch (lua_type(L, index)) {
+    case LUA_TSTRING:
+        lua_pushvalue(L, index);
+        return;
+    case LUA_TNUMBER:
+        if (lua_isinteger(L, index))
+            snprintf(buffer, sizeof(buffer), "%d", (int)lua_tointeger(L, index));
+        else
+            snprintf(buffer, sizeof(buffer), "%lf", (double)lua_tonumber(L, index));
+        break;
+    case LUA_TLIGHTUSERDATA:
+        snprintf(buffer, sizeof(buffer), "#%ld", (long)lua_touserdata(L, index));
+        break;
+    case LUA_TUSERDATA:
+        snprintf(buffer, sizeof(buffer), "#%ld", (long)lua_touserdata(L, index));
+        break;
+    case LUA_TNIL:
+        snprintf(buffer, sizeof(buffer), "<VT_EMPTY>   Unitialized");
+        break;
+    case LUA_TBOOLEAN:
+        snprintf(buffer, sizeof(buffer), "%d", lua_toboolean(L, index) ? 1 : 0);
+        break;
+    default:
+        snprintf(buffer, sizeof(buffer), "<Unprintable VARIANT type.>");
+        break;
+    }
+    lua_pushstring(L, buffer);
+}
+
 static int bor_lua_legacy_truthy(lua_State *L, int index)
 {
     switch (lua_type(L, index)) {
@@ -156,7 +188,8 @@ static int lua_openbor_log(lua_State *L)
     const char *message;
     if (lua_gettop(L) != 1)
         return luaL_error(L, "log expects exactly one value");
-    message = luaL_tolstring(L, 1, NULL);
+    bor_lua_push_legacy_string(L, 1);
+    message = lua_tostring(L, -1);
     printf("%s", message);
     fflush(stdout);
     return 0;
@@ -391,7 +424,9 @@ static int lua_openbor_drawstring(lua_State *L) {
     int x = (int)bor_lua_check_legacy_integer(L, 1, "drawstring");
     int y = (int)bor_lua_check_legacy_integer(L, 2, "drawstring");
     int font = (int)bor_lua_check_legacy_integer(L, 3, "drawstring");
-    const char *text = luaL_tolstring(L, 4, NULL);
+    const char *text;
+    bor_lua_push_legacy_string(L, 4);
+    text = lua_tostring(L, -1);
     int z = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawstring") : 0);
 
     font_printf(x, y, font, z, "%s", text);
@@ -2858,7 +2893,8 @@ static int lua_openbor_drawstringtoscreen(lua_State *L)
     x = bor_lua_check_legacy_integer(L, 2, "drawstringtoscreen");
     y = bor_lua_check_legacy_integer(L, 3, "drawstringtoscreen");
     font = bor_lua_check_legacy_integer(L, 4, "drawstringtoscreen");
-    text = luaL_tolstring(L, 5, NULL);
+    bor_lua_push_legacy_string(L, 5);
+    text = lua_tostring(L, -1);
 
     screen_printf(screen, x, y, font, "%s", text);
     return 0;
