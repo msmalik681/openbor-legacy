@@ -3222,10 +3222,13 @@ static int lua_openbor_changepalette(lua_State *L)
 static int lua_openbor_jumptobranch(lua_State *L)
 {
     extern int endgame;
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
 
     if (lua_gettop(L) < 1)
         return luaL_error(L, "jumptobranch expects a branch name and optional immediate flag");
+    if (lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "jumptobranch branch name must be a string");
+    name = lua_tostring(L, 1);
 
     strncpy(branch_name, name, MAX_NAME_LEN);
     branch_name[MAX_NAME_LEN] = '\0';
@@ -3454,7 +3457,9 @@ static int lua_openbor_settextobj(lua_State *L)
     y = (int)bor_lua_check_legacy_integer(L, 3, "settextobj");
     font = (int)bor_lua_check_legacy_integer(L, 4, "settextobj");
     z = (int)bor_lua_check_legacy_integer(L, 5, "settextobj");
-    text = luaL_checkstring(L, 6);
+    if (lua_type(L, 6) != LUA_TSTRING)
+        return luaL_error(L, "settextobj text must be a string");
+    text = lua_tostring(L, 6);
     if (lua_gettop(L) >= 7)
         time = (int)bor_lua_check_legacy_integer(L, 7, "settextobj");
 
