@@ -1757,6 +1757,36 @@ static int lua_openbor_getlocalvar(lua_State *L) {
 
 #define BOR_LUA_GLOBAL_VARS "OpenBOR.GlobalVars"
 #define BOR_LUA_INDEXED_VARS "OpenBOR.IndexedVars"
+#define BOR_LUA_MAX_GLOBAL_VARS 2048
+
+static int bor_lua_count_global_and_local_vars(lua_State *L)
+{
+    int count = 0;
+    int table_index;
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    if (lua_istable(L, -1)) {
+        table_index = lua_gettop(L);
+        lua_pushnil(L);
+        while (lua_next(L, table_index) != 0) {
+            ++count;
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        table_index = lua_gettop(L);
+        lua_pushnil(L);
+        while (lua_next(L, table_index) != 0) {
+            ++count;
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+    return count;
+}
 
 static int lua_openbor_getindexedvar(lua_State *L)
 {
@@ -1963,32 +1993,7 @@ static int lua_openbor_null(lua_State *L)
 
 static int lua_openbor_maxglobalvarindex(lua_State *L)
 {
-    int count = 0;
-    int table_index;
-
-    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
-    if (lua_istable(L, -1)) {
-        table_index = lua_gettop(L);
-        lua_pushnil(L);
-        while (lua_next(L, table_index) != 0) {
-            ++count;
-            lua_pop(L, 1);
-        }
-    }
-    lua_pop(L, 1);
-
-    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
-    if (lua_istable(L, -1)) {
-        table_index = lua_gettop(L);
-        lua_pushnil(L);
-        while (lua_next(L, table_index) != 0) {
-            ++count;
-            lua_pop(L, 1);
-        }
-    }
-    lua_pop(L, 1);
-
-    lua_pushinteger(L, count - 1);
+    lua_pushinteger(L, bor_lua_count_global_and_local_vars(L) - 1);
     return 1;
 }
 
@@ -2007,6 +2012,15 @@ static int lua_openbor_setlocalvar(lua_State *L)
         lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
     }
 
+    lua_pushstring(L, name);
+    lua_rawget(L, -2);
+    if (lua_isnil(L, -1) && !lua_isnil(L, 2) &&
+        bor_lua_count_global_and_local_vars(L) >= BOR_LUA_MAX_GLOBAL_VARS) {
+        lua_pop(L, 2);
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    lua_pop(L, 1);
     lua_pushstring(L, name);
     lua_pushvalue(L, 2);
     lua_rawset(L, -3);
@@ -2046,6 +2060,10 @@ static int lua_openbor_globalvar(lua_State *L)
     lua_pushstring(L, name);
     lua_rawget(L, -2);
     if (lua_isnil(L, -1)) {
+        if (bor_lua_count_global_and_local_vars(L) >= BOR_LUA_MAX_GLOBAL_VARS) {
+            lua_pop(L, 2);
+            return 0;
+        }
         lua_pop(L, 1);
         lua_pushstring(L, name);
         lua_pushinteger(L, 0);
@@ -2076,6 +2094,15 @@ static int lua_openbor_setglobalvar(lua_State *L)
     name = luaL_checkstring(L, 1);
     luaL_checkany(L, 2);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    lua_pushstring(L, name);
+    lua_rawget(L, -2);
+    if (lua_isnil(L, -1) && !lua_isnil(L, 2) &&
+        bor_lua_count_global_and_local_vars(L) >= BOR_LUA_MAX_GLOBAL_VARS) {
+        lua_pop(L, 2);
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+    lua_pop(L, 1);
     lua_pushstring(L, name);
     lua_pushvalue(L, 2);
     lua_rawset(L, -3);
