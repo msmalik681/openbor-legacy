@@ -3269,16 +3269,44 @@ static int lua_openbor_changeplayerproperty(lua_State *L)
 static int lua_openbor_tossentity(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
-    float height = (float)luaL_optnumber(L, 2, 0);
-    float speedx = (float)luaL_optnumber(L, 3, 0);
-    float speedz = (float)luaL_optnumber(L, 4, 0);
+    float height = 0;
+    float speedx = 0;
+    float speedz = 0;
+    lua_Number value;
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
-        return luaL_error(L, "tossentity expects an entity and up to 3 optional numbers");
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "tossentity expects an entity");
 
     if (!ent || !ent->exists) {
         lua_pushinteger(L, 0);
         return 1;
+    }
+
+    if (lua_gettop(L) >= 2) {
+        if (lua_type(L, 2) != LUA_TNUMBER) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        value = lua_tonumber(L, 2);
+        height = (float)value;
+    }
+
+    if (lua_gettop(L) >= 3) {
+        if (lua_type(L, 3) != LUA_TNUMBER) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        value = lua_tonumber(L, 3);
+        speedx = (float)value;
+    }
+
+    if (lua_gettop(L) >= 4) {
+        if (lua_type(L, 4) != LUA_TNUMBER) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        value = lua_tonumber(L, 4);
+        speedz = (float)value;
     }
 
     ent->xdir = speedx;
@@ -3295,7 +3323,7 @@ static int lua_openbor_findtarget(lua_State *L)
     entity *target;
     int animation = -1;
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+    if (lua_gettop(L) < 1)
         return luaL_error(L, "findtarget expects an entity and an optional animation");
 
     if (!ent || !ent->exists) {
@@ -3303,8 +3331,15 @@ static int lua_openbor_findtarget(lua_State *L)
         return 1;
     }
 
-    if (!lua_isnoneornil(L, 2))
-        animation = (int)luaL_checkinteger(L, 2);
+    if (lua_gettop(L) >= 2) {
+        lua_Number value;
+
+        if (lua_type(L, 2) != LUA_TNUMBER)
+            return luaL_error(L, "findtarget animation must be a number");
+
+        value = lua_tonumber(L, 2);
+        animation = (int)value;
+    }
 
     previous_self = self;
     self = ent;
