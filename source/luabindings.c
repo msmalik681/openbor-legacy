@@ -1011,8 +1011,11 @@ static entity *bor_lua_get_live_entity(lua_State *L, int index)
 
 // killentity(entity_pointer)
 static int lua_openbor_killentity(lua_State *L) {
-    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *ent;
 
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "killentity expects an entity");
+    ent = bor_lua_get_live_entity(L, 1);
     if (ent && ent->exists) {
         kill(ent);
         lua_pushinteger(L, 1);
@@ -1041,7 +1044,7 @@ static int lua_openbor_getentity(lua_State *L)
 }
 
 static int lua_openbor_damageentity(lua_State *L) {
-    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *ent;
     entity *other;
     entity *temp;
     s_attack attack;
@@ -1050,6 +1053,9 @@ static int lua_openbor_damageentity(lua_State *L) {
     int type = ATK_NORMAL;
     lua_Number value;
 
+    if (lua_gettop(L) < 1)
+        return luaL_error(L, "damageentity expects a target entity");
+    ent = bor_lua_get_live_entity(L, 1);
     if (!ent || !ent->exists) {
         lua_pushinteger(L, 0);
         return 1;
@@ -1073,6 +1079,20 @@ static int lua_openbor_damageentity(lua_State *L) {
         force = (int)value;
     }
 
+    /*
+     * The legacy implementation directly adjusts health when the target
+     * has no takedamage callback. This path returns before validating the
+     * optional drop and attack-type arguments.
+     */
+    if (!ent->takedamage) {
+        ent->health -= force;
+        if (ent->health <= 0)
+            kill(ent);
+
+        lua_pushinteger(L, 1);
+        return 1;
+    }
+
     if (lua_gettop(L) >= 4) {
         if (lua_type(L, 4) != LUA_TNUMBER) {
             lua_pushinteger(L, 0);
@@ -1089,19 +1109,6 @@ static int lua_openbor_damageentity(lua_State *L) {
         }
         value = lua_tonumber(L, 5);
         type = (int)value;
-    }
-
-    /*
-     * The legacy implementation directly adjusts health when the target
-     * has no takedamage callback. Its return value is 1 on this path.
-     */
-    if (!ent->takedamage) {
-        ent->health -= force;
-        if (ent->health <= 0)
-            kill(ent);
-
-        lua_pushinteger(L, 1);
-        return 1;
     }
 
     temp = self;
