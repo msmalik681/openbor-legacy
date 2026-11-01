@@ -3398,21 +3398,34 @@ static int lua_openbor_findtarget(lua_State *L)
 
 static int lua_openbor_checkrange(lua_State *L)
 {
-    entity *ent = bor_lua_get_live_entity(L, 1);
-    entity *target = bor_lua_get_live_entity(L, 2);
+    entity *ent;
+    entity *target;
     int animation;
 
-    if (lua_gettop(L) < 2 || lua_gettop(L) > 3)
+    if (lua_gettop(L) < 2)
         return luaL_error(L, "checkrange expects 2 entities and an optional animation");
 
+    ent = bor_lua_get_live_entity(L, 1);
+    target = bor_lua_get_live_entity(L, 2);
     if (!ent || !target || !ent->exists || !target->exists) {
         lua_pushnil(L);
         return 1;
     }
 
-    animation = lua_isnoneornil(L, 3) ? ent->animnum : (int)luaL_checkinteger(L, 3);
-    if (animation < 0 || animation >= dyn_anim_custom_maxvalues.max_animations)
-        return luaL_error(L, "checkrange animation index is out of range");
+    if (lua_gettop(L) >= 3) {
+        if (lua_type(L, 3) != LUA_TNUMBER) {
+            lua_pushnil(L);
+            return 1;
+        }
+        animation = (int)lua_tonumber(L, 3);
+    } else {
+        animation = ent->animnum;
+    }
+
+    if (animation < 0 || animation >= dyn_anim_custom_maxvalues.max_animations) {
+        lua_pushnil(L);
+        return 1;
+    }
     lua_pushinteger(L, check_range(ent, target, animation));
     return 1;
 }
