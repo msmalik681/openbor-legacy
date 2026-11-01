@@ -540,15 +540,17 @@ static entity *bor_lua_get_live_entity(lua_State *L, int index)
     return bor_lua_get_live_entity_ptr(candidate);
 }
 
-// openbor.killentity(entity_pointer)
+// killentity(entity_pointer)
 static int lua_openbor_killentity(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
+
     if (ent && ent->exists) {
         kill(ent);
-        lua_pushboolean(L, 1);
+        lua_pushinteger(L, 1);
     } else {
-        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
     }
+
     return 1;
 }
 
@@ -565,45 +567,91 @@ static int lua_openbor_getentity(lua_State *L) {
     return 1;
 }
 
-// openbor.damageentity(target_ent, attacker_ent, force, drop, type)
+// damageentity(entity, other, force, drop, type)
 static int lua_openbor_damageentity(lua_State *L) {
-    // 1. Fetch and validate target entity
     entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *other;
+    entity *temp;
+    s_attack attack;
+    int force = 1;
+    int drop = 0;
+    int type = ATK_NORMAL;
+    int is_number;
+    lua_Integer value;
+
     if (!ent || !ent->exists) {
-        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
         return 1;
     }
 
-    // 2. Fetch attacker entity (defaults to target if absent or null)
-    entity *other = NULL;
-    if (lua_isuserdata(L, 2)) {
+    other = ent;
+    if (lua_gettop(L) >= 2) {
         other = bor_lua_get_live_entity(L, 2);
-    }
-    if (!other) {
-        other = ent;
+        if (!other || !other->exists) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
     }
 
-    // 3. Process optional combat parameters with precise defaults
-    int force = (int)luaL_optinteger(L, 3, 1);
-    int drop = (int)luaL_optinteger(L, 4, 0);
-    int type = (int)luaL_optinteger(L, 5, ATK_NORMAL);
-    
-    entity *temp = self;
+    if (lua_gettop(L) >= 3) {
+        value = lua_tointegerx(L, 3, &is_number);
+        if (!is_number) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        force = (int)value;
+    }
+
+    if (lua_gettop(L) >= 4) {
+        value = lua_tointegerx(L, 4, &is_number);
+        if (!is_number) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        drop = (int)value;
+    }
+
+    if (lua_gettop(L) >= 5) {
+        value = lua_tointegerx(L, 5, &is_number);
+        if (!is_number) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        type = (int)value;
+    }
+
+    /*
+     * The legacy implementation directly adjusts health when the target
+     * has no takedamage callback. Its return value is 1 on this path.
+     */
+    if (!ent->takedamage) {
+        ent->health -= force;
+        if (ent->health <= 0)
+            kill(ent);
+
+        lua_pushinteger(L, 1);
+        return 1;
+    }
+
+    temp = self;
     self = ent;
-    s_attack attack = emptyattack;
+
+    attack = emptyattack;
     attack.attack_force = force;
-    attack.attack_drop  = drop;
-    attack.attack_type  = type;
-    
+    attack.attack_drop = drop;
+    attack.attack_type = type;
+
     if (drop) {
         attack.dropv[0] = 3.0f;
         attack.dropv[1] = 1.2f;
         attack.dropv[2] = 0.0f;
     }
-    
+
     self->takedamage(other, &attack);
     self = temp;
-    lua_pushboolean(L, 1);
+
+    /* The original scriptlib leaves the return value at zero here. */
+    lua_pushinteger(L, 0);
     return 1;
 }
 
