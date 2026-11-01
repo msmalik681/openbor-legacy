@@ -173,6 +173,12 @@ static const char *const bor_lua_getplayer_properties[] = {
 static const char *const bor_lua_changeplayer_properties[] = {
     "credits", "lives", "name", "playkeys", "score", "weapon"
 };
+static const char *const bor_lua_spawnentry_properties[] = {
+    "2phealth", "2pitem", "3phealth", "3pitem", "4phealth", "4pitem",
+    "aggression", "alias", "alpha", "boss", "coords", "credit", "dying",
+    "flip", "health", "item", "itemalias", "itemhealth", "itemmap", "map",
+    "mp", "multiple", "name", "nolife", "weapon"
+};
 
 static int bor_lua_legacy_truthy(lua_State *L, int index)
 {
@@ -2825,13 +2831,21 @@ static int lua_openbor_setspawnentry(lua_State *L)
     const char *name;
     s_model *model;
     int value;
+    int property_index;
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setspawnentry expects a property and value");
-    if (lua_type(L, 1) != LUA_TSTRING)
-        return luaL_error(L, "setspawnentry property must be a string");
+    if (lua_type(L, 1) != LUA_TSTRING && !lua_isinteger(L, 1))
+        return luaL_error(L, "setspawnentry property must be a string or integer ID");
 
-    property = lua_tostring(L, 1);
+    property_index = bor_lua_legacy_enum_index(L, 1, bor_lua_spawnentry_properties,
+                                                sizeof(bor_lua_spawnentry_properties) / sizeof(bor_lua_spawnentry_properties[0]));
+    if (property_index < 0) {
+        /* Legacy MAPSTRINGS leaves unknown names/IDs as a no-op sentinel. */
+        lua_pushinteger(L, 1);
+        return 1;
+    }
+    property = bor_lua_spawnentry_properties[property_index];
 
     if (bor_lua_stricmp(property, "name") == 0) {
         if (lua_type(L, 2) != LUA_TSTRING)
@@ -3900,8 +3914,9 @@ static int lua_openbor_checkhole(lua_State *L)
 {
     float x, z;
 
-    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
-        lua_type(L, 2) != LUA_TNUMBER || !level) {
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "checkhole expects x and z coordinates");
+    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER || !level) {
         lua_pushinteger(L, 0);
         return 1;
     }
@@ -3916,8 +3931,9 @@ static int lua_openbor_checkwall(lua_State *L)
     float x, z;
     int wall;
 
-    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
-        lua_type(L, 2) != LUA_TNUMBER || !level) {
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "checkwall expects x and z coordinates");
+    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER || !level) {
         lua_pushnumber(L, 0);
         return 1;
     }
@@ -3933,9 +3949,11 @@ static int lua_openbor_checkplatformbelow(lua_State *L)
     float x, z, a;
     entity *platform;
 
-    if (lua_gettop(L) < 3 || lua_type(L, 1) != LUA_TNUMBER ||
-        lua_type(L, 2) != LUA_TNUMBER || lua_type(L, 3) != LUA_TNUMBER || !level) {
-        lua_pushnil(L);
+    if (lua_gettop(L) < 3)
+        return luaL_error(L, "checkplatformbelow expects x, z, and altitude");
+    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER ||
+        lua_type(L, 3) != LUA_TNUMBER || !level) {
+        lua_pushnumber(L, 0);
         return 1;
     }
     x = (float)lua_tonumber(L, 1);
@@ -3955,10 +3973,12 @@ static int lua_openbor_drawline(lua_State *L)
     int y2 = (int)bor_lua_check_legacy_integer(L, 4, "drawline");
     int z = (int)bor_lua_check_legacy_integer(L, 5, "drawline");
     int color = (int)bor_lua_check_legacy_integer(L, 6, "drawline");
-    int blend_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawline") : -1);
+    int blend_index = -1;
 
     if (lua_gettop(L) < 6)
         return luaL_error(L, "drawline expects 6 required arguments and 1 optional LUT");
+    if (lua_gettop(L) >= 7)
+        blend_index = (int)bor_lua_check_legacy_integer(L, 7, "drawline");
 
     if (blend_index >= 0)
         blend_index %= MAX_BLENDINGS + 1;
@@ -3973,10 +3993,12 @@ static int lua_openbor_drawdot(lua_State *L)
     int y = (int)bor_lua_check_legacy_integer(L, 2, "drawdot");
     int z = (int)bor_lua_check_legacy_integer(L, 3, "drawdot");
     int color = (int)bor_lua_check_legacy_integer(L, 4, "drawdot");
-    int blend_index = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawdot") : -1);
+    int blend_index = -1;
 
     if (lua_gettop(L) < 4)
         return luaL_error(L, "drawdot expects 4 required arguments and 1 optional LUT");
+    if (lua_gettop(L) >= 5)
+        blend_index = (int)bor_lua_check_legacy_integer(L, 5, "drawdot");
 
     if (blend_index >= 0)
         blend_index %= MAX_BLENDINGS + 1;
