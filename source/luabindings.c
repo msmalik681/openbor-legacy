@@ -1921,7 +1921,11 @@ static int lua_openbor_setglobalvar(lua_State *L)
 /* File-stream helpers retain the original level-scoped stream handles. */
 static s_filestream *bor_lua_get_filestream(lua_State *L, int arg)
 {
-    lua_Integer index = luaL_checkinteger(L, arg);
+    lua_Integer index;
+
+    if (lua_type(L, arg) != LUA_TNUMBER)
+        luaL_error(L, "file stream index must be numeric");
+    index = (lua_Integer)lua_tonumber(L, arg);
 
     if (!level)
         luaL_error(L, "file stream operation requires a loaded level");
@@ -2173,19 +2177,36 @@ static int lua_openbor_savefilestream(lua_State *L)
 static int lua_openbor_filestreamappend(lua_State *L)
 {
     s_filestream *stream = bor_lua_get_filestream(L, 1);
+    char append[MAX_STR_VAR_LEN];
     size_t append_length;
     size_t extra;
-    const char *append;
     char *new_buffer;
-    int append_type = (int)luaL_checkinteger(L, 3);
+    int append_type;
 
+    if (lua_gettop(L) < 3)
+        return luaL_error(L, "filestreamappend expects stream, value, and append type");
+
+    if (lua_type(L, 2) == LUA_TSTRING) {
+        const char *value = lua_tostring(L, 2);
+        strncpy(append, value, sizeof(append) - 1);
+        append[sizeof(append) - 1] = '\0';
+    } else if (lua_type(L, 2) == LUA_TNUMBER) {
+        if (lua_isinteger(L, 2))
+            snprintf(append, sizeof(append), "%d", (int)lua_tointeger(L, 2));
+        else
+            snprintf(append, sizeof(append), "%f", (double)lua_tonumber(L, 2));
+    } else {
+        return luaL_error(L, "filestreamappend value must be a string or number");
+    }
+
+    if (lua_type(L, 3) != LUA_TNUMBER)
+        return luaL_error(L, "filestreamappend type must be numeric");
+    append_type = (int)lua_tonumber(L, 3);
     if (append_type != 0 && append_type != 1)
         return luaL_error(L, "filestreamappend type must be 0 or 1");
 
-    luaL_tolstring(L, 2, &append_length);
-    append = lua_tostring(L, -1);
+    append_length = strlen(append);
     extra = append_length + (append_type == 0 ? 3 : 1);
-
     new_buffer = (char *)realloc(stream->buf, stream->size + extra + 1);
     if (!new_buffer)
         return luaL_error(L, "filestreamappend ran out of memory");
@@ -2199,7 +2220,6 @@ static int lua_openbor_filestreamappend(lua_State *L)
     stream->size += append_length;
     stream->buf[stream->size++] = ' ';
     stream->buf[stream->size] = '\0';
-    lua_pop(L, 1);
     return 0;
 }
 
