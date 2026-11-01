@@ -1643,11 +1643,12 @@ static int lua_legacy_entity_type_mask(lua_State *L, int index, int *is_ground)
             *is_ground = 1;
             return 0;
         }
-        if (!bor_lua_stricmp(name, "enemy")) return TYPE_ENEMY;
-        if (!bor_lua_stricmp(name, "npc")) return TYPE_NPC;
-        if (!bor_lua_stricmp(name, "obstacle")) return TYPE_OBSTACLE;
-        if (!bor_lua_stricmp(name, "player")) return TYPE_PLAYER;
-        if (!bor_lua_stricmp(name, "shot")) return TYPE_SHOT;
+        /* These type_* names are the exact legacy mapstrings values. */
+        if (!bor_lua_stricmp(name, "type_enemy") || !bor_lua_stricmp(name, "enemy")) return TYPE_ENEMY;
+        if (!bor_lua_stricmp(name, "type_npc") || !bor_lua_stricmp(name, "npc")) return TYPE_NPC;
+        if (!bor_lua_stricmp(name, "type_obstacle") || !bor_lua_stricmp(name, "obstacle")) return TYPE_OBSTACLE;
+        if (!bor_lua_stricmp(name, "type_player") || !bor_lua_stricmp(name, "player")) return TYPE_PLAYER;
+        if (!bor_lua_stricmp(name, "type_shot") || !bor_lua_stricmp(name, "shot")) return TYPE_SHOT;
         return luaL_error(L, "changeentityproperty: unknown entity type '%s'", name);
     }
 }
