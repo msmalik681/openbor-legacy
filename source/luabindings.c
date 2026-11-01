@@ -1064,7 +1064,7 @@ static int lua_openbor_damageentity(lua_State *L) {
     other = ent;
     if (lua_gettop(L) >= 2) {
         other = bor_lua_get_live_entity(L, 2);
-        if (!other || !other->exists) {
+        if (!other) {
             lua_pushinteger(L, 0);
             return 1;
         }
@@ -3531,8 +3531,8 @@ static int lua_openbor_setdrawmethod(lua_State *L)
         return luaL_error(L, "setdrawmethod expects an entity or nil, draw flags, and optional colourmap");
     if (!lua_isnil(L, 1)) {
         ent = bor_lua_get_live_entity(L, 1);
-        if (!ent || !ent->exists)
-            return luaL_error(L, "setdrawmethod expects a live entity or nil");
+        if (!ent)
+            return luaL_error(L, "setdrawmethod expects an entity handle or nil");
     }
     method = ent ? &ent->drawmethod : &bor_lua_drawmethod;
 
@@ -3788,8 +3788,8 @@ static int lua_openbor_performattack(lua_State *L)
 
     if (lua_gettop(L) < 1)
         return luaL_error(L, "performattack expects an entity and optional integers");
-    if (!ent || !ent->exists)
-        return luaL_error(L, "performattack expects a live entity");
+    if (!ent)
+        return luaL_error(L, "performattack expects an entity handle");
 
     ent->takeaction = common_attack_proc;
     ent->attacking = 1;
@@ -3822,8 +3822,8 @@ static int lua_openbor_setidle(lua_State *L)
 
     if (lua_gettop(L) < 1)
         return luaL_error(L, "setidle expects an entity and optional integers");
-    if (!ent || !ent->exists)
-        return luaL_error(L, "setidle expects a live entity");
+    if (!ent)
+        return luaL_error(L, "setidle expects an entity handle");
 
     ent->takeaction = NULL;
     ent->attacking = 0;
@@ -3863,8 +3863,8 @@ static int lua_openbor_updateframe(lua_State *L)
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "updateframe expects an entity and frame number");
-    if (!ent || !ent->exists)
-        return luaL_error(L, "updateframe expects a live entity");
+    if (!ent)
+        return luaL_error(L, "updateframe expects an entity handle");
     if (lua_type(L, 2) != LUA_TNUMBER)
         return luaL_error(L, "updateframe frame number must be numeric");
 
