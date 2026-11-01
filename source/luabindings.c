@@ -3303,7 +3303,7 @@ static int lua_openbor_getplayerproperty(lua_State *L)
     else if (!bor_lua_stricmp(property, "weaponum"))
         lua_pushinteger(L, (lua_Integer)player[index].weapnum);
     else
-        return luaL_error(L, "getplayerproperty: unsupported property '%s'", property);
+        lua_pushnil(L);
 
     return 1;
 }
@@ -3364,7 +3364,7 @@ static int lua_openbor_changeplayerproperty(lua_State *L)
             if (noshare) player[index].credits = value;
             else credits = value;
         } else {
-            return luaL_error(L, "changeplayerproperty: unsupported property '%s'", property);
+            /* The original setter leaves unknown properties unchanged. */
         }
     }
 
