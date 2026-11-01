@@ -2370,19 +2370,22 @@ static int lua_openbor_clearspawnentry(lua_State *L)
 
 static int lua_openbor_setspawnentry(lua_State *L)
 {
-    const char *property = luaL_checkstring(L, 1);
+    const char *property;
     const char *name;
     s_model *model;
     int value;
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setspawnentry expects a property and value");
+    if (lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "setspawnentry property must be a string");
+
+    property = lua_tostring(L, 1);
 
     if (bor_lua_stricmp(property, "name") == 0) {
         name = luaL_checkstring(L, 2);
+        /* Legacy stores the lookup result, including NULL for an unknown model. */
         bor_lua_spawnentry.model = findmodel((char *)name);
-        if (!bor_lua_spawnentry.model)
-            return luaL_error(L, "setspawnentry: model '%s' was not found", name);
     } else if (bor_lua_stricmp(property, "alias") == 0) {
         name = luaL_checkstring(L, 2);
         strncpy(bor_lua_spawnentry.alias, name, sizeof(bor_lua_spawnentry.alias) - 1);
@@ -2390,21 +2393,25 @@ static int lua_openbor_setspawnentry(lua_State *L)
     } else if (bor_lua_stricmp(property, "item") == 0) {
         name = luaL_checkstring(L, 2);
         model = findmodel((char *)name);
-        if (!model) return luaL_error(L, "setspawnentry: item model '%s' was not found", name);
+        if (!model) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
         bor_lua_spawnentry.itemmodel = model;
         bor_lua_spawnentry.item = model->name;
         bor_lua_spawnentry.itemindex = get_cached_model_index(bor_lua_spawnentry.item);
         bor_lua_spawnentry.itemplayer_count = 0;
-    } else if (bor_lua_stricmp(property, "2pitem") == 0 ||
-               bor_lua_stricmp(property, "3pitem") == 0 ||
-               bor_lua_stricmp(property, "4pitem") == 0) {
+    } else if (bor_lua_stricmp(property, "2pitem") == 0) {
         name = luaL_checkstring(L, 2);
         model = findmodel((char *)name);
-        bor_lua_spawnentry.itemmodel = model;
         bor_lua_spawnentry.item = model ? model->name : NULL;
+        bor_lua_spawnentry.itemplayer_count = 1;
+    } else if (bor_lua_stricmp(property, "3pitem") == 0 ||
+               bor_lua_stricmp(property, "4pitem") == 0) {
+        name = luaL_checkstring(L, 2);
+        bor_lua_spawnentry.itemmodel = findmodel((char *)name);
         bor_lua_spawnentry.itemplayer_count =
-            bor_lua_stricmp(property, "2pitem") == 0 ? 1 :
-            (bor_lua_stricmp(property, "3pitem") == 0 ? 2 : 3);
+            bor_lua_stricmp(property, "3pitem") == 0 ? 2 : 3;
     } else if (bor_lua_stricmp(property, "itemalias") == 0) {
         name = luaL_checkstring(L, 2);
         strncpy(bor_lua_spawnentry.itemalias, name, sizeof(bor_lua_spawnentry.itemalias) - 1);
@@ -2412,18 +2419,48 @@ static int lua_openbor_setspawnentry(lua_State *L)
     } else if (bor_lua_stricmp(property, "weapon") == 0) {
         name = luaL_checkstring(L, 2);
         bor_lua_spawnentry.weaponmodel = findmodel((char *)name);
-        if (!bor_lua_spawnentry.weaponmodel)
-            return luaL_error(L, "setspawnentry: weapon model '%s' was not found", name);
     } else if (bor_lua_stricmp(property, "coords") == 0) {
-        bor_lua_spawnentry.x = (float)luaL_checknumber(L, 2);
-        if (!lua_isnoneornil(L, 3)) bor_lua_spawnentry.z = (float)luaL_checknumber(L, 3);
-        if (!lua_isnoneornil(L, 4)) bor_lua_spawnentry.a = (float)luaL_checknumber(L, 4);
+        if (lua_type(L, 2) != LUA_TNUMBER) goto numeric_error;
+        bor_lua_spawnentry.x = (float)lua_tonumber(L, 2);
+        if (lua_gettop(L) >= 3) {
+            if (lua_type(L, 3) != LUA_TNUMBER) goto numeric_error;
+            bor_lua_spawnentry.z = (float)lua_tonumber(L, 3);
+        }
+        if (lua_gettop(L) >= 4) {
+            if (lua_type(L, 4) != LUA_TNUMBER) goto numeric_error;
+            bor_lua_spawnentry.a = (float)lua_tonumber(L, 4);
+        }
     } else if (bor_lua_stricmp(property, "dying") == 0) {
-        bor_lua_spawnentry.dying = (char)luaL_checkinteger(L, 2);
-        if (!lua_isnoneornil(L, 3)) bor_lua_spawnentry.per1 = (char)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) bor_lua_spawnentry.per2 = (char)luaL_checkinteger(L, 4);
+        if (lua_type(L, 2) != LUA_TNUMBER) goto numeric_error;
+        bor_lua_spawnentry.dying = (char)lua_tonumber(L, 2);
+        if (lua_gettop(L) >= 3) {
+            if (lua_type(L, 3) != LUA_TNUMBER) goto numeric_error;
+            bor_lua_spawnentry.per1 = (char)lua_tonumber(L, 3);
+        }
+        if (lua_gettop(L) >= 4) {
+            if (lua_type(L, 4) != LUA_TNUMBER) goto numeric_error;
+            bor_lua_spawnentry.per2 = (char)lua_tonumber(L, 4);
+        }
     } else {
-        value = (int)luaL_checkinteger(L, 2);
+        if (bor_lua_stricmp(property, "health") != 0 &&
+            bor_lua_stricmp(property, "2phealth") != 0 &&
+            bor_lua_stricmp(property, "3phealth") != 0 &&
+            bor_lua_stricmp(property, "4phealth") != 0 &&
+            bor_lua_stricmp(property, "itemhealth") != 0 &&
+            bor_lua_stricmp(property, "itemmap") != 0 &&
+            bor_lua_stricmp(property, "map") != 0 &&
+            bor_lua_stricmp(property, "mp") != 0 &&
+            bor_lua_stricmp(property, "alpha") != 0 &&
+            bor_lua_stricmp(property, "multiple") != 0 &&
+            bor_lua_stricmp(property, "nolife") != 0 &&
+            bor_lua_stricmp(property, "boss") != 0 &&
+            bor_lua_stricmp(property, "flip") != 0 &&
+            bor_lua_stricmp(property, "credit") != 0 &&
+            bor_lua_stricmp(property, "aggression") != 0)
+            return luaL_error(L, "setspawnentry: unsupported property '%s'", property);
+
+        if (lua_type(L, 2) != LUA_TNUMBER) goto numeric_error;
+        value = (int)lua_tonumber(L, 2);
         if (bor_lua_stricmp(property, "health") == 0)
             bor_lua_spawnentry.health[0] = value;
         else if (bor_lua_stricmp(property, "2phealth") == 0)
@@ -2435,30 +2472,32 @@ static int lua_openbor_setspawnentry(lua_State *L)
         else if (bor_lua_stricmp(property, "itemhealth") == 0)
             bor_lua_spawnentry.itemhealth = value;
         else if (bor_lua_stricmp(property, "itemmap") == 0)
-            bor_lua_spawnentry.itemmap = (char)value;
+            bor_lua_spawnentry.itemmap = value;
         else if (bor_lua_stricmp(property, "map") == 0)
-            bor_lua_spawnentry.colourmap = (char)value;
+            bor_lua_spawnentry.colourmap = value;
         else if (bor_lua_stricmp(property, "mp") == 0)
             bor_lua_spawnentry.mp = value;
         else if (bor_lua_stricmp(property, "alpha") == 0)
-            bor_lua_spawnentry.alpha = (char)value;
+            bor_lua_spawnentry.alpha = value;
         else if (bor_lua_stricmp(property, "multiple") == 0)
             bor_lua_spawnentry.multiple = value;
         else if (bor_lua_stricmp(property, "nolife") == 0)
-            bor_lua_spawnentry.nolife = (char)value;
+            bor_lua_spawnentry.nolife = value;
         else if (bor_lua_stricmp(property, "boss") == 0)
-            bor_lua_spawnentry.boss = (char)value;
+            bor_lua_spawnentry.boss = value;
         else if (bor_lua_stricmp(property, "flip") == 0)
-            bor_lua_spawnentry.flip = (char)value;
+            bor_lua_spawnentry.flip = value;
         else if (bor_lua_stricmp(property, "credit") == 0)
-            bor_lua_spawnentry.credit = (unsigned char)value;
+            bor_lua_spawnentry.credit = value;
         else if (bor_lua_stricmp(property, "aggression") == 0)
-            bor_lua_spawnentry.aggression = (short)value;
-        else
-            return luaL_error(L, "setspawnentry: unsupported property '%s'", property);
+            bor_lua_spawnentry.aggression = value;
     }
 
     lua_pushinteger(L, 1);
+    return 1;
+
+numeric_error:
+    lua_pushinteger(L, 0);
     return 1;
 }
 
