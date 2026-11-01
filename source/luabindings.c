@@ -3034,7 +3034,7 @@ static int lua_openbor_setdrawmethod(lua_State *L)
 
     for (i = 2; i <= 13 && i <= lua_gettop(L); ++i) {
         if (!lua_isnil(L, i))
-            values[i - 2] = (int)luaL_checkinteger(L, i);
+            values[i - 2] = bor_lua_check_legacy_integer(L, i, "setdrawmethod");
     }
 
     method->flag = values[0];
