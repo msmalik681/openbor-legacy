@@ -1511,6 +1511,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         }
     }
     else if (!bor_lua_stricmp(prop, "stats")) {
+        if (lua_gettop(L) < 4) { lua_pushnil(L); return 1; }
         int type = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         int idx = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         if (idx < 0 || idx >= 20) lua_pushnil(L);
@@ -1518,6 +1519,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushnumber(L, ent->modeldata.stats[idx]);
     }
     else if (!bor_lua_stricmp(prop, "staydown")) {
+        if (lua_gettop(L) < 4) { lua_pushnil(L); return 1; }
         int which = 0;
         if (lua_isstring(L, 4)) {
             const char *field = lua_tostring(L, 4);
