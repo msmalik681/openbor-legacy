@@ -155,7 +155,7 @@ static int lua_changeopenborvariant(lua_State *L) {
     name = luaL_checkstring(L, 1);
 
     /* The legacy API accepts entity pointers for these two properties. */
-    if (!strcmp(name, "smartbomber") || !strcmp(name, "textbox")) {
+    if (!bor_lua_stricmp(name, "smartbomber") || !bor_lua_stricmp(name, "textbox")) {
         entity *ent = NULL;
 
         if (!lua_isnil(L, 2)) {
@@ -164,7 +164,7 @@ static int lua_changeopenborvariant(lua_State *L) {
                 return luaL_error(L, "changeopenborvariant: '%s' expects a live entity or nil", name);
         }
 
-        if (!strcmp(name, "smartbomber"))
+        if (!bor_lua_stricmp(name, "smartbomber"))
             smartbomber = ent;
         else
             textbox = ent;
@@ -174,35 +174,35 @@ static int lua_changeopenborvariant(lua_State *L) {
 
     value = bor_lua_check_legacy_integer(L, 2, "changeopenborvariant");
 
-    if (!strcmp(name, "elapsed_time")) {
+    if (!bor_lua_stricmp(name, "elapsed_time")) {
         borTime = (u32)value;
-    } else if (!strcmp(name, "levelpos")) {
+    } else if (!bor_lua_stricmp(name, "levelpos")) {
         if (!level)
             return luaL_error(L, "changeopenborvariant: 'levelpos' requires a loaded level");
         level->pos = (int)value;
-    } else if (!strcmp(name, "xpos")) {
+    } else if (!bor_lua_stricmp(name, "xpos")) {
         advancex = (float)value;
-    } else if (!strcmp(name, "ypos")) {
+    } else if (!bor_lua_stricmp(name, "ypos")) {
         advancey = (float)value;
-    } else if (!strcmp(name, "scrollminz")) {
+    } else if (!bor_lua_stricmp(name, "scrollminz")) {
         scrollminz = (float)value;
-    } else if (!strcmp(name, "scrollmaxz")) {
+    } else if (!bor_lua_stricmp(name, "scrollmaxz")) {
         scrollmaxz = (float)value;
-    } else if (!strcmp(name, "blockade")) {
+    } else if (!bor_lua_stricmp(name, "blockade")) {
         blockade = (float)value;
-    } else if (!strcmp(name, "slowmotion")) {
+    } else if (!bor_lua_stricmp(name, "slowmotion")) {
         slowmotion[0] = (unsigned char)value;
-    } else if (!strcmp(name, "slowmotion_duration")) {
+    } else if (!bor_lua_stricmp(name, "slowmotion_duration")) {
         slowmotion[1] = (unsigned char)value;
-    } else if (!strcmp(name, "lasthitx")) {
+    } else if (!bor_lua_stricmp(name, "lasthitx")) {
         lasthitx = (float)value;
-    } else if (!strcmp(name, "lasthitz")) {
+    } else if (!bor_lua_stricmp(name, "lasthitz")) {
         lasthitz = (float)value;
-    } else if (!strcmp(name, "lasthita")) {
+    } else if (!bor_lua_stricmp(name, "lasthita")) {
         lasthita = (float)value;
-    } else if (!strcmp(name, "lasthitc")) {
+    } else if (!bor_lua_stricmp(name, "lasthitc")) {
         lasthitc = (int)value;
-    } else if (!strcmp(name, "lasthitt")) {
+    } else if (!bor_lua_stricmp(name, "lasthitt")) {
         lasthitt = (int)value;
     } else {
         return luaL_error(L, "changeopenborvariant: unsupported or unimplemented property '%s'", name);
@@ -222,111 +222,111 @@ static int lua_openborvariant(lua_State *L) {
 
     name = luaL_checkstring(L, 1);
 
-    if (!strcmp(name, "branchname")) {
+    if (!bor_lua_stricmp(name, "branchname")) {
         lua_pushstring(L, branch_name);
-    } else if (!strcmp(name, "current_set")) {
+    } else if (!bor_lua_stricmp(name, "current_set")) {
         lua_pushinteger(L, current_set);
-    } else if (!strcmp(name, "current_level")) {
+    } else if (!bor_lua_stricmp(name, "current_level")) {
         lua_pushinteger(L, current_level);
-    } else if (!strcmp(name, "current_stage")) {
+    } else if (!bor_lua_stricmp(name, "current_stage")) {
         lua_pushinteger(L, current_stage);
-    } else if (!strcmp(name, "current_palette")) {
+    } else if (!bor_lua_stricmp(name, "current_palette")) {
         lua_pushinteger(L, current_palette);
-    } else if (!strcmp(name, "elapsed_time")) {
+    } else if (!bor_lua_stricmp(name, "elapsed_time")) {
         lua_pushinteger(L, (lua_Integer)borTime);
-    } else if (!strcmp(name, "ent_max")) {
+    } else if (!bor_lua_stricmp(name, "ent_max")) {
         lua_pushinteger(L, ent_max);
-    } else if (!strcmp(name, "in_level")) {
+    } else if (!bor_lua_stricmp(name, "in_level")) {
         /* Preserve the original legacy API's return semantics. */
         lua_pushinteger(L, level == NULL ? 1 : 0);
-    } else if (!strcmp(name, "in_selectscreen")) {
+    } else if (!bor_lua_stricmp(name, "in_selectscreen")) {
         lua_pushinteger(L, selectScreen);
-    } else if (!strcmp(name, "xpos")) {
+    } else if (!bor_lua_stricmp(name, "xpos")) {
         if (!level) return luaL_error(L, "openborvariant: 'xpos' requires a loaded level");
         lua_pushnumber(L, advancex);
-    } else if (!strcmp(name, "ypos")) {
+    } else if (!bor_lua_stricmp(name, "ypos")) {
         if (!level) return luaL_error(L, "openborvariant: 'ypos' requires a loaded level");
         lua_pushnumber(L, advancey);
-    } else if (!strcmp(name, "lasthitx")) {
+    } else if (!bor_lua_stricmp(name, "lasthitx")) {
         lua_pushnumber(L, lasthitx);
-    } else if (!strcmp(name, "lasthitz")) {
+    } else if (!bor_lua_stricmp(name, "lasthitz")) {
         lua_pushnumber(L, lasthitz);
-    } else if (!strcmp(name, "lasthita")) {
+    } else if (!bor_lua_stricmp(name, "lasthita")) {
         lua_pushnumber(L, lasthita);
-    } else if (!strcmp(name, "lasthitt")) {
+    } else if (!bor_lua_stricmp(name, "lasthitt")) {
         lua_pushinteger(L, lasthitt);
-    } else if (!strcmp(name, "lasthitc")) {
+    } else if (!bor_lua_stricmp(name, "lasthitc")) {
         lua_pushinteger(L, lasthitc);
-    } else if (!strcmp(name, "hResolution")) {
+    } else if (!bor_lua_stricmp(name, "hResolution")) {
         lua_pushinteger(L, videomodes.hRes);
-    } else if (!strcmp(name, "vResolution")) {
+    } else if (!bor_lua_stricmp(name, "vResolution")) {
         lua_pushinteger(L, videomodes.vRes);
-    } else if (!strcmp(name, "lightx")) {
+    } else if (!bor_lua_stricmp(name, "lightx")) {
         lua_pushinteger(L, light[0]);
-    } else if (!strcmp(name, "lightz")) {
+    } else if (!bor_lua_stricmp(name, "lightz")) {
         lua_pushinteger(L, light[1]);
-    } else if (!strcmp(name, "shadowalpha")) {
+    } else if (!bor_lua_stricmp(name, "shadowalpha")) {
         lua_pushinteger(L, shadowalpha);
-    } else if (!strcmp(name, "shadowcolor")) {
+    } else if (!bor_lua_stricmp(name, "shadowcolor")) {
         lua_pushinteger(L, colors.shadow);
-    } else if (!strcmp(name, "pixelformat")) {
+    } else if (!bor_lua_stricmp(name, "pixelformat")) {
         lua_pushinteger(L, pixelformat);
-    } else if (!strcmp(name, "totalram")) {
+    } else if (!bor_lua_stricmp(name, "totalram")) {
         lua_pushinteger(L, 64 * 1024);
-    } else if (!strcmp(name, "freeram")) {
+    } else if (!bor_lua_stricmp(name, "freeram")) {
         lua_pushinteger(L, 63 * 1024);
-    } else if (!strcmp(name, "usedram")) {
+    } else if (!bor_lua_stricmp(name, "usedram")) {
         lua_pushinteger(L, 1024);
-    } else if (!strcmp(name, "slowmotion")) {
+    } else if (!bor_lua_stricmp(name, "slowmotion")) {
         lua_pushinteger(L, slowmotion[0]);
-    } else if (!strcmp(name, "slowmotion_duration")) {
+    } else if (!bor_lua_stricmp(name, "slowmotion_duration")) {
         lua_pushinteger(L, slowmotion[1]);
-    } else if (!strcmp(name, "models_loaded")) {
+    } else if (!bor_lua_stricmp(name, "models_loaded")) {
         lua_pushinteger(L, (lua_Integer)models_loaded);
-    } else if (!strcmp(name, "models_cached")) {
+    } else if (!bor_lua_stricmp(name, "models_cached")) {
         lua_pushinteger(L, (lua_Integer)models_cached);
-    } else if (!strcmp(name, "maxplayers")) {
+    } else if (!bor_lua_stricmp(name, "maxplayers")) {
         int set_index = current_set >= 0 ? current_set : 0;
         if (set_index >= MAX_DIFFICULTIES)
             return luaL_error(L, "openborvariant: 'maxplayers' current_set is out of range");
         lua_pushinteger(L, maxplayers[set_index]);
-    } else if (!strcmp(name, "player") || !strcmp(name, "player1") ||
-               !strcmp(name, "player2") || !strcmp(name, "player3") ||
-               !strcmp(name, "player4")) {
-        int index = !strcmp(name, "player") ? 0 : name[6] - '1';
+    } else if (!bor_lua_stricmp(name, "player") || !bor_lua_stricmp(name, "player1") ||
+               !bor_lua_stricmp(name, "player2") || !bor_lua_stricmp(name, "player3") ||
+               !bor_lua_stricmp(name, "player4")) {
+        int index = !bor_lua_stricmp(name, "player") ? 0 : name[6] - '1';
         entity *player_ent = bor_lua_get_live_entity_ptr(player[index].ent);
         if (player_ent && player_ent->exists)
             bor_lua_push_entity(L, player_ent);
         else
             lua_pushnil(L);
-    } else if (!strcmp(name, "count_enemies")) {
+    } else if (!bor_lua_stricmp(name, "count_enemies")) {
         lua_pushinteger(L, count_ents(TYPE_ENEMY));
-    } else if (!strcmp(name, "count_npcs")) {
+    } else if (!bor_lua_stricmp(name, "count_npcs")) {
         lua_pushinteger(L, count_ents(TYPE_NPC));
-    } else if (!strcmp(name, "count_players")) {
+    } else if (!bor_lua_stricmp(name, "count_players")) {
         lua_pushinteger(L, count_ents(TYPE_PLAYER));
-    } else if (!strcmp(name, "count_entities")) {
+    } else if (!bor_lua_stricmp(name, "count_entities")) {
         lua_pushinteger(L, ent_count);
-    } else if (!strcmp(name, "game_paused")) {
+    } else if (!bor_lua_stricmp(name, "game_paused")) {
         lua_pushinteger(L, pause);
-    } else if (!strcmp(name, "levelwidth")) {
+    } else if (!bor_lua_stricmp(name, "levelwidth")) {
         if (!level) return luaL_error(L, "openborvariant: 'levelwidth' requires a loaded level");
         lua_pushinteger(L, level->width);
-    } else if (!strcmp(name, "levelheight")) {
+    } else if (!bor_lua_stricmp(name, "levelheight")) {
         if (!level) return luaL_error(L, "openborvariant: 'levelheight' requires a loaded level");
         lua_pushinteger(L, panel_height);
-    } else if (!strcmp(name, "numpalettes")) {
+    } else if (!bor_lua_stricmp(name, "numpalettes")) {
         if (!level) return luaL_error(L, "openborvariant: 'numpalettes' requires a loaded level");
         lua_pushinteger(L, level->numpalettes);
-    } else if (!strcmp(name, "gfx_y_offset")) {
+    } else if (!bor_lua_stricmp(name, "gfx_y_offset")) {
         if (!level) return luaL_error(L, "openborvariant: 'gfx_y_offset' requires a loaded level");
         lua_pushinteger(L, gfx_y_offset);
-    } else if (!strcmp(name, "game_speed")) {
+    } else if (!bor_lua_stricmp(name, "game_speed")) {
         if (!level) return luaL_error(L, "openborvariant: 'game_speed' requires a loaded level");
         lua_pushinteger(L, GAME_SPEED);
-    } else if (!strcmp(name, "player_max_z")) {
+    } else if (!bor_lua_stricmp(name, "player_max_z")) {
         lua_pushinteger(L, PLAYER_MAX_Z);
-    } else if (!strcmp(name, "player_min_z")) {
+    } else if (!bor_lua_stricmp(name, "player_min_z")) {
         lua_pushinteger(L, PLAYER_MIN_Z);
     } else {
         return luaL_error(L, "openborvariant: unsupported or unimplemented property '%s'", name);
