@@ -3587,12 +3587,13 @@ static int lua_openbor_loadmodel(lua_State *L)
 
 static int lua_openbor_loadsprite(lua_State *L)
 {
-    const char *filename = luaL_checkstring(L, 1);
+    const char *filename;
     s_sprite *sprite;
     bor_lua_sprite_handle *handle;
 
-    if (lua_gettop(L) != 1)
-        return luaL_error(L, "loadsprite expects exactly 1 filename");
+    if (lua_gettop(L) != 1 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "loadsprite expects exactly 1 filename string");
+    filename = lua_tostring(L, 1);
     sprite = loadsprite2((char *)filename, NULL, NULL);
     if (!sprite) {
         lua_pushnil(L);
