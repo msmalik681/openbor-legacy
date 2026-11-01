@@ -4522,20 +4522,20 @@ static int lua_openbor_playerkeys(lua_State *L) {
         const char *name;
         u32 flag;
     } buttons[] = {
-        {"anybutton", FLAG_ANYBUTTON},
+        {"jump", FLAG_JUMP},
         {"attack", FLAG_ATTACK},
         {"attack2", FLAG_ATTACK2},
         {"attack3", FLAG_ATTACK3},
         {"attack4", FLAG_ATTACK4},
+        {"special", FLAG_SPECIAL},
         {"esc", FLAG_ESC},
-        {"jump", FLAG_JUMP},
-        {"movedown", FLAG_MOVEDOWN},
+        {"start", FLAG_START},
         {"moveleft", FLAG_MOVELEFT},
         {"moveright", FLAG_MOVERIGHT},
         {"moveup", FLAG_MOVEUP},
+        {"movedown", FLAG_MOVEDOWN},
         {"screenshot", FLAG_SCREENSHOT},
-        {"special", FLAG_SPECIAL},
-        {"start", FLAG_START}
+        {"anybutton", FLAG_ANYBUTTON}
     };
     int top = lua_gettop(L);
     int index = 0;
@@ -4549,9 +4549,9 @@ static int lua_openbor_playerkeys(lua_State *L) {
     }
 
     if (lua_isnumber(L, 1))
-        index = (int)lua_tointeger(L, 1);
+        index = (int)lua_tonumber(L, 1);
     if (lua_isnumber(L, 2))
-        newkey = (int)lua_tointeger(L, 2);
+        newkey = (int)lua_tonumber(L, 2);
 
     /* The legacy code did not validate the player index; guard it in Lua. */
     if (index < 0 || index >= MAX_PLAYERS) {
@@ -4572,7 +4572,7 @@ static int lua_openbor_playerkeys(lua_State *L) {
         int j;
 
         if (lua_isnumber(L, i)) {
-            button = lua_tointeger(L, i);
+            button = (lua_Integer)lua_tonumber(L, i);
         } else if (lua_type(L, i) == LUA_TSTRING) {
             const char *name = lua_tostring(L, i);
             for (j = 0; j < (int)(sizeof(buttons) / sizeof(buttons[0])); j++) {
