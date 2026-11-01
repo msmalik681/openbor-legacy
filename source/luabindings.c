@@ -2589,7 +2589,7 @@ static int lua_openbor_projectile(lua_State *L)
         value[i] = (int)lua_tonumber(L, i + 2);
     }
 
-    if (value[4] == 1)
+    if (value[5] == 1)
         ent = bomb_spawn((char *)name, -1, (float)value[0], (float)value[1],
                          (float)value[2], value[3], value[6]);
     else
