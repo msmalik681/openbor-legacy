@@ -4522,20 +4522,20 @@ static int lua_openbor_playerkeys(lua_State *L) {
         const char *name;
         u32 flag;
     } buttons[] = {
-        {"jump", FLAG_JUMP},
+        {"anybutton", FLAG_ANYBUTTON},
         {"attack", FLAG_ATTACK},
         {"attack2", FLAG_ATTACK2},
         {"attack3", FLAG_ATTACK3},
         {"attack4", FLAG_ATTACK4},
-        {"special", FLAG_SPECIAL},
         {"esc", FLAG_ESC},
-        {"start", FLAG_START},
+        {"jump", FLAG_JUMP},
+        {"movedown", FLAG_MOVEDOWN},
         {"moveleft", FLAG_MOVELEFT},
         {"moveright", FLAG_MOVERIGHT},
         {"moveup", FLAG_MOVEUP},
-        {"movedown", FLAG_MOVEDOWN},
         {"screenshot", FLAG_SCREENSHOT},
-        {"anybutton", FLAG_ANYBUTTON}
+        {"special", FLAG_SPECIAL},
+        {"start", FLAG_START}
     };
     int top = lua_gettop(L);
     int index = 0;
