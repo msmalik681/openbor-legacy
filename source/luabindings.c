@@ -2493,12 +2493,21 @@ static int lua_openbor_getentityvar(lua_State *L)
 
 static int lua_openbor_setentityvar(lua_State *L)
 {
-    entity *ent = bor_lua_get_live_entity(L, 1);
-    lua_Integer index = bor_lua_check_legacy_integer(L, 2, "setentityvar");
+    entity *ent;
+    lua_Integer index;
 
     if (lua_gettop(L) < 3)
         return luaL_error(L, "setentityvar expects an entity, index, and value");
-    if (!ent || index < 0) {
+    ent = bor_lua_get_live_entity(L, 1);
+    if (!lua_isnil(L, 1) && !ent)
+        return luaL_error(L, "setentityvar expects a valid entity handle or nil");
+    if (!ent) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
+
+    index = bor_lua_check_legacy_integer(L, 2, "setentityvar");
+    if (index < 0) {
         lua_pushinteger(L, 0);
         return 1;
     }
