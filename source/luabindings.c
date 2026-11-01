@@ -926,7 +926,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         if (ent->colourmap) lua_pushlightuserdata(L, ent->colourmap); else lua_pushnil(L);
     }
     else if (!bor_lua_stricmp(prop, "colourtable")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         if (which < 0 || which >= ent->modeldata.maps_loaded) lua_pushnil(L);
         else if (ent->modeldata.colourmap[which]) lua_pushlightuserdata(L, ent->modeldata.colourmap[which]);
         else lua_pushnil(L);
@@ -956,35 +956,35 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown aiflag '%s'", flag);
     }
     else if (!bor_lua_stricmp(prop, "animvalid")) {
-        int anim = (int)luaL_optinteger(L, 3, 0);
+        int anim = (int)(lua_gettop(L) >= 3 && !lua_isnil(L, 3) ? bor_lua_check_legacy_integer(L, 3, "getentityproperty") : 0);
         lua_pushinteger(L, validanim(ent, anim) ? 1 : 0);
     }
     else if (!bor_lua_stricmp(prop, "dropframe") || !bor_lua_stricmp(prop, "landframe")) {
-        int anim = (int)luaL_optinteger(L, 3, 0);
+        int anim = (int)(lua_gettop(L) >= 3 && !lua_isnil(L, 3) ? bor_lua_check_legacy_integer(L, 3, "getentityproperty") : 0);
         if (!validanim(ent, anim)) lua_pushnil(L);
         else if (!bor_lua_stricmp(prop, "dropframe")) lua_pushinteger(L, ent->modeldata.animation[anim]->dropframe);
         else lua_pushinteger(L, ent->modeldata.animation[anim]->landframe[0]);
     }
     else if (!bor_lua_stricmp(prop, "energycost")) {
-        int anim = (int)luaL_checkinteger(L, 3);
-        int arg = (int)luaL_checkinteger(L, 4);
+        int anim = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
+        int arg = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         if (!validanim(ent, anim) || arg < 0 || arg >= MAX_ATTACKS)
             return luaL_error(L, "getentityproperty: invalid energycost animation or argument");
         lua_pushinteger(L, ent->modeldata.animation[anim]->energycost[arg]);
     }
     else if (!bor_lua_stricmp(prop, "komap")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushinteger(L, ent->modeldata.komap[which]);
     }
     else if (!bor_lua_stricmp(prop, "offense")) {
-        int which = (int)luaL_optinteger(L, 3, 0);
+        int which = (int)(lua_gettop(L) >= 3 && !lua_isnil(L, 3) ? bor_lua_check_legacy_integer(L, 3, "getentityproperty") : 0);
         if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
         else lua_pushnumber(L, ent->modeldata.offense_factors[which]);
     }
     else if (!bor_lua_stricmp(prop, "defense")) {
-        int which = (int)luaL_optinteger(L, 3, 0);
+        int which = (int)(lua_gettop(L) >= 3 && !lua_isnil(L, 3) ? bor_lua_check_legacy_integer(L, 3, "getentityproperty") : 0);
         const char *field = luaL_optstring(L, 4, "factor");
         if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
@@ -998,7 +998,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown defense property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "flash")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         if (which == 1) lua_pushinteger(L, ent->modeldata.noatflash);
         else if (which == 2) lua_pushinteger(L, ent->modeldata.bflash);
         else lua_pushinteger(L, ent->modeldata.flash);
@@ -1062,10 +1062,10 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown running property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "bbox")) {
-        int anim = (int)luaL_checkinteger(L, 4);
-        int frame = (int)luaL_checkinteger(L, 5);
-        int coord = (int)luaL_checkinteger(L, 6);
-        (void)luaL_checkinteger(L, 3); /* legacy bbox index argument */
+        int anim = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
+        int frame = (int)bor_lua_check_legacy_integer(L, 5, "getentityproperty");
+        int coord = (int)bor_lua_check_legacy_integer(L, 6, "getentityproperty");
+        (void)bor_lua_check_legacy_integer(L, 3, "getentityproperty"); /* legacy bbox index argument */
         if (!validanim(ent, anim) || frame < 0 ||
             frame >= ent->modeldata.animation[anim]->numframes || coord < 0 || coord >= 5 ||
             !ent->modeldata.animation[anim]->bbox_coords)
@@ -1074,7 +1074,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!bor_lua_stricmp(prop, "range")) {
         const char *field = luaL_checkstring(L, 3);
-        int anim = (int)luaL_checkinteger(L, 4);
+        int anim = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         int idx = -1;
         if (!validanim(ent, anim)) lua_pushnil(L);
         else {
@@ -1091,8 +1091,8 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         }
     }
     else if (!bor_lua_stricmp(prop, "stats")) {
-        int type = (int)luaL_checkinteger(L, 3);
-        int idx = (int)luaL_checkinteger(L, 4);
+        int type = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
+        int idx = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         if (idx < 0 || idx >= 20) lua_pushnil(L);
         else if (type == 1) lua_pushnumber(L, ent->stats[idx]);
         else lua_pushnumber(L, ent->modeldata.stats[idx]);
@@ -1105,14 +1105,14 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             else if (bor_lua_stricmp(field, "staydown") != 0)
                 return luaL_error(L, "unknown staydown property '%s'", field);
         } else {
-            which = (int)luaL_optinteger(L, 4, 0);
+            which = (int)(lua_gettop(L) >= 4 && !lua_isnil(L, 4) ? bor_lua_check_legacy_integer(L, 4, "getentityproperty") : 0);
         }
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushnumber(L, ent->staydown[which]);
     }
     else if (!bor_lua_stricmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
     else if (!bor_lua_stricmp(prop, "dot")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         const char *field = luaL_checkstring(L, 4);
         if (which < 0 || which >= MAX_DOTS) lua_pushnil(L);
         else if (!bor_lua_stricmp(field, "time")) lua_pushinteger(L, ent->dot_time[which]);
@@ -1128,11 +1128,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!bor_lua_stricmp(prop, "attack")) {
         const char *field = luaL_checkstring(L, 3);
-        int anim = (int)luaL_checkinteger(L, 5);
-        int frame = (int)luaL_checkinteger(L, 6);
-        int arg = (int)luaL_optinteger(L, 7, 0);
+        int anim = (int)bor_lua_check_legacy_integer(L, 5, "getentityproperty");
+        int frame = (int)bor_lua_check_legacy_integer(L, 6, "getentityproperty");
+        int arg = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "getentityproperty") : 0);
         s_attack *attack;
-        (void)luaL_checkinteger(L, 4); /* legacy attack-box index argument */
+        (void)bor_lua_check_legacy_integer(L, 4, "getentityproperty"); /* legacy attack-box index argument */
         if (!validanim(ent, anim) || frame < 0 ||
             frame >= ent->modeldata.animation[anim]->numframes ||
             !ent->modeldata.animation[anim]->attacks ||
