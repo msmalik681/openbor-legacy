@@ -555,19 +555,22 @@ static int lua_openbor_killentity(lua_State *L) {
 }
 
 // openbor.getentity(index)
-static int lua_openbor_getentity(lua_State *L) {
-    int idx = (int)luaL_checkinteger(L, 1);
+static int lua_openbor_getentity(lua_State *L)
+{
+    int idx;
     extern entity *ent_list[MAX_ENTS];
 
-    if (idx >= 0 && idx < MAX_ENTS && ent_list[idx]) {
+    if (lua_gettop(L) != 1 || lua_type(L, 1) != LUA_TNUMBER)
+        return luaL_error(L, "getentity expects one numeric entity index");
+    idx = (int)lua_tonumber(L, 1);
+
+    if (idx >= 0 && idx < MAX_ENTS && ent_list[idx])
         bor_lua_push_entity(L, ent_list[idx]);
-    } else {
+    else
         lua_pushnil(L);
-    }
     return 1;
 }
 
-// damageentity(entity, other, force, drop, type)
 static int lua_openbor_damageentity(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
     entity *other;
@@ -2757,12 +2760,18 @@ static int lua_openbor_setdrawmethod(lua_State *L)
 /* Legacy model, sprite, and GIF helpers. */
 static int lua_openbor_loadmodel(lua_State *L)
 {
-    const char *name = luaL_checkstring(L, 1);
-    char unload = (char)luaL_optinteger(L, 2, 0);
+    const char *name;
+    char unload = 0;
     s_model *model;
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
-        return luaL_error(L, "loadmodel expects a model name and optional unload flag");
+    if (lua_gettop(L) < 1 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "loadmodel expects a model name");
+    name = lua_tostring(L, 1);
+    if (lua_gettop(L) == 2) {
+        if (lua_type(L, 2) != LUA_TNUMBER)
+            return luaL_error(L, "loadmodel unload flag must be numeric");
+        unload = (char)lua_tonumber(L, 2);
+    }
 
     model = load_cached_model((char *)name, "openbor_loadmodel", unload);
     if (model)
@@ -2796,16 +2805,22 @@ static int lua_openbor_loadsprite(lua_State *L)
 static int lua_openbor_playgif(lua_State *L)
 {
     extern unsigned char pal[1024];
-    const char *filename = luaL_checkstring(L, 1);
-    int x = (int)luaL_optinteger(L, 2, 0);
-    int y = (int)luaL_optinteger(L, 3, 0);
-    int noskip = (int)luaL_optinteger(L, 4, 0);
+    const char *filename;
+    int values[3] = {0, 0, 0};
+    int i;
     int result;
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
-        return luaL_error(L, "playgif expects a filename and up to 3 optional integers");
+    if (lua_gettop(L) < 1 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "playgif expects a filename");
+    filename = lua_tostring(L, 1);
 
-    result = playgif((char *)filename, x, y, noskip);
+    for (i = 0; i < 3 && i + 2 <= lua_gettop(L); ++i) {
+        if (lua_type(L, i + 2) != LUA_TNUMBER)
+            return luaL_error(L, "playgif optional arguments must be numeric");
+        values[i] = (int)lua_tonumber(L, i + 2);
+    }
+
+    result = playgif((char *)filename, values[0], values[1], values[2]);
     palette_set_corrected(pal, savedata.gamma, savedata.gamma, savedata.gamma,
                           savedata.brightness, savedata.brightness, savedata.brightness);
     lua_pushinteger(L, result);
