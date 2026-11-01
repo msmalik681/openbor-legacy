@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 extern int sprite_map_max_items;
+extern int MAX_WALL_HEIGHT;
 static s_spawn_entry bor_lua_spawnentry;
 /*
  * Common Lua -> C execution boundary.
@@ -3968,7 +3969,7 @@ static int lua_openborconstant(lua_State *L)
 
     /* The legacy engine exposed this default as a global integer. */
     if (bor_lua_stricmp(name, "MAX_WALL_HEIGHT") == 0) {
-        lua_pushinteger(L, 1000);
+        lua_pushinteger(L, MAX_WALL_HEIGHT);
         return 1;
     }
 
