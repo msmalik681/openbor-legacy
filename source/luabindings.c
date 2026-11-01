@@ -1371,7 +1371,8 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             return luaL_error(L, "getentityproperty energycost expects exactly 4 arguments");
         int anim = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         int arg = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
-        if (!validanim(ent, anim) || arg < 0 || arg >= MAX_ATTACKS)
+        /* Each animation stores exactly three energy-cost values. */
+        if (!validanim(ent, anim) || arg < 0 || arg >= 3)
             return luaL_error(L, "getentityproperty: invalid energycost animation or argument");
         lua_pushinteger(L, ent->modeldata.animation[anim]->energycost[arg]);
     }
