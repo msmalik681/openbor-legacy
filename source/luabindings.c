@@ -359,8 +359,7 @@ static int lua_openbor_drawstring(lua_State *L) {
     int x = (int)bor_lua_check_legacy_integer(L, 1, "drawstring");
     int y = (int)bor_lua_check_legacy_integer(L, 2, "drawstring");
     int font = (int)bor_lua_check_legacy_integer(L, 3, "drawstring");
-    size_t text_length;
-    const char *text = luaL_tolstring(L, 4, &text_length);
+    const char *text = luaL_tolstring(L, 4, NULL);
     int z = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawstring") : 0);
 
     font_printf(x, y, font, z, "%s", text);
