@@ -1131,15 +1131,15 @@ static int lua_legacy_entity_type_mask(lua_State *L, int index, int *is_ground)
     const char *name = luaL_checkstring(L, index);
 
     *is_ground = 0;
-    if (!strcmp(name, "ground")) {
+    if (!bor_lua_stricmp(name, "ground")) {
         *is_ground = 1;
         return 0;
     }
-    if (!strcmp(name, "enemy")) return TYPE_ENEMY;
-    if (!strcmp(name, "npc")) return TYPE_NPC;
-    if (!strcmp(name, "obstacle")) return TYPE_OBSTACLE;
-    if (!strcmp(name, "player")) return TYPE_PLAYER;
-    if (!strcmp(name, "shot")) return TYPE_SHOT;
+    if (!bor_lua_stricmp(name, "enemy")) return TYPE_ENEMY;
+    if (!bor_lua_stricmp(name, "npc")) return TYPE_NPC;
+    if (!bor_lua_stricmp(name, "obstacle")) return TYPE_OBSTACLE;
+    if (!bor_lua_stricmp(name, "player")) return TYPE_PLAYER;
+    if (!bor_lua_stricmp(name, "shot")) return TYPE_SHOT;
 
     luaL_error(L, "changeentityproperty: unknown entity type '%s'", name);
     return 0;
