@@ -285,6 +285,14 @@ static int lua_openborvariant(lua_State *L) {
         lua_pushinteger(L, (lua_Integer)models_loaded);
     } else if (!bor_lua_stricmp(name, "models_cached")) {
         lua_pushinteger(L, (lua_Integer)models_cached);
+    } else if (!bor_lua_stricmp(name, "maxentityvars")) {
+        lua_pushinteger(L, 0);
+    } else if (!bor_lua_stricmp(name, "maxglobalvars")) {
+        lua_pushinteger(L, 2048);
+    } else if (!bor_lua_stricmp(name, "maxindexedvars")) {
+        lua_pushinteger(L, 0);
+    } else if (!bor_lua_stricmp(name, "maxscriptvars")) {
+        lua_pushinteger(L, 0);
     } else if (!bor_lua_stricmp(name, "maxplayers")) {
         int set_index = current_set >= 0 ? current_set : 0;
         if (set_index >= MAX_DIFFICULTIES)
