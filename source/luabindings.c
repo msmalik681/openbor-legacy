@@ -1783,11 +1783,11 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!bor_lua_stricmp(prop, "throwdamage")) {
         ent->modeldata.throwdamage = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "throwdist")) {
-        ent->modeldata.throwdist = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        ent->modeldata.throwdist = (float)luaL_checknumber(L, 3);
     } else if (!bor_lua_stricmp(prop, "throwframewait")) {
         ent->modeldata.throwframewait = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "throwheight")) {
-        ent->modeldata.throwheight = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        ent->modeldata.throwheight = (float)luaL_checknumber(L, 3);
     } else if (!bor_lua_stricmp(prop, "alpha")) {
         ent->modeldata.alpha = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "guardpoints")) {
