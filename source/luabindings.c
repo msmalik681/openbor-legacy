@@ -2873,8 +2873,8 @@ static int lua_openbor_getfilestreamargument(lua_State *L)
     if (argument < 0)
         return luaL_error(L, "file stream argument index cannot be negative");
 
-    while (end < stream->size && stream->buf[end] != '\n' &&
-           stream->buf[end] != '\r')
+    while (end < stream->size && stream->buf[end] != '\0' &&
+           stream->buf[end] != '\n' && stream->buf[end] != '\r')
         ++end;
     line = (char *)malloc(end - (size_t)stream->pos + 1);
     if (!line)
