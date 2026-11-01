@@ -130,9 +130,13 @@ static entity *bor_lua_get_live_entity(lua_State *L, int index);
 static entity *bor_lua_get_live_entity_ptr(entity *candidate);
 
 // openbor.log("message")
-static int lua_openbor_log(lua_State *L) {
-    const char *message = luaL_checkstring(L, 1);
-    printf("%s\n", message);
+static int lua_openbor_log(lua_State *L)
+{
+    const char *message;
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "log expects exactly one value");
+    message = luaL_tolstring(L, 1, NULL);
+    printf("%s", message);
     fflush(stdout);
     return 0;
 }
@@ -2476,8 +2480,7 @@ static int lua_openbor_free(lua_State *L)
         bor_lua_release_resource(L, 1);
         free(sprite->sprite);
         sprite->sprite = NULL;
-        lua_pushinteger(L, 0);
-        return 1;
+        return 0;
     }
 
     return luaL_error(L, "free expects a live screen or sprite handle");
@@ -2826,7 +2829,6 @@ static int lua_openbor_drawstringtoscreen(lua_State *L)
     s_screen *screen;
     int x, y, font;
     const char *text;
-    size_t text_length;
 
     if (lua_gettop(L) != 5)
         return luaL_error(L, "drawstringtoscreen expects screen, x, y, font, and text");
@@ -2835,7 +2837,7 @@ static int lua_openbor_drawstringtoscreen(lua_State *L)
     x = bor_lua_check_legacy_integer(L, 2, "drawstringtoscreen");
     y = bor_lua_check_legacy_integer(L, 3, "drawstringtoscreen");
     font = bor_lua_check_legacy_integer(L, 4, "drawstringtoscreen");
-    text = luaL_tolstring(L, 5, &text_length);
+    text = luaL_tolstring(L, 5, NULL);
 
     screen_printf(screen, x, y, font, "%s", text);
     return 0;
