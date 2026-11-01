@@ -1413,6 +1413,8 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!lua_isnoneornil(L, 4)) ent->modeldata.mpstable = (int)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->modeldata.mpstableval = (int)luaL_checknumber(L, 5);
         if (!lua_isnoneornil(L, 6)) ent->modeldata.mprate = (int)luaL_checknumber(L, 6);
+        if (!lua_isnoneornil(L, 7)) ent->modeldata.mpdroprate = (int)luaL_checknumber(L, 7);
+        if (!lua_isnoneornil(L, 8)) ent->modeldata.chargerate = (int)luaL_checknumber(L, 8);
     } else if (!bor_lua_stricmp(prop, "grabforce")) {
         ent->model->grabforce = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "iconposition")) {
