@@ -173,7 +173,7 @@ static int lua_changeopenborvariant(lua_State *L) {
         return 1;
     }
 
-    value = luaL_checkinteger(L, 2);
+    value = bor_lua_check_legacy_integer(L, 2, "changeopenborvariant");
 
     if (!strcmp(name, "elapsed_time")) {
         borTime = (u32)value;
@@ -1623,7 +1623,7 @@ static int lua_openbor_getlocalvar(lua_State *L) {
 
 static int lua_openbor_getindexedvar(lua_State *L)
 {
-    lua_Integer index = luaL_checkinteger(L, 1);
+    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "getindexedvar");
 
     if (index < 0) {
         lua_pushnil(L);
@@ -1639,7 +1639,7 @@ static int lua_openbor_getindexedvar(lua_State *L)
 
 static int lua_openbor_setindexedvar(lua_State *L)
 {
-    lua_Integer index = luaL_checkinteger(L, 1);
+    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "setindexedvar");
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setindexedvar expects an index and value");
@@ -1691,7 +1691,7 @@ static int bor_lua_push_script_var_table(lua_State *L)
 
 static int lua_openbor_getscriptvar(lua_State *L)
 {
-    lua_Integer index = luaL_checkinteger(L, 1);
+    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "getscriptvar");
 
     if (index < 0) {
         lua_pushnil(L);
@@ -1707,7 +1707,7 @@ static int lua_openbor_getscriptvar(lua_State *L)
 
 static int lua_openbor_setscriptvar(lua_State *L)
 {
-    lua_Integer index = luaL_checkinteger(L, 1);
+    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "setscriptvar");
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setscriptvar expects an index and value");
@@ -1753,7 +1753,7 @@ void bor_lua_clear_all_entity_vars(void)
 static int lua_openbor_getentityvar(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
-    lua_Integer index = luaL_checkinteger(L, 2);
+    lua_Integer index = bor_lua_check_legacy_integer(L, 2, "getentityvar");
 
     if (!ent || index < 0) {
         lua_pushnil(L);
@@ -1779,7 +1779,7 @@ static int lua_openbor_getentityvar(lua_State *L)
 static int lua_openbor_setentityvar(lua_State *L)
 {
     entity *ent = bor_lua_get_live_entity(L, 1);
-    lua_Integer index = luaL_checkinteger(L, 2);
+    lua_Integer index = bor_lua_check_legacy_integer(L, 2, "setentityvar");
 
     if (lua_gettop(L) < 3)
         return luaL_error(L, "setentityvar expects an entity, index, and value");
@@ -1827,11 +1827,24 @@ static int lua_openbor_null(lua_State *L)
 static int lua_openbor_maxglobalvarindex(lua_State *L)
 {
     int count = 0;
+    int table_index;
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
     if (lua_istable(L, -1)) {
+        table_index = lua_gettop(L);
         lua_pushnil(L);
-        while (lua_next(L, -2) != 0) {
+        while (lua_next(L, table_index) != 0) {
+            ++count;
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        table_index = lua_gettop(L);
+        lua_pushnil(L);
+        while (lua_next(L, table_index) != 0) {
             ++count;
             lua_pop(L, 1);
         }
@@ -2610,8 +2623,8 @@ static int lua_openbor_allocscreen(lua_State *L)
 
     if (lua_gettop(L) != 2)
         return luaL_error(L, "allocscreen expects width and height");
-    width = (int)luaL_checkinteger(L, 1);
-    height = (int)luaL_checkinteger(L, 2);
+    width = (int)bor_lua_check_legacy_integer(L, 1, "allocscreen");
+    height = (int)bor_lua_check_legacy_integer(L, 2, "allocscreen");
     if (width <= 0 || height <= 0)
         return luaL_error(L, "allocscreen dimensions must be positive");
 
