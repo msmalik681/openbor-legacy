@@ -161,6 +161,18 @@ static const char *const bor_lua_gep_range[] = {
 static const char *const bor_lua_gep_edelay[] = {
     "cap_max", "cap_min", "factor", "mode", "range_max", "range_min"
 };
+static const char *const bor_lua_textobj_properties[] = {"font", "text", "time", "x", "y", "z"};
+static const char *const bor_lua_layer_properties[] = {
+    "alpha", "amplitude", "bgspeedratio", "enabled", "transparency", "watermode",
+    "wavelength", "wavespeed", "xoffset", "xratio", "xrepeat", "xspacing",
+    "zoffset", "zratio", "zrepeat", "zspacing"
+};
+static const char *const bor_lua_getplayer_properties[] = {
+    "credits", "ent", "entity", "keys", "lives", "name", "playkeys", "score", "weaponum"
+};
+static const char *const bor_lua_changeplayer_properties[] = {
+    "credits", "lives", "name", "playkeys", "score", "weapon"
+};
 
 static int bor_lua_legacy_truthy(lua_State *L, int index)
 {
@@ -3319,8 +3331,10 @@ static int lua_openbor_changemodelproperty(lua_State *L)
     /* Legacy properties 0-3 are no-ops; property 4 changes selectability. */
     if (property == 4) {
         int value;
-        if (lua_gettop(L) < 3)
-            return luaL_error(L, "changemodelproperty property 4 requires a value");
+        if (lua_gettop(L) < 3 || lua_type(L, 3) != LUA_TNUMBER) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
         value = bor_lua_check_legacy_integer(L, 3, "changemodelproperty");
         model_cache[index].selectable = (char)value;
     }
@@ -3347,7 +3361,7 @@ static int lua_openbor_changeshadowcolor(lua_State *L)
         return luaL_error(L, "changeshadowcolor expects a color and optional alpha");
 
     colors.shadow = (int)bor_lua_check_legacy_integer(L, 1, "changeshadowcolor");
-    if (!lua_isnoneornil(L, 2))
+    if (lua_gettop(L) >= 2)
         shadowalpha = (int)bor_lua_check_legacy_integer(L, 2, "changeshadowcolor");
     return 0;
 }
@@ -3372,7 +3386,7 @@ static int lua_openbor_jumptobranch(lua_State *L)
 
     strncpy(branch_name, name, MAX_NAME_LEN);
     branch_name[MAX_NAME_LEN] = '\0';
-    if (!lua_isnoneornil(L, 2))
+    if (lua_gettop(L) >= 2)
         endgame = (int)bor_lua_check_legacy_integer(L, 2, "jumptobranch");
     return 0;
 }
@@ -3508,70 +3522,57 @@ static int lua_openbor_updateframe(lua_State *L)
 static int lua_openbor_gettextobjproperty(lua_State *L)
 {
     int index = (int)bor_lua_check_legacy_integer(L, 1, "gettextobjproperty");
-    const char *property = luaL_checkstring(L, 2);
+    int property;
     s_textobj *obj;
-
-    if (!level)
-        return luaL_error(L, "gettextobjproperty requires a loaded level");
-    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
-        lua_pushinteger(L, 0);
-        return 1;
-    }
+    if (!level) return luaL_error(L, "gettextobjproperty requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) { lua_pushinteger(L, 0); return 1; }
+    property = bor_lua_legacy_enum_index(L, 2, bor_lua_textobj_properties, 6);
     obj = &level->textobjs[index];
-
-    if (bor_lua_stricmp(property, "font") == 0)
-        lua_pushinteger(L, obj->font);
-    else if (bor_lua_stricmp(property, "text") == 0)
-        lua_pushstring(L, obj->text ? obj->text : "");
-    else if (bor_lua_stricmp(property, "time") == 0)
-        lua_pushinteger(L, obj->t);
-    else if (bor_lua_stricmp(property, "x") == 0)
-        lua_pushinteger(L, obj->x);
-    else if (bor_lua_stricmp(property, "y") == 0)
-        lua_pushinteger(L, obj->y);
-    else if (bor_lua_stricmp(property, "z") == 0)
-        lua_pushinteger(L, obj->z);
-    else
-        return luaL_error(L, "gettextobjproperty: unsupported property '%s'", property);
+    switch (property) {
+    case 0: lua_pushinteger(L, obj->font); break;
+    case 1: lua_pushstring(L, obj->text ? obj->text : ""); break;
+    case 2: lua_pushinteger(L, obj->t); break;
+    case 3: lua_pushinteger(L, obj->x); break;
+    case 4: lua_pushinteger(L, obj->y); break;
+    case 5: lua_pushinteger(L, obj->z); break;
+    default: return luaL_error(L, "gettextobjproperty: unsupported property");
+    }
     return 1;
 }
 
 static int lua_openbor_changetextobjproperty(lua_State *L)
 {
     int index = (int)bor_lua_check_legacy_integer(L, 1, "changetextobjproperty");
-    const char *property = luaL_checkstring(L, 2);
+    int property;
     s_textobj *obj;
-
-    if (lua_gettop(L) < 3)
-        return luaL_error(L, "changetextobjproperty expects index, property, and value");
-    if (!level)
-        return luaL_error(L, "changetextobjproperty requires a loaded level");
-    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
-        lua_pushinteger(L, 0);
-        return 1;
-    }
+    int value;
+    if (lua_gettop(L) < 3) return luaL_error(L, "changetextobjproperty expects index, property, and value");
+    if (!level) return luaL_error(L, "changetextobjproperty requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) { lua_pushinteger(L, 0); return 1; }
+    property = bor_lua_legacy_enum_index(L, 2, bor_lua_textobj_properties, 6);
     obj = &level->textobjs[index];
-
-    if (bor_lua_stricmp(property, "font") == 0)
-        obj->font = (int)bor_lua_check_legacy_integer(L, 3, "changetextobjproperty");
-    else if (bor_lua_stricmp(property, "text") == 0) {
-        const char *value = luaL_checkstring(L, 3);
-        char *copy = (char *)malloc(strlen(value) + 1);
+    if (property == 1) {
+        const char *value_text;
+        char *copy;
+        if (lua_type(L, 3) != LUA_TSTRING) return luaL_error(L, "changetextobjproperty text value must be a string");
+        value_text = lua_tostring(L, 3);
+        copy = (char *)malloc(strlen(value_text) + 1);
         if (!copy) return luaL_error(L, "out of memory changing text object");
-        strcpy(copy, value);
+        strcpy(copy, value_text);
         free(obj->text);
         obj->text = copy;
-    } else if (bor_lua_stricmp(property, "time") == 0)
-        obj->t = (int)bor_lua_check_legacy_integer(L, 3, "changetextobjproperty");
-    else if (bor_lua_stricmp(property, "x") == 0)
-        obj->x = (int)bor_lua_check_legacy_integer(L, 3, "changetextobjproperty");
-    else if (bor_lua_stricmp(property, "y") == 0)
-        obj->y = (int)bor_lua_check_legacy_integer(L, 3, "changetextobjproperty");
-    else if (bor_lua_stricmp(property, "z") == 0)
-        obj->z = (int)bor_lua_check_legacy_integer(L, 3, "changetextobjproperty");
-    else
-        return luaL_error(L, "changetextobjproperty: unsupported property '%s'", property);
-
+    } else {
+        if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; }
+        value = (int)lua_tonumber(L, 3);
+        switch (property) {
+        case 0: obj->font = value; break;
+        case 2: obj->t = value; break;
+        case 3: obj->x = value; break;
+        case 4: obj->y = value; break;
+        case 5: obj->z = value; break;
+        default: return luaL_error(L, "changetextobjproperty: unsupported property");
+        }
+    }
     lua_pushinteger(L, 1);
     return 1;
 }
@@ -3582,42 +3583,22 @@ static int lua_openbor_settextobj(lua_State *L)
     const char *text;
     s_textobj *obj;
     char *copy;
-    int x, y, font, z, time = 0;
-
-    if (lua_gettop(L) < 6)
-        return luaL_error(L, "settextobj expects index, x, y, font, z, text, and optional time");
-    if (!level)
-        return luaL_error(L, "settextobj requires a loaded level");
-    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) {
-        lua_pushinteger(L, 0);
-        return 1;
-    }
-
-    x = (int)bor_lua_check_legacy_integer(L, 2, "settextobj");
-    y = (int)bor_lua_check_legacy_integer(L, 3, "settextobj");
-    font = (int)bor_lua_check_legacy_integer(L, 4, "settextobj");
-    z = (int)bor_lua_check_legacy_integer(L, 5, "settextobj");
-    if (lua_type(L, 6) != LUA_TSTRING)
-        return luaL_error(L, "settextobj text must be a string");
+    if (lua_gettop(L) < 6) return luaL_error(L, "settextobj expects index, x, y, font, z, text, and optional time");
+    if (!level) return luaL_error(L, "settextobj requires a loaded level");
+    if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) { lua_pushinteger(L, 0); return 1; }
+    if (lua_type(L, 6) != LUA_TSTRING) return luaL_error(L, "settextobj text must be a string");
     text = lua_tostring(L, 6);
-    if (lua_gettop(L) >= 7)
-        time = (int)bor_lua_check_legacy_integer(L, 7, "settextobj");
-
     copy = (char *)malloc(strlen(text) + 1);
-    if (!copy)
-        return luaL_error(L, "out of memory setting text object");
+    if (!copy) return luaL_error(L, "out of memory setting text object");
     strcpy(copy, text);
-
     obj = &level->textobjs[index];
-    obj->x = x;
-    obj->y = y;
-    obj->font = font;
-    obj->z = z;
-    if (lua_gettop(L) == 7)
-        obj->t = time;
+    if (lua_type(L, 2) == LUA_TNUMBER) obj->x = (int)lua_tonumber(L, 2);
+    if (lua_type(L, 3) == LUA_TNUMBER) obj->y = (int)lua_tonumber(L, 3);
+    if (lua_type(L, 4) == LUA_TNUMBER) obj->font = (int)lua_tonumber(L, 4);
+    if (lua_type(L, 5) == LUA_TNUMBER) obj->z = (int)lua_tonumber(L, 5);
+    if (lua_gettop(L) >= 7 && lua_type(L, 7) == LUA_TNUMBER) obj->t = (int)lua_tonumber(L, 7);
     free(obj->text);
     obj->text = copy;
-
     lua_pushinteger(L, 1);
     return 1;
 }
@@ -3644,76 +3625,58 @@ static int lua_openbor_cleartextobj(lua_State *L)
 
 static int bor_lua_layer_property(lua_State *L, int foreground, int change)
 {
-    int index;
-    const char *property;
-    int count;
-    int value;
+    int index, property, count, value;
     float decimal;
-
-    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
-        lua_type(L, 2) != LUA_TSTRING)
-        return luaL_error(L, "layer property access expects a numeric index and property name");
-
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER)
+        return luaL_error(L, "layer property access expects a numeric index and property name or ID");
     index = (int)lua_tonumber(L, 1);
-    property = lua_tostring(L, 2);
-
-    if (!level)
-        return luaL_error(L, "layer property access requires a loaded level");
+    if (!level) return luaL_error(L, "layer property access requires a loaded level");
     count = foreground ? level->numfglayers : level->numbglayers;
-    if (index < 0 || index >= count) {
-        lua_pushinteger(L, 0);
-        return 1;
-    }
-    if (change && lua_gettop(L) < 3)
-        return luaL_error(L, "layer property change expects a value");
-
-#define BOR_LAYER_INT(field) \
-    do { \
+    if (index < 0 || index >= count) { lua_pushinteger(L, 0); return 1; }
+    property = bor_lua_legacy_enum_index(L, 2, bor_lua_layer_properties, 16);
+    if (property < 0) return luaL_error(L, "unsupported layer property");
+    if (change && lua_gettop(L) < 3) return luaL_error(L, "layer property change expects a value");
+#define BOR_LAYER_INT(field, id) do { \
+    if (property == id) { \
         if (change) { \
             if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
             value = (int)lua_tonumber(L, 3); \
-            if (foreground) level->fglayers[index].field = value; \
-            else level->bglayers[index].field = value; \
+            if (foreground) level->fglayers[index].field = value; else level->bglayers[index].field = value; \
             lua_pushinteger(L, 1); \
-        } else { \
-            lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
-        } \
+        } else lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
         return 1; \
-    } while (0)
-#define BOR_LAYER_FLOAT(field) \
-    do { \
+    } \
+} while (0)
+#define BOR_LAYER_FLOAT(field, id) do { \
+    if (property == id) { \
         if (change) { \
             if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
             decimal = (float)lua_tonumber(L, 3); \
-            if (foreground) level->fglayers[index].field = decimal; \
-            else level->bglayers[index].field = decimal; \
+            if (foreground) level->fglayers[index].field = decimal; else level->bglayers[index].field = decimal; \
             lua_pushinteger(L, 1); \
-        } else { \
-            lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
-        } \
+        } else lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
         return 1; \
-    } while (0)
-
-    if (bor_lua_stricmp(property, "alpha") == 0) BOR_LAYER_INT(alpha);
-    if (bor_lua_stricmp(property, "amplitude") == 0) BOR_LAYER_INT(amplitude);
-    if (bor_lua_stricmp(property, "bgspeedratio") == 0) BOR_LAYER_FLOAT(bgspeedratio);
-    if (bor_lua_stricmp(property, "enabled") == 0) BOR_LAYER_INT(enabled);
-    if (bor_lua_stricmp(property, "transparency") == 0) BOR_LAYER_INT(transparency);
-    if (bor_lua_stricmp(property, "watermode") == 0) BOR_LAYER_INT(watermode);
-    if (bor_lua_stricmp(property, "wavelength") == 0) BOR_LAYER_INT(wavelength);
-    if (bor_lua_stricmp(property, "wavespeed") == 0) BOR_LAYER_FLOAT(wavespeed);
-    if (bor_lua_stricmp(property, "xoffset") == 0) BOR_LAYER_INT(xoffset);
-    if (bor_lua_stricmp(property, "xratio") == 0) BOR_LAYER_FLOAT(xratio);
-    if (bor_lua_stricmp(property, "xrepeat") == 0) BOR_LAYER_INT(xrepeat);
-    if (bor_lua_stricmp(property, "xspacing") == 0) BOR_LAYER_INT(xspacing);
-    if (bor_lua_stricmp(property, "zoffset") == 0) BOR_LAYER_INT(zoffset);
-    if (bor_lua_stricmp(property, "zratio") == 0) BOR_LAYER_FLOAT(zratio);
-    if (bor_lua_stricmp(property, "zrepeat") == 0) BOR_LAYER_INT(zrepeat);
-    if (bor_lua_stricmp(property, "zspacing") == 0) BOR_LAYER_INT(zspacing);
-
+    } \
+} while (0)
+    BOR_LAYER_INT(alpha, 0);
+    BOR_LAYER_INT(amplitude, 1);
+    BOR_LAYER_FLOAT(bgspeedratio, 2);
+    BOR_LAYER_INT(enabled, 3);
+    BOR_LAYER_INT(transparency, 4);
+    BOR_LAYER_INT(watermode, 5);
+    BOR_LAYER_INT(wavelength, 6);
+    BOR_LAYER_FLOAT(wavespeed, 7);
+    BOR_LAYER_INT(xoffset, 8);
+    BOR_LAYER_FLOAT(xratio, 9);
+    BOR_LAYER_INT(xrepeat, 10);
+    BOR_LAYER_INT(xspacing, 11);
+    BOR_LAYER_INT(zoffset, 12);
+    BOR_LAYER_FLOAT(zratio, 13);
+    BOR_LAYER_INT(zrepeat, 14);
+    BOR_LAYER_INT(zspacing, 15);
 #undef BOR_LAYER_INT
 #undef BOR_LAYER_FLOAT
-    return luaL_error(L, "unsupported layer property '%s'", property);
+    return luaL_error(L, "unsupported layer property");
 }
 
 static int lua_openbor_getbglayerproperty(lua_State *L)
@@ -3740,76 +3703,42 @@ static int lua_openbor_changefglayerproperty(lua_State *L)
 static int lua_openbor_getplayerproperty(lua_State *L)
 {
     extern s_player player[4];
-    int index = 0;
-    const char *property;
+    int index = 0, property;
     entity *ent;
-
-    if (lua_gettop(L) < 2 || lua_type(L, 2) != LUA_TSTRING)
-        return luaL_error(L, "getplayerproperty expects a player index and property name");
-    if (lua_type(L, 1) == LUA_TNUMBER)
-        index = (int)lua_tonumber(L, 1);
-    property = lua_tostring(L, 2);
-
-    /* Guard the original's unchecked player array access. */
-    if (index < 0 || index >= 4) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (lua_gettop(L) < 2) return luaL_error(L, "getplayerproperty expects a player index and property name or ID");
+    if (lua_type(L, 1) == LUA_TNUMBER) index = (int)lua_tonumber(L, 1);
+    property = bor_lua_legacy_enum_index(L, 2, bor_lua_getplayer_properties, 9);
+    if (index < 0 || index >= 4) { lua_pushnil(L); return 1; }
     ent = player[index].ent;
-    if (!ent) {
-        lua_pushnil(L);
-        return 1;
+    if (!ent) { lua_pushnil(L); return 1; }
+    switch (property) {
+    case 0: lua_pushinteger(L, noshare ? player[index].credits : credits); break;
+    case 1: case 2: bor_lua_push_entity(L, ent); break;
+    case 3: lua_pushinteger(L, (lua_Integer)player[index].keys); break;
+    case 4: lua_pushinteger(L, (lua_Integer)player[index].lives); break;
+    case 5: lua_pushstring(L, player[index].name); break;
+    case 6: lua_pushinteger(L, (lua_Integer)player[index].playkeys); break;
+    case 7: lua_pushinteger(L, (lua_Integer)player[index].score); break;
+    case 8: lua_pushinteger(L, (lua_Integer)player[index].weapnum); break;
+    default: lua_pushnil(L); break;
     }
-
-    if (!bor_lua_stricmp(property, "ent") || !bor_lua_stricmp(property, "entity"))
-        bor_lua_push_entity(L, ent);
-    else if (!bor_lua_stricmp(property, "name"))
-        lua_pushstring(L, player[index].name);
-    else if (!bor_lua_stricmp(property, "score"))
-        lua_pushinteger(L, (lua_Integer)player[index].score);
-    else if (!bor_lua_stricmp(property, "lives"))
-        lua_pushinteger(L, (lua_Integer)player[index].lives);
-    else if (!bor_lua_stricmp(property, "playkeys"))
-        lua_pushinteger(L, (lua_Integer)player[index].playkeys);
-    else if (!bor_lua_stricmp(property, "keys"))
-        lua_pushinteger(L, (lua_Integer)player[index].keys);
-    else if (!bor_lua_stricmp(property, "credits"))
-        lua_pushinteger(L, noshare ? player[index].credits : credits);
-    else if (!bor_lua_stricmp(property, "weaponum"))
-        lua_pushinteger(L, (lua_Integer)player[index].weapnum);
-    else
-        lua_pushnil(L);
-
     return 1;
 }
 
 static int lua_openbor_changeplayerproperty(lua_State *L)
 {
     extern s_player player[4];
-    int index = 0;
-    const char *property;
+    int index = 0, property, value;
     entity *ent;
-    int value;
-
-    if (lua_gettop(L) < 3 || lua_type(L, 2) != LUA_TSTRING)
-        return luaL_error(L, "changeplayerproperty expects player, property, and value");
-    if (lua_type(L, 1) == LUA_TNUMBER)
-        index = (int)lua_tonumber(L, 1);
-    property = lua_tostring(L, 2);
-
-    if (index < 0 || index >= 4) {
-        lua_pushinteger(L, 0);
-        return 1;
-    }
+    if (lua_gettop(L) < 3) return luaL_error(L, "changeplayerproperty expects player, property, and value");
+    if (lua_type(L, 1) == LUA_TNUMBER) index = (int)lua_tonumber(L, 1);
+    property = bor_lua_legacy_enum_index(L, 2, bor_lua_changeplayer_properties, 6);
+    if (index < 0 || index >= 4) { lua_pushinteger(L, 0); return 1; }
     ent = player[index].ent;
-    if (!ent) {
-        lua_pushinteger(L, 1);
-        return 1;
-    }
-
-    if (!bor_lua_stricmp(property, "weapon")) {
-        int weapon;
-        int animation = 0;
+    if (!ent) { lua_pushinteger(L, 1); return 1; }
+    if (property < 0 || property >= 6) { lua_pushinteger(L, 1); return 1; }
+    if (property == 5) {
+        int weapon, animation = 0;
         if (lua_type(L, 3) != LUA_TNUMBER) goto invalid_value;
         weapon = (int)lua_tonumber(L, 3);
         if (lua_gettop(L) > 3) {
@@ -3817,35 +3746,28 @@ static int lua_openbor_changeplayerproperty(lua_State *L)
             animation = (int)lua_tonumber(L, 4);
         }
         set_weapon(ent, weapon, animation);
-    } else if (!bor_lua_stricmp(property, "name")) {
+    } else if (property == 2) {
         const char *name;
-        if (lua_type(L, 3) != LUA_TSTRING)
-            return luaL_error(L, "changeplayerproperty name value must be a string");
+        if (lua_type(L, 3) != LUA_TSTRING) return luaL_error(L, "changeplayerproperty name value must be a string");
         name = lua_tostring(L, 3);
         strncpy(player[index].name, name, sizeof(player[index].name) - 1);
         player[index].name[sizeof(player[index].name) - 1] = '\0';
     } else {
         if (lua_type(L, 3) != LUA_TNUMBER) goto invalid_value;
         value = (int)lua_tonumber(L, 3);
-        if (!bor_lua_stricmp(property, "score")) {
+        if (property == 4) {
             if (value < 0) value = 0;
             else if (value > 999999999) value = 999999999;
             player[index].score = (unsigned int)value;
-        } else if (!bor_lua_stricmp(property, "lives")) {
-            player[index].lives = value;
-        } else if (!bor_lua_stricmp(property, "playkeys")) {
-            player[index].playkeys = value;
-        } else if (!bor_lua_stricmp(property, "credits")) {
+        } else if (property == 1) player[index].lives = value;
+        else if (property == 3) player[index].playkeys = value;
+        else if (property == 0) {
             if (noshare) player[index].credits = value;
             else credits = value;
-        } else {
-            /* The original setter leaves unknown properties unchanged. */
         }
     }
-
     lua_pushinteger(L, 1);
     return 1;
-
 invalid_value:
     lua_pushinteger(L, 0);
     return 1;
