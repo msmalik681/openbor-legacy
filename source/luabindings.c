@@ -2649,15 +2649,20 @@ static int lua_openbor_clearscreen(lua_State *L)
 
 static int lua_openbor_drawstringtoscreen(lua_State *L)
 {
-    s_screen *screen = bor_lua_check_screen(L, 1);
-    int x = (int)bor_lua_check_legacy_integer(L, 2, "drawstringtoscreen");
-    int y = (int)bor_lua_check_legacy_integer(L, 3, "drawstringtoscreen");
-    int font = (int)bor_lua_check_legacy_integer(L, 4, "drawstringtoscreen");
+    s_screen *screen;
+    int x, y, font;
+    const char *text;
     size_t text_length;
-    const char *text = luaL_tolstring(L, 5, &text_length);
 
     if (lua_gettop(L) != 5)
         return luaL_error(L, "drawstringtoscreen expects screen, x, y, font, and text");
+
+    screen = bor_lua_check_screen(L, 1);
+    x = bor_lua_check_legacy_integer(L, 2, "drawstringtoscreen");
+    y = bor_lua_check_legacy_integer(L, 3, "drawstringtoscreen");
+    font = bor_lua_check_legacy_integer(L, 4, "drawstringtoscreen");
+    text = luaL_tolstring(L, 5, &text_length);
+
     screen_printf(screen, x, y, font, "%s", text);
     return 0;
 }
