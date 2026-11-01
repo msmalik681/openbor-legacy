@@ -3147,10 +3147,12 @@ static int lua_openbor_drawsprite(lua_State *L)
     int x = (int)bor_lua_check_legacy_integer(L, 2, "drawsprite");
     int y = (int)bor_lua_check_legacy_integer(L, 3, "drawsprite");
     int z = (int)bor_lua_check_legacy_integer(L, 4, "drawsprite");
-    int sortid = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawsprite") : 0);
+    int sortid = 0;
 
     if (lua_gettop(L) < 4 || !sprite)
         return luaL_error(L, "drawsprite expects a sprite handle, x, y, z, and optional sort ID");
+    if (lua_gettop(L) >= 5)
+        sortid = (int)bor_lua_check_legacy_integer(L, 5, "drawsprite");
     spriteq_add_frame(x, y, z, sprite, &bor_lua_drawmethod, sortid);
     return 0;
 }
@@ -3184,10 +3186,8 @@ static int lua_openbor_setdrawmethod(lua_State *L)
     }
     method = ent ? &ent->drawmethod : &bor_lua_drawmethod;
 
-    for (i = 2; i <= 13 && i <= lua_gettop(L); ++i) {
-        if (!lua_isnil(L, i))
-            values[i - 2] = bor_lua_check_legacy_integer(L, i, "setdrawmethod");
-    }
+    for (i = 2; i <= 13 && i <= lua_gettop(L); ++i)
+        values[i - 2] = bor_lua_check_legacy_integer(L, i, "setdrawmethod");
 
     method->flag = values[0];
     method->scalex = values[1];
