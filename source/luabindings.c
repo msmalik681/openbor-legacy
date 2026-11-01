@@ -1841,7 +1841,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!bor_lua_stricmp(prop, "invinctime")) {
         ent->invinctime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "lifespancountdown")) {
-        ent->lifespancountdown = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        ent->lifespancountdown = (float)luaL_checknumber(L, 3);
     } else if (!bor_lua_stricmp(prop, "freezetime")) {
         ent->freezetime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "bounce")) {
