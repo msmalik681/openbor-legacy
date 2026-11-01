@@ -2840,11 +2840,8 @@ static int lua_openbor_setspawnentry(lua_State *L)
 
     property_index = bor_lua_legacy_enum_index(L, 1, bor_lua_spawnentry_properties,
                                                 sizeof(bor_lua_spawnentry_properties) / sizeof(bor_lua_spawnentry_properties[0]));
-    if (property_index < 0) {
-        /* Legacy MAPSTRINGS leaves unknown names/IDs as a no-op sentinel. */
-        lua_pushinteger(L, 1);
-        return 1;
-    }
+    if (property_index < 0)
+        return luaL_error(L, "setspawnentry: unsupported property");
     property = bor_lua_spawnentry_properties[property_index];
 
     if (bor_lua_stricmp(property, "name") == 0) {
@@ -4143,12 +4140,9 @@ static int lua_openborconstant(lua_State *L)
 
     /* The legacy function passes integer arguments through unchanged. */
     if (lua_type(L, 1) == LUA_TNUMBER) {
-        lua_Number number = lua_tonumber(L, 1);
-        lua_Integer integer = lua_tointeger(L, 1);
-
-        if (number != (lua_Number)integer)
+        if (!lua_isinteger(L, 1))
             return luaL_error(L, "openborconstant expects a string or integer");
-        lua_pushinteger(L, integer);
+        lua_pushinteger(L, lua_tointeger(L, 1));
         return 1;
     }
 
