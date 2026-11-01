@@ -932,7 +932,10 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushinteger(L, ent->modeldata.flash);
     }
     else if (!bor_lua_stricmp(prop, "icon")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        if (lua_gettop(L) < 3) {
+            lua_pushnil(L);
+        } else {
+        int which = bor_lua_check_legacy_integer(L, 3, "getentityproperty icon");
         int sprite = ent->modeldata.icon;
         if (which == 1) sprite = ent->modeldata.icondie;
         else if (which == 2) sprite = ent->modeldata.iconget;
@@ -949,6 +952,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             sprite_map[sprite].sprite->centerx = sprite_map[sprite].centerx;
             sprite_map[sprite].sprite->centery = sprite_map[sprite].centery;
             lua_pushlightuserdata(L, sprite_map[sprite].sprite);
+        }
         }
     }
     else if (!bor_lua_stricmp(prop, "sprite")) {
