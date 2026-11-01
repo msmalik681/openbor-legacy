@@ -3466,49 +3466,49 @@ static int lua_openbor_checkrange(lua_State *L)
 
 static int lua_openbor_checkhole(lua_State *L)
 {
-    float x = (float)luaL_checknumber(L, 1);
-    float z = (float)luaL_checknumber(L, 2);
+    float x, z;
 
-    if (!level) {
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
+        lua_type(L, 2) != LUA_TNUMBER || !level) {
         lua_pushinteger(L, 0);
         return 1;
     }
-
+    x = (float)lua_tonumber(L, 1);
+    z = (float)lua_tonumber(L, 2);
     lua_pushinteger(L, checkhole(x, z) && checkwall(x, z) < 0 ? 1 : 0);
     return 1;
 }
 
 static int lua_openbor_checkwall(lua_State *L)
 {
-    float x = (float)luaL_checknumber(L, 1);
-    float z = (float)luaL_checknumber(L, 2);
+    float x, z;
     int wall;
 
-    if (!level) {
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
+        lua_type(L, 2) != LUA_TNUMBER || !level) {
         lua_pushnumber(L, 0);
         return 1;
     }
-
+    x = (float)lua_tonumber(L, 1);
+    z = (float)lua_tonumber(L, 2);
     wall = checkwall_below(x, z, 100000);
-    if (wall >= 0)
-        lua_pushnumber(L, level->walls[wall].alt);
-    else
-        lua_pushnumber(L, 0);
+    lua_pushnumber(L, wall >= 0 ? level->walls[wall].alt : 0);
     return 1;
 }
 
 static int lua_openbor_checkplatformbelow(lua_State *L)
 {
-    float x = (float)luaL_checknumber(L, 1);
-    float z = (float)luaL_checknumber(L, 2);
-    float a = (float)luaL_checknumber(L, 3);
+    float x, z, a;
     entity *platform;
 
-    if (!level) {
+    if (lua_gettop(L) < 3 || lua_type(L, 1) != LUA_TNUMBER ||
+        lua_type(L, 2) != LUA_TNUMBER || lua_type(L, 3) != LUA_TNUMBER || !level) {
         lua_pushnil(L);
         return 1;
     }
-
+    x = (float)lua_tonumber(L, 1);
+    z = (float)lua_tonumber(L, 2);
+    a = (float)lua_tonumber(L, 3);
     platform = check_platform_below(x, z, a);
     bor_lua_push_entity(L, platform);
     return 1;
