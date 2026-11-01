@@ -1118,6 +1118,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown edelay property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "running")) {
+        if (lua_gettop(L) < 3) { lua_pushnil(L); return 1; }
         int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_running, sizeof(bor_lua_gep_running) / sizeof(bor_lua_gep_running[0]));
         const char *field;
         if (field_index < 0)
@@ -1142,6 +1143,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushinteger(L, ent->modeldata.animation[anim]->bbox_coords[frame][coord]);
     }
     else if (!bor_lua_stricmp(prop, "range")) {
+        if (lua_gettop(L) < 4) { lua_pushnil(L); return 1; }
         int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_range, sizeof(bor_lua_gep_range) / sizeof(bor_lua_gep_range[0]));
         const char *field;
         int anim = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
@@ -1185,6 +1187,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!bor_lua_stricmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
     else if (!bor_lua_stricmp(prop, "dot")) {
+        if (lua_gettop(L) < 4) { lua_pushnil(L); return 1; }
         int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         int field_index = bor_lua_legacy_enum_index(L, 4, bor_lua_gep_dot, sizeof(bor_lua_gep_dot) / sizeof(bor_lua_gep_dot[0]));
         const char *field;
@@ -1204,6 +1207,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown dot property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "attack")) {
+        if (lua_gettop(L) < 6) { lua_pushnil(L); return 1; }
         int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_attack, sizeof(bor_lua_gep_attack) / sizeof(bor_lua_gep_attack[0]));
         const char *field;
         int anim = (int)bor_lua_check_legacy_integer(L, 5, "getentityproperty");
