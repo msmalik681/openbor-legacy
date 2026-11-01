@@ -3889,6 +3889,8 @@ static int lua_openbor_changetextobjproperty(lua_State *L)
     if (!level) return luaL_error(L, "changetextobjproperty requires a loaded level");
     if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) { lua_pushinteger(L, 0); return 1; }
     property = bor_lua_legacy_enum_index(L, 2, bor_lua_textobj_properties, 6);
+    if (property < 0)
+        return luaL_error(L, "changetextobjproperty: unsupported property");
     obj = &level->textobjs[index];
     if (property == 1) {
         const char *value_text;
