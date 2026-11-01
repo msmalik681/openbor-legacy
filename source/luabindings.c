@@ -1364,7 +1364,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     else if (!bor_lua_stricmp(prop, "tossv"))         ent->tossv = (float)luaL_checknumber(L, 3);
     else if (!bor_lua_stricmp(prop, "base"))          ent->base = (float)luaL_checknumber(L, 3);
     else if (!bor_lua_stricmp(prop, "direction"))     ent->direction = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
-    else if (!bor_lua_stricmp(prop, "map"))           ent->map = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "map"))           ent_set_colourmap(ent, (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "nextanim"))      ent->nextanim = (unsigned int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "nextthink"))     ent->nextthink = (unsigned int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "autokill"))      ent->autokill = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
