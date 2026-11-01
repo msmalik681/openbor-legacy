@@ -1192,21 +1192,34 @@ static int lua_openbor_getentityproperty(lua_State *L) {
 // openbor.setEntityProperty(entity, property, value)
 static int lua_legacy_entity_type_mask(lua_State *L, int index, int *is_ground)
 {
-    const char *name = luaL_checkstring(L, index);
+    static const int entity_types[] = {0, TYPE_ENEMY, TYPE_NPC, TYPE_OBSTACLE, TYPE_PLAYER, TYPE_SHOT};
 
     *is_ground = 0;
-    if (!bor_lua_stricmp(name, "ground")) {
-        *is_ground = 1;
-        return 0;
+    if (lua_isinteger(L, index)) {
+        lua_Integer value = lua_tointeger(L, index);
+        if (value < 0 || value >= (lua_Integer)(sizeof(entity_types) / sizeof(entity_types[0])))
+            return luaL_error(L, "changeentityproperty: entity type index out of range");
+        if (value == 0)
+            *is_ground = 1;
+        return entity_types[value];
     }
-    if (!bor_lua_stricmp(name, "enemy")) return TYPE_ENEMY;
-    if (!bor_lua_stricmp(name, "npc")) return TYPE_NPC;
-    if (!bor_lua_stricmp(name, "obstacle")) return TYPE_OBSTACLE;
-    if (!bor_lua_stricmp(name, "player")) return TYPE_PLAYER;
-    if (!bor_lua_stricmp(name, "shot")) return TYPE_SHOT;
 
-    luaL_error(L, "changeentityproperty: unknown entity type '%s'", name);
-    return 0;
+    if (lua_type(L, index) != LUA_TSTRING)
+        return luaL_error(L, "changeentityproperty: entity type must be a name or integer constant");
+
+    {
+        const char *name = lua_tostring(L, index);
+        if (!bor_lua_stricmp(name, "ground")) {
+            *is_ground = 1;
+            return 0;
+        }
+        if (!bor_lua_stricmp(name, "enemy")) return TYPE_ENEMY;
+        if (!bor_lua_stricmp(name, "npc")) return TYPE_NPC;
+        if (!bor_lua_stricmp(name, "obstacle")) return TYPE_OBSTACLE;
+        if (!bor_lua_stricmp(name, "player")) return TYPE_PLAYER;
+        if (!bor_lua_stricmp(name, "shot")) return TYPE_SHOT;
+        return luaL_error(L, "changeentityproperty: unknown entity type '%s'", name);
+    }
 }
 
 static int lua_openbor_changeentityproperty(lua_State *L) {
