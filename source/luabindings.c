@@ -1938,12 +1938,21 @@ static s_filestream *bor_lua_get_filestream(lua_State *L, int arg)
 
 static int lua_openbor_openfilestream(lua_State *L)
 {
-    const char *filename = luaL_checkstring(L, 1);
-    int location = (int)luaL_optinteger(L, 2, 0);
+    const char *filename;
+    int location = 0;
     s_filestream *stream;
     char path[512] = {0};
     char *buffer = NULL;
     size_t size = 0;
+
+    if (lua_gettop(L) < 1 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "openfilestream expects a filename string");
+    filename = lua_tostring(L, 1);
+    if (lua_gettop(L) >= 2) {
+        if (lua_type(L, 2) != LUA_TNUMBER)
+            return luaL_error(L, "openfilestream location must be numeric");
+        location = (int)lua_tonumber(L, 2);
+    }
 
     if (!level)
         return luaL_error(L, "openfilestream requires a loaded level");
@@ -1999,29 +2008,6 @@ static int lua_openbor_openfilestream(lua_State *L)
     return 1;
 }
 
-static int lua_openbor_createfilestream(lua_State *L)
-{
-    s_filestream *stream;
-
-    (void)L;
-    if (!level)
-        return luaL_error(L, "createfilestream requires a loaded level");
-    if (level->numfilestreams >= LEVEL_MAX_FILESTREAMS)
-        return luaL_error(L, "maximum file streams exceeded");
-
-    stream = &level->filestreams[level->numfilestreams];
-    stream->buf = (char *)malloc(1);
-    if (!stream->buf)
-        return luaL_error(L, "createfilestream ran out of memory");
-    stream->buf[0] = '\0';
-    stream->size = 0;
-    stream->pos = 0;
-
-    lua_pushinteger(L, level->numfilestreams);
-    ++level->numfilestreams;
-    return 1;
-}
-
 static int lua_openbor_getfilestreamline(lua_State *L)
 {
     s_filestream *stream = bor_lua_get_filestream(L, 1);
@@ -2042,11 +2028,17 @@ static int lua_openbor_getfilestreamline(lua_State *L)
 static int lua_openbor_getfilestreamargument(lua_State *L)
 {
     s_filestream *stream = bor_lua_get_filestream(L, 1);
-    lua_Integer argument = luaL_checkinteger(L, 2);
-    const char *type = luaL_checkstring(L, 3);
+    lua_Integer argument;
+    const char *type;
     size_t end = (size_t)stream->pos;
     char *line;
     char *value;
+
+    if (lua_gettop(L) < 3 || lua_type(L, 2) != LUA_TNUMBER ||
+        lua_type(L, 3) != LUA_TSTRING)
+        return luaL_error(L, "getfilestreamargument expects stream, numeric argument index, and type string");
+    argument = (lua_Integer)lua_tonumber(L, 2);
+    type = lua_tostring(L, 3);
 
     if (stream->pos < 0 || (size_t)stream->pos > stream->size)
         return luaL_error(L, "file stream position is out of range");
@@ -2063,13 +2055,13 @@ static int lua_openbor_getfilestreamargument(lua_State *L)
     line[end - (size_t)stream->pos] = '\0';
 
     value = findarg(line, (int)argument);
-    if (bor_lua_stricmp(type, "string") == 0) {
+    if (bor_lua_stricmp(type, "string") == 0)
         lua_pushstring(L, value ? value : "");
-    } else if (bor_lua_stricmp(type, "int") == 0) {
+    else if (bor_lua_stricmp(type, "int") == 0)
         lua_pushinteger(L, value ? (lua_Integer)atoi(value) : 0);
-    } else if (bor_lua_stricmp(type, "float") == 0) {
+    else if (bor_lua_stricmp(type, "float") == 0)
         lua_pushnumber(L, value ? (lua_Number)atof(value) : 0);
-    } else {
+    else {
         free(line);
         return luaL_error(L, "getfilestreamargument type must be string, int, or float");
     }
@@ -2108,69 +2100,14 @@ static int lua_openbor_getfilestreamposition(lua_State *L)
 static int lua_openbor_setfilestreamposition(lua_State *L)
 {
     s_filestream *stream = bor_lua_get_filestream(L, 1);
-    lua_Integer position = luaL_checkinteger(L, 2);
+    lua_Integer position;
 
+    if (lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "file stream position must be numeric");
+    position = (lua_Integer)lua_tonumber(L, 2);
     if (position < 0 || (lua_Unsigned)position > stream->size)
         return luaL_error(L, "file stream position is out of range");
     stream->pos = (int)position;
-    return 0;
-}
-
-static int lua_openbor_savefilestream(lua_State *L)
-{
-    s_filestream *stream = bor_lua_get_filestream(L, 1);
-    const char *filename = luaL_checkstring(L, 2);
-    char path[512] = {0};
-    char modname[128] = {0};
-    const char *base;
-    const char *slash;
-    size_t mod_length;
-    FILE *handle;
-
-    if (lua_gettop(L) != 2)
-        return luaL_error(L, "savefilestream expects a stream index and filename");
-
-    base = strrchr(packfile, '/');
-    slash = strrchr(packfile, '\\');
-    if (!base || (slash && slash > base))
-        base = slash;
-    base = base ? base + 1 : packfile;
-
-    mod_length = strlen(base);
-    if (mod_length >= 4 && base[mod_length - 4] == '.')
-        mod_length -= 4;
-    if (mod_length >= sizeof(modname))
-        mod_length = sizeof(modname) - 1;
-    memcpy(modname, base, mod_length);
-    modname[mod_length] = '\0';
-
-    getBasePath(path, "Saves/", 0);
-    if (strlen(path) + strlen(modname) + 2 >= sizeof(path))
-        return luaL_error(L, "savefilestream path is too long");
-    if (path[0] && path[strlen(path) - 1] == '/')
-        path[strlen(path) - 1] = '\0';
-    strcat(path, "/");
-    strcat(path, modname);
-    dirExists(path, 1);
-
-    if (strlen(path) + strlen(filename) + 2 >= sizeof(path))
-        return luaL_error(L, "savefilestream path is too long");
-    strcat(path, "/");
-    strcat(path, filename);
-
-    handle = fopen(path, "wb");
-    if (!handle)
-        return luaL_error(L, "savefilestream could not open '%s' for writing", path);
-
-    if (stream->size && fwrite(stream->buf, 1, stream->size, handle) != stream->size) {
-        fclose(handle);
-        return luaL_error(L, "savefilestream could not write '%s'", path);
-    }
-    if (fwrite("\r\n", 1, 2, handle) != 2) {
-        fclose(handle);
-        return luaL_error(L, "savefilestream could not finish writing '%s'", path);
-    }
-    fclose(handle);
     return 0;
 }
 
