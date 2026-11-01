@@ -3143,10 +3143,8 @@ static int lua_openbor_getmodelproperty(lua_State *L)
         lua_pushinteger(L, model_cache[index].loadflag);
         break;
     case 1:
-        if (model_cache[index].model)
-            lua_pushlightuserdata(L, model_cache[index].model);
-        else
-            lua_pushnil(L);
+        /* The legacy switch falls through to property 2 and returns the name. */
+        lua_pushstring(L, model_cache[index].name ? model_cache[index].name : "");
         break;
     case 2:
         lua_pushstring(L, model_cache[index].name ? model_cache[index].name : "");
@@ -3158,34 +3156,36 @@ static int lua_openbor_getmodelproperty(lua_State *L)
         lua_pushinteger(L, model_cache[index].selectable);
         break;
     default:
-        return luaL_error(L, "getmodelproperty: unknown property index %d", property);
+        lua_pushnil(L);
+        break;
     }
     return 1;
 }
 
 static int lua_openbor_changemodelproperty(lua_State *L)
 {
-    int index = (int)luaL_checkinteger(L, 1);
-    int property = (int)luaL_checkinteger(L, 2);
+    int index;
+    int property;
 
-    if (lua_gettop(L) < 3)
-        return luaL_error(L, "changemodelproperty expects model index, property index, and value");
-    if (index < 0 || (unsigned int)index >= models_cached || !model_cache) {
-        lua_pushinteger(L, 0);
-        return 1;
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "changemodelproperty expects model index and property index");
+
+    index = bor_lua_check_legacy_integer(L, 1, "changemodelproperty");
+    property = bor_lua_check_legacy_integer(L, 2, "changemodelproperty");
+
+    if (index < 0 || (unsigned int)index >= models_cached || !model_cache)
+        return 0;
+
+    /* Legacy properties 0-3 are no-ops; property 4 changes selectability. */
+    if (property == 4) {
+        int value;
+        if (lua_gettop(L) < 3)
+            return luaL_error(L, "changemodelproperty property 4 requires a value");
+        value = bor_lua_check_legacy_integer(L, 3, "changemodelproperty");
+        model_cache[index].selectable = (char)value;
     }
 
-    if (property == 4)
-        model_cache[index].selectable = (char)luaL_checkinteger(L, 3);
-    else if (property < 0 || property > 4)
-        return luaL_error(L, "changemodelproperty: unknown property index %d", property);
-    else {
-        lua_pushinteger(L, 0);
-        return 1;
-    }
-
-    lua_pushinteger(L, 1);
-    return 1;
+    return 0;
 }
 
 /* Legacy engine state and entity action helpers. */
