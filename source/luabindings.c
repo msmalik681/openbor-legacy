@@ -3034,7 +3034,7 @@ static int lua_openbor_playmusic(lua_State *L)
 {
     const char *filename;
     int loop = 0;
-    long offset = 0;
+    s32 offset = 0;
     if (lua_gettop(L) == 0) { sound_close_music(); return 0; }
     if (lua_type(L, 1) != LUA_TSTRING)
         return luaL_error(L, "playmusic expects a filename string");
@@ -3043,7 +3043,7 @@ static int lua_openbor_playmusic(lua_State *L)
     if (lua_gettop(L) >= 3) {
         if (lua_type(L, 3) != LUA_TNUMBER)
             return luaL_error(L, "playmusic offset must be numeric");
-        offset = (long)lua_tonumber(L, 3);
+        offset = (s32)lua_tonumber(L, 3);
     }
     music((char *)filename, loop, offset);
     return 0;
@@ -4961,9 +4961,9 @@ static int lua_openbor_playerkeys(lua_State *L) {
         return 1;
     }
 
-    if (lua_isnumber(L, 1))
+    if (lua_type(L, 1) == LUA_TNUMBER)
         index = (int)lua_tonumber(L, 1);
-    if (lua_isnumber(L, 2))
+    if (lua_type(L, 2) == LUA_TNUMBER)
         newkey = (int)lua_tonumber(L, 2);
 
     /* The legacy code did not validate the player index; guard it in Lua. */
