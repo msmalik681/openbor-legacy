@@ -1461,7 +1461,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
             if (n == sizeof(aiflag_names) / sizeof(aiflag_names[0]))
                 return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
         }
-else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    } else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "blink"))             ent->blink = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "attacking"))         ent->attacking = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "projectile"))        ent->projectile = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
