@@ -84,6 +84,27 @@ static int bor_lua_check_legacy_integer(lua_State *L, int index, const char *fun
     return (int)lua_tonumber(L, index);
 }
 
+static int bor_lua_legacy_truthy(lua_State *L, int index)
+{
+    switch (lua_type(L, index)) {
+    case LUA_TBOOLEAN:
+        return lua_toboolean(L, index);
+    case LUA_TNUMBER:
+        return lua_tonumber(L, index) != 0;
+    case LUA_TSTRING: {
+        size_t length = 0;
+        lua_tolstring(L, index, &length);
+        return length != 0;
+    }
+    case LUA_TLIGHTUSERDATA:
+        return lua_touserdata(L, index) != NULL;
+    case LUA_TUSERDATA:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 
 extern int noshare;
 extern int credits;
@@ -2510,7 +2531,7 @@ static int lua_openbor_playmusic(lua_State *L)
     if (lua_type(L, 1) != LUA_TSTRING)
         return luaL_error(L, "playmusic expects a filename string");
     filename = lua_tostring(L, 1);
-    if (lua_gettop(L) >= 2) loop = lua_toboolean(L, 2);
+    if (lua_gettop(L) >= 2) loop = bor_lua_legacy_truthy(L, 2);
     if (lua_gettop(L) >= 3) {
         if (lua_type(L, 3) != LUA_TNUMBER)
             return luaL_error(L, "playmusic offset must be numeric");
@@ -2567,7 +2588,7 @@ static int lua_openbor_setmusictempo(lua_State *L)
 static int lua_openbor_pausemusic(lua_State *L)
 {
     if (lua_gettop(L) > 0)
-        sound_pause_music(lua_toboolean(L, 1));
+        sound_pause_music(bor_lua_legacy_truthy(L, 1));
     return 0;
 }
 
