@@ -3155,27 +3155,55 @@ static int lua_openbor_cleartextobj(lua_State *L)
 
 static int bor_lua_layer_property(lua_State *L, int foreground, int change)
 {
-    int index = (int)luaL_checkinteger(L, 1);
-    const char *property = luaL_checkstring(L, 2);
+    int index;
+    const char *property;
     int count;
     int value;
     float decimal;
+
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
+        lua_type(L, 2) != LUA_TSTRING)
+        return luaL_error(L, "layer property access expects a numeric index and property name");
+
+    index = (int)lua_tonumber(L, 1);
+    property = lua_tostring(L, 2);
 
     if (!level)
         return luaL_error(L, "layer property access requires a loaded level");
     count = foreground ? level->numfglayers : level->numbglayers;
     if (index < 0 || index >= count) {
-        if (change) lua_pushinteger(L, 0);
-        else lua_pushinteger(L, 0);
+        lua_pushinteger(L, 0);
         return 1;
     }
-    if (change && lua_gettop(L) != 3)
-        return luaL_error(L, "layer property change expects index, property, and value");
+    if (change && lua_gettop(L) < 3)
+        return luaL_error(L, "layer property change expects a value");
 
 #define BOR_LAYER_INT(field) \
-    do { if (change) { value = (int)luaL_checkinteger(L, 3); if (foreground) level->fglayers[index].field = value; else level->bglayers[index].field = value; lua_pushinteger(L, 1); } else { lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
+    do { \
+        if (change) { \
+            if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
+            value = (int)lua_tonumber(L, 3); \
+            if (foreground) level->fglayers[index].field = value; \
+            else level->bglayers[index].field = value; \
+            lua_pushinteger(L, 1); \
+        } else { \
+            lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
+        } \
+        return 1; \
+    } while (0)
 #define BOR_LAYER_FLOAT(field) \
-    do { if (change) { decimal = (float)luaL_checknumber(L, 3); if (foreground) level->fglayers[index].field = decimal; else level->bglayers[index].field = decimal; lua_pushinteger(L, 1); } else { lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); } return 1; } while (0)
+    do { \
+        if (change) { \
+            if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
+            decimal = (float)lua_tonumber(L, 3); \
+            if (foreground) level->fglayers[index].field = decimal; \
+            else level->bglayers[index].field = decimal; \
+            lua_pushinteger(L, 1); \
+        } else { \
+            lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
+        } \
+        return 1; \
+    } while (0)
 
     if (bor_lua_stricmp(property, "alpha") == 0) BOR_LAYER_INT(alpha);
     if (bor_lua_stricmp(property, "amplitude") == 0) BOR_LAYER_INT(amplitude);
