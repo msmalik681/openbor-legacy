@@ -676,39 +676,39 @@ static int lua_openbor_getentityproperty(lua_State *L) {
 
     prop = luaL_checkstring(L, 2);
 
-    if (!strcmp(prop, "health"))              lua_pushinteger(L, ent->health);
-    else if (!strcmp(prop, "mp"))             lua_pushinteger(L, ent->mp);
-    else if (!strcmp(prop, "maxhealth"))      lua_pushinteger(L, ent->modeldata.health);
-    else if (!strcmp(prop, "maxmp"))          lua_pushinteger(L, ent->modeldata.mp);
-    else if (!strcmp(prop, "x"))              lua_pushnumber(L, ent->x);
-    else if (!strcmp(prop, "z"))              lua_pushnumber(L, ent->z);
-    else if (!strcmp(prop, "a"))              lua_pushnumber(L, ent->a);
-    else if (!strcmp(prop, "xdir"))           lua_pushnumber(L, ent->xdir);
-    else if (!strcmp(prop, "zdir"))           lua_pushnumber(L, ent->zdir);
-    else if (!strcmp(prop, "tossv"))           lua_pushnumber(L, ent->tossv);
-    else if (!strcmp(prop, "base"))            lua_pushnumber(L, ent->base);
-    else if (!strcmp(prop, "jumpz"))           lua_pushnumber(L, ent->jumpz);
-    else if (!strcmp(prop, "jumpx"))           lua_pushnumber(L, ent->jumpx);
-    else if (!strcmp(prop, "jumpv"))           lua_pushnumber(L, ent->jumpv);
-    else if (!strcmp(prop, "direction"))       lua_pushinteger(L, ent->direction);
-    else if (!strcmp(prop, "exists"))          lua_pushinteger(L, ent->exists ? 1 : 0);
-    else if (!strcmp(prop, "dead"))            lua_pushinteger(L, ent->dead ? 1 : 0);
-    else if (!strcmp(prop, "dying"))           lua_pushinteger(L, ent->dying ? 1 : 0);
-    else if (!strcmp(prop, "attacking"))       lua_pushinteger(L, ent->attacking ? 1 : 0);
-    else if (!strcmp(prop, "blocking"))        lua_pushinteger(L, ent->blocking ? 1 : 0);
-    else if (!strcmp(prop, "falling"))         lua_pushinteger(L, ent->falling ? 1 : 0);
-    else if (!strcmp(prop, "running") && lua_gettop(L) < 3) lua_pushinteger(L, ent->running ? 1 : 0);
-    else if (!strcmp(prop, "frozen"))          lua_pushinteger(L, ent->frozen ? 1 : 0);
-    else if (!strcmp(prop, "invincible"))      lua_pushinteger(L, ent->invincible ? 1 : 0);
-    else if (!strcmp(prop, "projectile"))      lua_pushinteger(L, ent->projectile ? 1 : 0);
-    else if (!strcmp(prop, "autokill"))        lua_pushinteger(L, ent->autokill ? 1 : 0);
-    else if (!strcmp(prop, "seal"))            lua_pushinteger(L, ent->seal ? 1 : 0);
-    else if (!strcmp(prop, "name"))            lua_pushstring(L, ent->name);
-    else if (!strcmp(prop, "model"))           lua_pushstring(L, ent->model ? ent->model->name : "");
-    else if (!strcmp(prop, "defaultmodel"))    lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
-    else if (!strcmp(prop, "spawntype"))        lua_pushinteger(L, ent->spawntype);
-    else if (!strcmp(prop, "playerindex"))     lua_pushinteger(L, ent->playerindex);
-    else if (!strcmp(prop, "map")) {
+    if (!bor_lua_stricmp(prop, "health"))              lua_pushinteger(L, ent->health);
+    else if (!bor_lua_stricmp(prop, "mp"))             lua_pushinteger(L, ent->mp);
+    else if (!bor_lua_stricmp(prop, "maxhealth"))      lua_pushinteger(L, ent->modeldata.health);
+    else if (!bor_lua_stricmp(prop, "maxmp"))          lua_pushinteger(L, ent->modeldata.mp);
+    else if (!bor_lua_stricmp(prop, "x"))              lua_pushnumber(L, ent->x);
+    else if (!bor_lua_stricmp(prop, "z"))              lua_pushnumber(L, ent->z);
+    else if (!bor_lua_stricmp(prop, "a"))              lua_pushnumber(L, ent->a);
+    else if (!bor_lua_stricmp(prop, "xdir"))           lua_pushnumber(L, ent->xdir);
+    else if (!bor_lua_stricmp(prop, "zdir"))           lua_pushnumber(L, ent->zdir);
+    else if (!bor_lua_stricmp(prop, "tossv"))           lua_pushnumber(L, ent->tossv);
+    else if (!bor_lua_stricmp(prop, "base"))            lua_pushnumber(L, ent->base);
+    else if (!bor_lua_stricmp(prop, "jumpz"))           lua_pushnumber(L, ent->jumpz);
+    else if (!bor_lua_stricmp(prop, "jumpx"))           lua_pushnumber(L, ent->jumpx);
+    else if (!bor_lua_stricmp(prop, "jumpv"))           lua_pushnumber(L, ent->jumpv);
+    else if (!bor_lua_stricmp(prop, "direction"))       lua_pushinteger(L, ent->direction);
+    else if (!bor_lua_stricmp(prop, "exists"))          lua_pushinteger(L, ent->exists ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "dead"))            lua_pushinteger(L, ent->dead ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "dying"))           lua_pushinteger(L, ent->dying ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "attacking"))       lua_pushinteger(L, ent->attacking ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "blocking"))        lua_pushinteger(L, ent->blocking ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "falling"))         lua_pushinteger(L, ent->falling ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "running") && lua_gettop(L) < 3) lua_pushinteger(L, ent->running ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "frozen"))          lua_pushinteger(L, ent->frozen ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "invincible"))      lua_pushinteger(L, ent->invincible ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "projectile"))      lua_pushinteger(L, ent->projectile ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "autokill"))        lua_pushinteger(L, ent->autokill ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "seal"))            lua_pushinteger(L, ent->seal ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "name"))            lua_pushstring(L, ent->name);
+    else if (!bor_lua_stricmp(prop, "model"))           lua_pushstring(L, ent->model ? ent->model->name : "");
+    else if (!bor_lua_stricmp(prop, "defaultmodel"))    lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
+    else if (!bor_lua_stricmp(prop, "spawntype"))        lua_pushinteger(L, ent->spawntype);
+    else if (!bor_lua_stricmp(prop, "playerindex"))     lua_pushinteger(L, ent->playerindex);
+    else if (!bor_lua_stricmp(prop, "map")) {
         int i;
         lua_Integer map_index = 0;
         for (i = 0; i < ent->modeldata.maps_loaded; ++i) {
@@ -719,205 +719,205 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         }
         lua_pushinteger(L, map_index);
     }
-    else if (!strcmp(prop, "animnum"))         lua_pushinteger(L, ent->animnum);
-    else if (!strcmp(prop, "animpos"))         lua_pushinteger(L, ent->animpos);
-    else if (!strcmp(prop, "nextanim"))        lua_pushinteger(L, ent->nextanim);
-    else if (!strcmp(prop, "nextthink"))       lua_pushinteger(L, ent->nextthink);
-    else if (!strcmp(prop, "attackid"))        lua_pushinteger(L, ent->attack_id);
-    else if (!strcmp(prop, "hitbyid"))         lua_pushinteger(L, ent->hit_by_attack_id);
-    else if (!strcmp(prop, "speed"))           lua_pushnumber(L, ent->modeldata.speed);
-    else if (!strcmp(prop, "height"))          lua_pushinteger(L, ent->modeldata.height);
-    else if (!strcmp(prop, "alpha"))           lua_pushinteger(L, ent->modeldata.alpha);
-    else if (!strcmp(prop, "setlayer"))        lua_pushinteger(L, ent->modeldata.setlayer);
-    else if (!strcmp(prop, "mprate"))          lua_pushinteger(L, ent->modeldata.mprate);
-    else if (!strcmp(prop, "mpdroprate"))      lua_pushinteger(L, ent->modeldata.mpdroprate);
-    else if (!strcmp(prop, "chargerate"))      lua_pushinteger(L, ent->modeldata.chargerate);
-    else if (!strcmp(prop, "guardpoints"))     lua_pushinteger(L, ent->modeldata.guardpoints[0]);
-    else if (!strcmp(prop, "maxguardpoints"))  lua_pushinteger(L, ent->modeldata.guardpoints[1]);
-    else if (!strcmp(prop, "jugglepoints"))    lua_pushinteger(L, ent->modeldata.jugglepoints[0]);
-    else if (!strcmp(prop, "maxjugglepoints")) lua_pushinteger(L, ent->modeldata.jugglepoints[1]);
-    else if (!strcmp(prop, "player"))           lua_pushinteger(L, ent->playerindex);
-    else if (!strcmp(prop, "owner")) {
+    else if (!bor_lua_stricmp(prop, "animnum"))         lua_pushinteger(L, ent->animnum);
+    else if (!bor_lua_stricmp(prop, "animpos"))         lua_pushinteger(L, ent->animpos);
+    else if (!bor_lua_stricmp(prop, "nextanim"))        lua_pushinteger(L, ent->nextanim);
+    else if (!bor_lua_stricmp(prop, "nextthink"))       lua_pushinteger(L, ent->nextthink);
+    else if (!bor_lua_stricmp(prop, "attackid"))        lua_pushinteger(L, ent->attack_id);
+    else if (!bor_lua_stricmp(prop, "hitbyid"))         lua_pushinteger(L, ent->hit_by_attack_id);
+    else if (!bor_lua_stricmp(prop, "speed"))           lua_pushnumber(L, ent->modeldata.speed);
+    else if (!bor_lua_stricmp(prop, "height"))          lua_pushinteger(L, ent->modeldata.height);
+    else if (!bor_lua_stricmp(prop, "alpha"))           lua_pushinteger(L, ent->modeldata.alpha);
+    else if (!bor_lua_stricmp(prop, "setlayer"))        lua_pushinteger(L, ent->modeldata.setlayer);
+    else if (!bor_lua_stricmp(prop, "mprate"))          lua_pushinteger(L, ent->modeldata.mprate);
+    else if (!bor_lua_stricmp(prop, "mpdroprate"))      lua_pushinteger(L, ent->modeldata.mpdroprate);
+    else if (!bor_lua_stricmp(prop, "chargerate"))      lua_pushinteger(L, ent->modeldata.chargerate);
+    else if (!bor_lua_stricmp(prop, "guardpoints"))     lua_pushinteger(L, ent->modeldata.guardpoints[0]);
+    else if (!bor_lua_stricmp(prop, "maxguardpoints"))  lua_pushinteger(L, ent->modeldata.guardpoints[1]);
+    else if (!bor_lua_stricmp(prop, "jugglepoints"))    lua_pushinteger(L, ent->modeldata.jugglepoints[0]);
+    else if (!bor_lua_stricmp(prop, "maxjugglepoints")) lua_pushinteger(L, ent->modeldata.jugglepoints[1]);
+    else if (!bor_lua_stricmp(prop, "player"))           lua_pushinteger(L, ent->playerindex);
+    else if (!bor_lua_stricmp(prop, "owner")) {
         if (bor_lua_get_live_entity_ptr(ent->owner) && ent->owner->exists) bor_lua_push_entity(L, ent->owner); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "parent")) {
+    else if (!bor_lua_stricmp(prop, "parent")) {
         if (bor_lua_get_live_entity_ptr(ent->parent) && ent->parent->exists) bor_lua_push_entity(L, ent->parent); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "subentity")) {
+    else if (!bor_lua_stricmp(prop, "subentity")) {
         if (bor_lua_get_live_entity_ptr(ent->subentity) && ent->subentity->exists) bor_lua_push_entity(L, ent->subentity); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "opponent")) {
+    else if (!bor_lua_stricmp(prop, "opponent")) {
         if (bor_lua_get_live_entity_ptr(ent->opponent) && ent->opponent->exists) bor_lua_push_entity(L, ent->opponent); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "link")) {
+    else if (!bor_lua_stricmp(prop, "link")) {
         if (bor_lua_get_live_entity_ptr(ent->link) && ent->link->exists) bor_lua_push_entity(L, ent->link); else lua_pushnil(L);
     }
     /* Additional properties supported by the original legacy API. */
-    else if (!strcmp(prop, "animal"))            lua_pushinteger(L, ent->modeldata.animal);
-    else if (!strcmp(prop, "animhits")) {
+    else if (!bor_lua_stricmp(prop, "animal"))            lua_pushinteger(L, ent->modeldata.animal);
+    else if (!bor_lua_stricmp(prop, "animhits")) {
         if (ent->animation) lua_pushinteger(L, ent->animation->animhits); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "tosstime"))           lua_pushinteger(L, ent->toss_time);
-    else if (!strcmp(prop, "mpstableval"))        lua_pushinteger(L, ent->modeldata.mpstableval);
-    else if (!strcmp(prop, "mpstable"))           lua_pushinteger(L, ent->modeldata.mpstable);
-    else if (!strcmp(prop, "mapcount"))           lua_pushinteger(L, ent->modeldata.maps_loaded + 1);
-    else if (!strcmp(prop, "mapdefault"))         lua_pushinteger(L, ent->map);
-    else if (!strcmp(prop, "hmapl"))              lua_pushinteger(L, ent->modeldata.hmap1);
-    else if (!strcmp(prop, "hmapu"))              lua_pushinteger(L, ent->modeldata.hmap2);
-    else if (!strcmp(prop, "defaultname"))        lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
-    else if (!strcmp(prop, "type"))               lua_pushinteger(L, ent->modeldata.type);
-    else if (!strcmp(prop, "subtype"))            lua_pushinteger(L, ent->modeldata.subtype);
-    else if (!strcmp(prop, "throwdamage"))        lua_pushinteger(L, ent->modeldata.throwdamage);
-    else if (!strcmp(prop, "throwdist"))          lua_pushnumber(L, ent->modeldata.throwdist);
-    else if (!strcmp(prop, "throwframewait"))     lua_pushinteger(L, ent->modeldata.throwframewait);
-    else if (!strcmp(prop, "throwheight"))        lua_pushnumber(L, ent->modeldata.throwheight);
-    else if (!strcmp(prop, "animheight")) {
+    else if (!bor_lua_stricmp(prop, "tosstime"))           lua_pushinteger(L, ent->toss_time);
+    else if (!bor_lua_stricmp(prop, "mpstableval"))        lua_pushinteger(L, ent->modeldata.mpstableval);
+    else if (!bor_lua_stricmp(prop, "mpstable"))           lua_pushinteger(L, ent->modeldata.mpstable);
+    else if (!bor_lua_stricmp(prop, "mapcount"))           lua_pushinteger(L, ent->modeldata.maps_loaded + 1);
+    else if (!bor_lua_stricmp(prop, "mapdefault"))         lua_pushinteger(L, ent->map);
+    else if (!bor_lua_stricmp(prop, "hmapl"))              lua_pushinteger(L, ent->modeldata.hmap1);
+    else if (!bor_lua_stricmp(prop, "hmapu"))              lua_pushinteger(L, ent->modeldata.hmap2);
+    else if (!bor_lua_stricmp(prop, "defaultname"))        lua_pushstring(L, ent->defaultmodel ? ent->defaultmodel->name : "");
+    else if (!bor_lua_stricmp(prop, "type"))               lua_pushinteger(L, ent->modeldata.type);
+    else if (!bor_lua_stricmp(prop, "subtype"))            lua_pushinteger(L, ent->modeldata.subtype);
+    else if (!bor_lua_stricmp(prop, "throwdamage"))        lua_pushinteger(L, ent->modeldata.throwdamage);
+    else if (!bor_lua_stricmp(prop, "throwdist"))          lua_pushnumber(L, ent->modeldata.throwdist);
+    else if (!bor_lua_stricmp(prop, "throwframewait"))     lua_pushinteger(L, ent->modeldata.throwframewait);
+    else if (!bor_lua_stricmp(prop, "throwheight"))        lua_pushnumber(L, ent->modeldata.throwheight);
+    else if (!bor_lua_stricmp(prop, "animheight")) {
         if (ent->animation) lua_pushinteger(L, ent->animation->height); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "animationid"))        lua_pushinteger(L, ent->animnum);
-    else if (!strcmp(prop, "animating"))          lua_pushinteger(L, ent->animating);
-    else if (!strcmp(prop, "jumping"))            lua_pushinteger(L, ent->jumping ? 1 : 0);
-    else if (!strcmp(prop, "idling"))             lua_pushinteger(L, ent->idling ? 1 : 0);
-    else if (!strcmp(prop, "drop"))               lua_pushinteger(L, ent->drop ? 1 : 0);
-    else if (!strcmp(prop, "getting"))            lua_pushinteger(L, ent->getting ? 1 : 0);
-    else if (!strcmp(prop, "turning"))            lua_pushinteger(L, ent->turning ? 1 : 0);
-    else if (!strcmp(prop, "charging"))           lua_pushinteger(L, ent->charging ? 1 : 0);
-    else if (!strcmp(prop, "inpain"))             lua_pushinteger(L, ent->inpain ? 1 : 0);
-    else if (!strcmp(prop, "toexplode"))          lua_pushinteger(L, ent->toexplode ? 1 : 0);
-    else if (!strcmp(prop, "freezetime"))         lua_pushinteger(L, ent->freezetime);
-    else if (!strcmp(prop, "invinctime"))         lua_pushinteger(L, ent->invinctime);
-    else if (!strcmp(prop, "rush_count"))         lua_pushinteger(L, ent->rush[0]);
-    else if (!strcmp(prop, "rush_tally"))         lua_pushinteger(L, ent->rush[1]);
-    else if (!strcmp(prop, "rush_time"))          lua_pushinteger(L, ent->rushtime);
-    else if (!strcmp(prop, "knockdowncount"))     lua_pushnumber(L, ent->knockdowncount);
-    else if (!strcmp(prop, "lifespancountdown"))  lua_pushnumber(L, ent->lifespancountdown);
-    else if (!strcmp(prop, "subject_to_screen"))  lua_pushinteger(L, ent->modeldata.subject_to_screen);
-    else if (!strcmp(prop, "subject_to_minz"))    lua_pushinteger(L, ent->modeldata.subject_to_minz);
-    else if (!strcmp(prop, "subject_to_maxz"))    lua_pushinteger(L, ent->modeldata.subject_to_maxz);
-    else if (!strcmp(prop, "subject_to_wall"))    lua_pushinteger(L, ent->modeldata.subject_to_wall);
-    else if (!strcmp(prop, "subject_to_hole"))    lua_pushinteger(L, ent->modeldata.subject_to_hole);
-    else if (!strcmp(prop, "subject_to_gravity")) lua_pushinteger(L, ent->modeldata.subject_to_gravity);
-    else if (!strcmp(prop, "subject_to_obstacle"))lua_pushinteger(L, ent->modeldata.subject_to_obstacle);
-    else if (!strcmp(prop, "subject_to_platform"))lua_pushinteger(L, ent->modeldata.subject_to_platform);
-    else if (!strcmp(prop, "no_adjust_base"))     lua_pushinteger(L, ent->modeldata.no_adjust_base);
-    else if (!strcmp(prop, "noaicontrol"))        lua_pushinteger(L, ent->noaicontrol);
-    else if (!strcmp(prop, "nodieblink"))         lua_pushinteger(L, ent->modeldata.nodieblink);
-    else if (!strcmp(prop, "bounce"))             lua_pushinteger(L, ent->modeldata.bounce);
-    else if (!strcmp(prop, "falldie"))            lua_pushinteger(L, ent->modeldata.falldie);
-    else if (!strcmp(prop, "antigravity"))        lua_pushnumber(L, ent->antigravity);
-    else if (!strcmp(prop, "path"))               lua_pushstring(L, ent->modeldata.path ? ent->modeldata.path : "");
-    else if (!strcmp(prop, "grabbing")) {
+    else if (!bor_lua_stricmp(prop, "animationid"))        lua_pushinteger(L, ent->animnum);
+    else if (!bor_lua_stricmp(prop, "animating"))          lua_pushinteger(L, ent->animating);
+    else if (!bor_lua_stricmp(prop, "jumping"))            lua_pushinteger(L, ent->jumping ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "idling"))             lua_pushinteger(L, ent->idling ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "drop"))               lua_pushinteger(L, ent->drop ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "getting"))            lua_pushinteger(L, ent->getting ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "turning"))            lua_pushinteger(L, ent->turning ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "charging"))           lua_pushinteger(L, ent->charging ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "inpain"))             lua_pushinteger(L, ent->inpain ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "toexplode"))          lua_pushinteger(L, ent->toexplode ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "freezetime"))         lua_pushinteger(L, ent->freezetime);
+    else if (!bor_lua_stricmp(prop, "invinctime"))         lua_pushinteger(L, ent->invinctime);
+    else if (!bor_lua_stricmp(prop, "rush_count"))         lua_pushinteger(L, ent->rush[0]);
+    else if (!bor_lua_stricmp(prop, "rush_tally"))         lua_pushinteger(L, ent->rush[1]);
+    else if (!bor_lua_stricmp(prop, "rush_time"))          lua_pushinteger(L, ent->rushtime);
+    else if (!bor_lua_stricmp(prop, "knockdowncount"))     lua_pushnumber(L, ent->knockdowncount);
+    else if (!bor_lua_stricmp(prop, "lifespancountdown"))  lua_pushnumber(L, ent->lifespancountdown);
+    else if (!bor_lua_stricmp(prop, "subject_to_screen"))  lua_pushinteger(L, ent->modeldata.subject_to_screen);
+    else if (!bor_lua_stricmp(prop, "subject_to_minz"))    lua_pushinteger(L, ent->modeldata.subject_to_minz);
+    else if (!bor_lua_stricmp(prop, "subject_to_maxz"))    lua_pushinteger(L, ent->modeldata.subject_to_maxz);
+    else if (!bor_lua_stricmp(prop, "subject_to_wall"))    lua_pushinteger(L, ent->modeldata.subject_to_wall);
+    else if (!bor_lua_stricmp(prop, "subject_to_hole"))    lua_pushinteger(L, ent->modeldata.subject_to_hole);
+    else if (!bor_lua_stricmp(prop, "subject_to_gravity")) lua_pushinteger(L, ent->modeldata.subject_to_gravity);
+    else if (!bor_lua_stricmp(prop, "subject_to_obstacle"))lua_pushinteger(L, ent->modeldata.subject_to_obstacle);
+    else if (!bor_lua_stricmp(prop, "subject_to_platform"))lua_pushinteger(L, ent->modeldata.subject_to_platform);
+    else if (!bor_lua_stricmp(prop, "no_adjust_base"))     lua_pushinteger(L, ent->modeldata.no_adjust_base);
+    else if (!bor_lua_stricmp(prop, "noaicontrol"))        lua_pushinteger(L, ent->noaicontrol);
+    else if (!bor_lua_stricmp(prop, "nodieblink"))         lua_pushinteger(L, ent->modeldata.nodieblink);
+    else if (!bor_lua_stricmp(prop, "bounce"))             lua_pushinteger(L, ent->modeldata.bounce);
+    else if (!bor_lua_stricmp(prop, "falldie"))            lua_pushinteger(L, ent->modeldata.falldie);
+    else if (!bor_lua_stricmp(prop, "antigravity"))        lua_pushnumber(L, ent->antigravity);
+    else if (!bor_lua_stricmp(prop, "path"))               lua_pushstring(L, ent->modeldata.path ? ent->modeldata.path : "");
+    else if (!bor_lua_stricmp(prop, "grabbing")) {
         if (bor_lua_get_live_entity_ptr(ent->grabbing) && ent->grabbing->exists) bor_lua_push_entity(L, ent->grabbing); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "aimove"))             lua_pushinteger(L, ent->modeldata.aimove);
-    else if (!strcmp(prop, "aggression"))         lua_pushinteger(L, ent->modeldata.aggression);
-    else if (!strcmp(prop, "aiattack"))           lua_pushinteger(L, ent->modeldata.aiattack);
-    else if (!strcmp(prop, "scroll"))             lua_pushnumber(L, ent->modeldata.scroll);
-    else if (!strcmp(prop, "damage_on_landing"))  lua_pushinteger(L, ent->damage_on_landing);
-    else if (!strcmp(prop, "detect"))             lua_pushinteger(L, ent->modeldata.stealth[1]);
-    else if (!strcmp(prop, "stealth"))            lua_pushinteger(L, ent->modeldata.stealth[0]);
-    else if (!strcmp(prop, "stalltime"))          lua_pushinteger(L, ent->stalltime);
-    else if (!strcmp(prop, "gfxshadow"))          lua_pushinteger(L, ent->modeldata.gfxshadow);
-    else if (!strcmp(prop, "nograb"))             lua_pushinteger(L, ent->nograb);
-    else if (!strcmp(prop, "nodrop"))             lua_pushinteger(L, ent->modeldata.nodrop);
-    else if (!strcmp(prop, "nopain"))             lua_pushinteger(L, ent->modeldata.nopain);
-    else if (!strcmp(prop, "running_speed"))      lua_pushnumber(L, ent->modeldata.runspeed);
-    else if (!strcmp(prop, "running_jumpy"))      lua_pushnumber(L, ent->modeldata.runjumpheight);
-    else if (!strcmp(prop, "running_jumpx"))      lua_pushnumber(L, ent->modeldata.runjumpdist);
-    else if (!strcmp(prop, "running_land"))       lua_pushinteger(L, ent->modeldata.runhold);
-    else if (!strcmp(prop, "running_movez"))      lua_pushinteger(L, ent->modeldata.runupdown);
-    else if (!strcmp(prop, "sealtime"))           lua_pushinteger(L, ent->sealtime);
-    else if (!strcmp(prop, "blockback"))          lua_pushinteger(L, ent->modeldata.blockback);
-    else if (!strcmp(prop, "blockpain"))          lua_pushinteger(L, ent->modeldata.blockpain);
-    else if (!strcmp(prop, "weapent")) {
+    else if (!bor_lua_stricmp(prop, "aimove"))             lua_pushinteger(L, ent->modeldata.aimove);
+    else if (!bor_lua_stricmp(prop, "aggression"))         lua_pushinteger(L, ent->modeldata.aggression);
+    else if (!bor_lua_stricmp(prop, "aiattack"))           lua_pushinteger(L, ent->modeldata.aiattack);
+    else if (!bor_lua_stricmp(prop, "scroll"))             lua_pushnumber(L, ent->modeldata.scroll);
+    else if (!bor_lua_stricmp(prop, "damage_on_landing"))  lua_pushinteger(L, ent->damage_on_landing);
+    else if (!bor_lua_stricmp(prop, "detect"))             lua_pushinteger(L, ent->modeldata.stealth[1]);
+    else if (!bor_lua_stricmp(prop, "stealth"))            lua_pushinteger(L, ent->modeldata.stealth[0]);
+    else if (!bor_lua_stricmp(prop, "stalltime"))          lua_pushinteger(L, ent->stalltime);
+    else if (!bor_lua_stricmp(prop, "gfxshadow"))          lua_pushinteger(L, ent->modeldata.gfxshadow);
+    else if (!bor_lua_stricmp(prop, "nograb"))             lua_pushinteger(L, ent->nograb);
+    else if (!bor_lua_stricmp(prop, "nodrop"))             lua_pushinteger(L, ent->modeldata.nodrop);
+    else if (!bor_lua_stricmp(prop, "nopain"))             lua_pushinteger(L, ent->modeldata.nopain);
+    else if (!bor_lua_stricmp(prop, "running_speed"))      lua_pushnumber(L, ent->modeldata.runspeed);
+    else if (!bor_lua_stricmp(prop, "running_jumpy"))      lua_pushnumber(L, ent->modeldata.runjumpheight);
+    else if (!bor_lua_stricmp(prop, "running_jumpx"))      lua_pushnumber(L, ent->modeldata.runjumpdist);
+    else if (!bor_lua_stricmp(prop, "running_land"))       lua_pushinteger(L, ent->modeldata.runhold);
+    else if (!bor_lua_stricmp(prop, "running_movez"))      lua_pushinteger(L, ent->modeldata.runupdown);
+    else if (!bor_lua_stricmp(prop, "sealtime"))           lua_pushinteger(L, ent->sealtime);
+    else if (!bor_lua_stricmp(prop, "blockback"))          lua_pushinteger(L, ent->modeldata.blockback);
+    else if (!bor_lua_stricmp(prop, "blockpain"))          lua_pushinteger(L, ent->modeldata.blockpain);
+    else if (!bor_lua_stricmp(prop, "weapent")) {
         if (bor_lua_get_live_entity_ptr(ent->weapent) && ent->weapent->exists) bor_lua_push_entity(L, ent->weapent); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "blink"))              lua_pushinteger(L, ent->blink ? 1 : 0);
-    else if (!strcmp(prop, "animation") || !strcmp(prop, "animation.handle")) {
+    else if (!bor_lua_stricmp(prop, "blink"))              lua_pushinteger(L, ent->blink ? 1 : 0);
+    else if (!bor_lua_stricmp(prop, "animation") || !bor_lua_stricmp(prop, "animation.handle")) {
         if (ent->animation) lua_pushlightuserdata(L, ent->animation); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "colourmap")) {
+    else if (!bor_lua_stricmp(prop, "colourmap")) {
         if (ent->colourmap) lua_pushlightuserdata(L, ent->colourmap); else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "colourtable")) {
+    else if (!bor_lua_stricmp(prop, "colourtable")) {
         int which = (int)luaL_checkinteger(L, 3);
         if (which < 0 || which >= ent->modeldata.maps_loaded) lua_pushnil(L);
         else if (ent->modeldata.colourmap[which]) lua_pushlightuserdata(L, ent->modeldata.colourmap[which]);
         else lua_pushnil(L);
     }
-    else if (!strcmp(prop, "aiflag")) {
+    else if (!bor_lua_stricmp(prop, "aiflag")) {
         const char *flag = luaL_optstring(L, 3, "");
-        if (!strcmp(flag, "dead")) lua_pushinteger(L, ent->dead ? 1 : 0);
-        else if (!strcmp(flag, "jumping")) lua_pushinteger(L, ent->jumping ? 1 : 0);
-        else if (!strcmp(flag, "idling")) lua_pushinteger(L, ent->idling ? 1 : 0);
-        else if (!strcmp(flag, "drop")) lua_pushinteger(L, ent->drop ? 1 : 0);
-        else if (!strcmp(flag, "attacking")) lua_pushinteger(L, ent->attacking ? 1 : 0);
-        else if (!strcmp(flag, "getting")) lua_pushinteger(L, ent->getting ? 1 : 0);
-        else if (!strcmp(flag, "turning")) lua_pushinteger(L, ent->turning ? 1 : 0);
-        else if (!strcmp(flag, "charging")) lua_pushinteger(L, ent->charging ? 1 : 0);
-        else if (!strcmp(flag, "blocking")) lua_pushinteger(L, ent->blocking ? 1 : 0);
-        else if (!strcmp(flag, "falling")) lua_pushinteger(L, ent->falling ? 1 : 0);
-        else if (!strcmp(flag, "running")) lua_pushinteger(L, ent->running ? 1 : 0);
-        else if (!strcmp(flag, "inpain")) lua_pushinteger(L, ent->inpain ? 1 : 0);
-        else if (!strcmp(flag, "projectile")) lua_pushinteger(L, ent->projectile ? 1 : 0);
-        else if (!strcmp(flag, "frozen")) lua_pushinteger(L, ent->frozen ? 1 : 0);
-        else if (!strcmp(flag, "freezetime")) lua_pushinteger(L, ent->freezetime);
-        else if (!strcmp(flag, "toexplode")) lua_pushinteger(L, ent->toexplode ? 1 : 0);
-        else if (!strcmp(flag, "animating")) lua_pushinteger(L, ent->animating);
-        else if (!strcmp(flag, "blink")) lua_pushinteger(L, ent->blink ? 1 : 0);
-        else if (!strcmp(flag, "invincible")) lua_pushinteger(L, ent->invincible ? 1 : 0);
-        else if (!strcmp(flag, "autokill")) lua_pushinteger(L, ent->autokill ? 1 : 0);
+        if (!bor_lua_stricmp(flag, "dead")) lua_pushinteger(L, ent->dead ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "jumping")) lua_pushinteger(L, ent->jumping ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "idling")) lua_pushinteger(L, ent->idling ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "drop")) lua_pushinteger(L, ent->drop ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "attacking")) lua_pushinteger(L, ent->attacking ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "getting")) lua_pushinteger(L, ent->getting ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "turning")) lua_pushinteger(L, ent->turning ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "charging")) lua_pushinteger(L, ent->charging ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "blocking")) lua_pushinteger(L, ent->blocking ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "falling")) lua_pushinteger(L, ent->falling ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "running")) lua_pushinteger(L, ent->running ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "inpain")) lua_pushinteger(L, ent->inpain ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "projectile")) lua_pushinteger(L, ent->projectile ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "frozen")) lua_pushinteger(L, ent->frozen ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "freezetime")) lua_pushinteger(L, ent->freezetime);
+        else if (!bor_lua_stricmp(flag, "toexplode")) lua_pushinteger(L, ent->toexplode ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "animating")) lua_pushinteger(L, ent->animating);
+        else if (!bor_lua_stricmp(flag, "blink")) lua_pushinteger(L, ent->blink ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "invincible")) lua_pushinteger(L, ent->invincible ? 1 : 0);
+        else if (!bor_lua_stricmp(flag, "autokill")) lua_pushinteger(L, ent->autokill ? 1 : 0);
         else return luaL_error(L, "unknown aiflag '%s'", flag);
     }
-    else if (!strcmp(prop, "animvalid")) {
+    else if (!bor_lua_stricmp(prop, "animvalid")) {
         int anim = (int)luaL_optinteger(L, 3, 0);
         lua_pushinteger(L, validanim(ent, anim) ? 1 : 0);
     }
-    else if (!strcmp(prop, "dropframe") || !strcmp(prop, "landframe")) {
+    else if (!bor_lua_stricmp(prop, "dropframe") || !bor_lua_stricmp(prop, "landframe")) {
         int anim = (int)luaL_optinteger(L, 3, 0);
         if (!validanim(ent, anim)) lua_pushnil(L);
-        else if (!strcmp(prop, "dropframe")) lua_pushinteger(L, ent->modeldata.animation[anim]->dropframe);
+        else if (!bor_lua_stricmp(prop, "dropframe")) lua_pushinteger(L, ent->modeldata.animation[anim]->dropframe);
         else lua_pushinteger(L, ent->modeldata.animation[anim]->landframe[0]);
     }
-    else if (!strcmp(prop, "energycost")) {
+    else if (!bor_lua_stricmp(prop, "energycost")) {
         int anim = (int)luaL_checkinteger(L, 3);
         int arg = (int)luaL_checkinteger(L, 4);
         if (!validanim(ent, anim) || arg < 0 || arg >= MAX_ATTACKS)
             return luaL_error(L, "getentityproperty: invalid energycost animation or argument");
         lua_pushinteger(L, ent->modeldata.animation[anim]->energycost[arg]);
     }
-    else if (!strcmp(prop, "komap")) {
+    else if (!bor_lua_stricmp(prop, "komap")) {
         int which = (int)luaL_checkinteger(L, 3);
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushinteger(L, ent->modeldata.komap[which]);
     }
-    else if (!strcmp(prop, "offense")) {
+    else if (!bor_lua_stricmp(prop, "offense")) {
         int which = (int)luaL_optinteger(L, 3, 0);
         if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
         else lua_pushnumber(L, ent->modeldata.offense_factors[which]);
     }
-    else if (!strcmp(prop, "defense")) {
+    else if (!bor_lua_stricmp(prop, "defense")) {
         int which = (int)luaL_optinteger(L, 3, 0);
         const char *field = luaL_optstring(L, 4, "factor");
         if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
-        else if (!strcmp(field, "factor")) lua_pushnumber(L, ent->modeldata.defense_factors[which]);
-        else if (!strcmp(field, "blockpower")) lua_pushnumber(L, ent->modeldata.defense_blockpower[which]);
-        else if (!strcmp(field, "blockratio")) lua_pushnumber(L, ent->modeldata.defense_blockratio[which]);
-        else if (!strcmp(field, "blockthreshold")) lua_pushnumber(L, ent->modeldata.defense_blockthreshold[which]);
-        else if (!strcmp(field, "blocktype")) lua_pushnumber(L, ent->modeldata.defense_blocktype[which]);
-        else if (!strcmp(field, "knockdown")) lua_pushnumber(L, ent->modeldata.defense_knockdown[which]);
-        else if (!strcmp(field, "pain")) lua_pushnumber(L, ent->modeldata.defense_pain[which]);
+        else if (!bor_lua_stricmp(field, "factor")) lua_pushnumber(L, ent->modeldata.defense_factors[which]);
+        else if (!bor_lua_stricmp(field, "blockpower")) lua_pushnumber(L, ent->modeldata.defense_blockpower[which]);
+        else if (!bor_lua_stricmp(field, "blockratio")) lua_pushnumber(L, ent->modeldata.defense_blockratio[which]);
+        else if (!bor_lua_stricmp(field, "blockthreshold")) lua_pushnumber(L, ent->modeldata.defense_blockthreshold[which]);
+        else if (!bor_lua_stricmp(field, "blocktype")) lua_pushnumber(L, ent->modeldata.defense_blocktype[which]);
+        else if (!bor_lua_stricmp(field, "knockdown")) lua_pushnumber(L, ent->modeldata.defense_knockdown[which]);
+        else if (!bor_lua_stricmp(field, "pain")) lua_pushnumber(L, ent->modeldata.defense_pain[which]);
         else return luaL_error(L, "unknown defense property '%s'", field);
     }
-    else if (!strcmp(prop, "flash")) {
+    else if (!bor_lua_stricmp(prop, "flash")) {
         int which = (int)luaL_checkinteger(L, 3);
         if (which == 1) lua_pushinteger(L, ent->modeldata.noatflash);
         else if (which == 2) lua_pushinteger(L, ent->modeldata.bflash);
         else lua_pushinteger(L, ent->modeldata.flash);
     }
-    else if (!strcmp(prop, "icon")) {
+    else if (!bor_lua_stricmp(prop, "icon")) {
         int which = (int)luaL_checkinteger(L, 3);
         int sprite = ent->modeldata.icon;
         if (which == 1) sprite = ent->modeldata.icondie;
@@ -937,7 +937,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             lua_pushlightuserdata(L, sprite_map[sprite].sprite);
         }
     }
-    else if (!strcmp(prop, "sprite")) {
+    else if (!bor_lua_stricmp(prop, "sprite")) {
         int sprite;
         if (!ent->animation || ent->animpos < 0 || ent->animpos >= ent->animation->numframes) {
             lua_pushnil(L);
@@ -952,26 +952,26 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             }
         }
     }
-    else if (!strcmp(prop, "edelay")) {
+    else if (!bor_lua_stricmp(prop, "edelay")) {
         const char *field = luaL_checkstring(L, 3);
-        if (!strcmp(field, "mode")) lua_pushinteger(L, ent->modeldata.edelay.mode);
-        else if (!strcmp(field, "factor")) lua_pushnumber(L, ent->modeldata.edelay.factor);
-        else if (!strcmp(field, "cap_min")) lua_pushinteger(L, ent->modeldata.edelay.cap_min);
-        else if (!strcmp(field, "cap_max")) lua_pushinteger(L, ent->modeldata.edelay.cap_max);
-        else if (!strcmp(field, "range_min")) lua_pushinteger(L, ent->modeldata.edelay.range_min);
-        else if (!strcmp(field, "range_max")) lua_pushinteger(L, ent->modeldata.edelay.range_max);
+        if (!bor_lua_stricmp(field, "mode")) lua_pushinteger(L, ent->modeldata.edelay.mode);
+        else if (!bor_lua_stricmp(field, "factor")) lua_pushnumber(L, ent->modeldata.edelay.factor);
+        else if (!bor_lua_stricmp(field, "cap_min")) lua_pushinteger(L, ent->modeldata.edelay.cap_min);
+        else if (!bor_lua_stricmp(field, "cap_max")) lua_pushinteger(L, ent->modeldata.edelay.cap_max);
+        else if (!bor_lua_stricmp(field, "range_min")) lua_pushinteger(L, ent->modeldata.edelay.range_min);
+        else if (!bor_lua_stricmp(field, "range_max")) lua_pushinteger(L, ent->modeldata.edelay.range_max);
         else return luaL_error(L, "unknown edelay property '%s'", field);
     }
-    else if (!strcmp(prop, "running")) {
+    else if (!bor_lua_stricmp(prop, "running")) {
         const char *field = luaL_checkstring(L, 3);
-        if (!strcmp(field, "speed")) lua_pushnumber(L, ent->modeldata.runspeed);
-        else if (!strcmp(field, "jumpy")) lua_pushnumber(L, ent->modeldata.runjumpheight);
-        else if (!strcmp(field, "jumpx")) lua_pushnumber(L, ent->modeldata.runjumpdist);
-        else if (!strcmp(field, "land")) lua_pushinteger(L, ent->modeldata.runhold);
-        else if (!strcmp(field, "movez")) lua_pushinteger(L, ent->modeldata.runupdown);
+        if (!bor_lua_stricmp(field, "speed")) lua_pushnumber(L, ent->modeldata.runspeed);
+        else if (!bor_lua_stricmp(field, "jumpy")) lua_pushnumber(L, ent->modeldata.runjumpheight);
+        else if (!bor_lua_stricmp(field, "jumpx")) lua_pushnumber(L, ent->modeldata.runjumpdist);
+        else if (!bor_lua_stricmp(field, "land")) lua_pushinteger(L, ent->modeldata.runhold);
+        else if (!bor_lua_stricmp(field, "movez")) lua_pushinteger(L, ent->modeldata.runupdown);
         else return luaL_error(L, "unknown running property '%s'", field);
     }
-    else if (!strcmp(prop, "bbox")) {
+    else if (!bor_lua_stricmp(prop, "bbox")) {
         int anim = (int)luaL_checkinteger(L, 4);
         int frame = (int)luaL_checkinteger(L, 5);
         int coord = (int)luaL_checkinteger(L, 6);
@@ -982,37 +982,37 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             lua_pushnil(L);
         else lua_pushinteger(L, ent->modeldata.animation[anim]->bbox_coords[frame][coord]);
     }
-    else if (!strcmp(prop, "range")) {
+    else if (!bor_lua_stricmp(prop, "range")) {
         const char *field = luaL_checkstring(L, 3);
         int anim = (int)luaL_checkinteger(L, 4);
         int idx = -1;
         if (!validanim(ent, anim)) lua_pushnil(L);
         else {
-            if (!strcmp(field, "xmin")) idx = 0;
-            else if (!strcmp(field, "xmax")) idx = 1;
-            else if (!strcmp(field, "zmin")) idx = 2;
-            else if (!strcmp(field, "zmax")) idx = 3;
-            else if (!strcmp(field, "amin")) idx = 4;
-            else if (!strcmp(field, "amax")) idx = 5;
-            else if (!strcmp(field, "bmin")) idx = 6;
-            else if (!strcmp(field, "bmax")) idx = 7;
+            if (!bor_lua_stricmp(field, "xmin")) idx = 0;
+            else if (!bor_lua_stricmp(field, "xmax")) idx = 1;
+            else if (!bor_lua_stricmp(field, "zmin")) idx = 2;
+            else if (!bor_lua_stricmp(field, "zmax")) idx = 3;
+            else if (!bor_lua_stricmp(field, "amin")) idx = 4;
+            else if (!bor_lua_stricmp(field, "amax")) idx = 5;
+            else if (!bor_lua_stricmp(field, "bmin")) idx = 6;
+            else if (!bor_lua_stricmp(field, "bmax")) idx = 7;
             if (idx < 0) return luaL_error(L, "unknown range property '%s'", field);
             lua_pushinteger(L, ent->modeldata.animation[anim]->range[idx]);
         }
     }
-    else if (!strcmp(prop, "stats")) {
+    else if (!bor_lua_stricmp(prop, "stats")) {
         int type = (int)luaL_checkinteger(L, 3);
         int idx = (int)luaL_checkinteger(L, 4);
         if (idx < 0 || idx >= 20) lua_pushnil(L);
         else if (type == 1) lua_pushnumber(L, ent->stats[idx]);
         else lua_pushnumber(L, ent->modeldata.stats[idx]);
     }
-    else if (!strcmp(prop, "staydown")) {
+    else if (!bor_lua_stricmp(prop, "staydown")) {
         int which = 0;
         if (lua_isstring(L, 4)) {
             const char *field = lua_tostring(L, 4);
-            if (!strcmp(field, "staydownatk")) which = 1;
-            else if (strcmp(field, "staydown") != 0)
+            if (!bor_lua_stricmp(field, "staydownatk")) which = 1;
+            else if (bor_lua_stricmp(field, "staydown") != 0)
                 return luaL_error(L, "unknown staydown property '%s'", field);
         } else {
             which = (int)luaL_optinteger(L, 4, 0);
@@ -1020,23 +1020,23 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushnumber(L, ent->staydown[which]);
     }
-    else if (!strcmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
-    else if (!strcmp(prop, "dot")) {
+    else if (!bor_lua_stricmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
+    else if (!bor_lua_stricmp(prop, "dot")) {
         int which = (int)luaL_checkinteger(L, 3);
         const char *field = luaL_checkstring(L, 4);
         if (which < 0 || which >= MAX_DOTS) lua_pushnil(L);
-        else if (!strcmp(field, "time")) lua_pushinteger(L, ent->dot_time[which]);
-        else if (!strcmp(field, "mode")) lua_pushinteger(L, ent->dot[which]);
-        else if (!strcmp(field, "force")) lua_pushinteger(L, ent->dot_force[which]);
-        else if (!strcmp(field, "rate")) lua_pushinteger(L, ent->dot_rate[which]);
-        else if (!strcmp(field, "type")) lua_pushinteger(L, ent->dot_atk[which]);
-        else if (!strcmp(field, "owner")) {
+        else if (!bor_lua_stricmp(field, "time")) lua_pushinteger(L, ent->dot_time[which]);
+        else if (!bor_lua_stricmp(field, "mode")) lua_pushinteger(L, ent->dot[which]);
+        else if (!bor_lua_stricmp(field, "force")) lua_pushinteger(L, ent->dot_force[which]);
+        else if (!bor_lua_stricmp(field, "rate")) lua_pushinteger(L, ent->dot_rate[which]);
+        else if (!bor_lua_stricmp(field, "type")) lua_pushinteger(L, ent->dot_atk[which]);
+        else if (!bor_lua_stricmp(field, "owner")) {
             if (bor_lua_get_live_entity_ptr(ent->dot_owner[which]) && ent->dot_owner[which]->exists) bor_lua_push_entity(L, ent->dot_owner[which]);
             else lua_pushnil(L);
         }
         else return luaL_error(L, "unknown dot property '%s'", field);
     }
-    else if (!strcmp(prop, "attack")) {
+    else if (!bor_lua_stricmp(prop, "attack")) {
         const char *field = luaL_checkstring(L, 3);
         int anim = (int)luaL_checkinteger(L, 5);
         int frame = (int)luaL_checkinteger(L, 6);
@@ -1050,45 +1050,45 @@ static int lua_openbor_getentityproperty(lua_State *L) {
             lua_pushnil(L);
         } else {
             attack = ent->modeldata.animation[anim]->attacks[frame];
-            if (!strcmp(field, "blockflash")) lua_pushinteger(L, attack->blockflash);
-            else if (!strcmp(field, "blocksound")) lua_pushinteger(L, attack->blocksound);
-            else if (!strcmp(field, "blast")) lua_pushinteger(L, attack->blast);
-            else if (!strcmp(field, "coords")) {
+            if (!bor_lua_stricmp(field, "blockflash")) lua_pushinteger(L, attack->blockflash);
+            else if (!bor_lua_stricmp(field, "blocksound")) lua_pushinteger(L, attack->blocksound);
+            else if (!bor_lua_stricmp(field, "blast")) lua_pushinteger(L, attack->blast);
+            else if (!bor_lua_stricmp(field, "coords")) {
                 if (arg < 0 || arg >= 5) lua_pushnil(L); else lua_pushinteger(L, attack->attack_coords[arg]);
             }
-            else if (!strcmp(field, "counterattack")) lua_pushinteger(L, attack->counterattack);
-            else if (!strcmp(field, "direction")) lua_pushinteger(L, attack->force_direction);
-            else if (!strcmp(field, "dol")) lua_pushinteger(L, attack->damage_on_landing);
-            else if (!strcmp(field, "dot")) lua_pushinteger(L, attack->dot);
-            else if (!strcmp(field, "dotforce")) lua_pushinteger(L, attack->dot_force);
-            else if (!strcmp(field, "dotindex")) lua_pushinteger(L, attack->dot_index);
-            else if (!strcmp(field, "dotrate")) lua_pushinteger(L, attack->dot_rate);
-            else if (!strcmp(field, "dottime")) lua_pushinteger(L, attack->dot_time);
-            else if (!strcmp(field, "drop")) lua_pushinteger(L, attack->attack_drop);
-            else if (!strcmp(field, "dropv")) {
+            else if (!bor_lua_stricmp(field, "counterattack")) lua_pushinteger(L, attack->counterattack);
+            else if (!bor_lua_stricmp(field, "direction")) lua_pushinteger(L, attack->force_direction);
+            else if (!bor_lua_stricmp(field, "dol")) lua_pushinteger(L, attack->damage_on_landing);
+            else if (!bor_lua_stricmp(field, "dot")) lua_pushinteger(L, attack->dot);
+            else if (!bor_lua_stricmp(field, "dotforce")) lua_pushinteger(L, attack->dot_force);
+            else if (!bor_lua_stricmp(field, "dotindex")) lua_pushinteger(L, attack->dot_index);
+            else if (!bor_lua_stricmp(field, "dotrate")) lua_pushinteger(L, attack->dot_rate);
+            else if (!bor_lua_stricmp(field, "dottime")) lua_pushinteger(L, attack->dot_time);
+            else if (!bor_lua_stricmp(field, "drop")) lua_pushinteger(L, attack->attack_drop);
+            else if (!bor_lua_stricmp(field, "dropv")) {
                 if (arg < 0 || arg >= 3) lua_pushnil(L); else lua_pushnumber(L, attack->dropv[arg]);
             }
-            else if (!strcmp(field, "force")) lua_pushinteger(L, attack->attack_force);
-            else if (!strcmp(field, "forcemap")) lua_pushinteger(L, attack->forcemap);
-            else if (!strcmp(field, "freeze")) lua_pushinteger(L, attack->freeze);
-            else if (!strcmp(field, "freezetime")) lua_pushinteger(L, attack->freezetime);
-            else if (!strcmp(field, "grab")) lua_pushinteger(L, attack->grab);
-            else if (!strcmp(field, "grabdistance")) lua_pushinteger(L, attack->grab_distance);
-            else if (!strcmp(field, "guardcost")) lua_pushinteger(L, attack->guardcost);
-            else if (!strcmp(field, "hitflash")) lua_pushinteger(L, attack->hitflash);
-            else if (!strcmp(field, "hitsound")) lua_pushinteger(L, attack->hitsound);
-            else if (!strcmp(field, "jugglecost")) lua_pushinteger(L, attack->jugglecost);
-            else if (!strcmp(field, "maptime")) lua_pushinteger(L, attack->maptime);
-            else if (!strcmp(field, "noblock")) lua_pushinteger(L, attack->no_block);
-            else if (!strcmp(field, "noflash")) lua_pushinteger(L, attack->no_flash);
-            else if (!strcmp(field, "nopain")) lua_pushinteger(L, attack->no_pain);
-            else if (!strcmp(field, "otg")) lua_pushinteger(L, attack->otg);
-            else if (!strcmp(field, "pause")) lua_pushinteger(L, attack->pause_add);
-            else if (!strcmp(field, "seal")) lua_pushinteger(L, attack->seal);
-            else if (!strcmp(field, "sealtime")) lua_pushinteger(L, attack->sealtime);
-            else if (!strcmp(field, "staydown")) lua_pushlightuserdata(L, attack->staydown);
-            else if (!strcmp(field, "steal")) lua_pushinteger(L, attack->steal);
-            else if (!strcmp(field, "type")) lua_pushinteger(L, attack->attack_type);
+            else if (!bor_lua_stricmp(field, "force")) lua_pushinteger(L, attack->attack_force);
+            else if (!bor_lua_stricmp(field, "forcemap")) lua_pushinteger(L, attack->forcemap);
+            else if (!bor_lua_stricmp(field, "freeze")) lua_pushinteger(L, attack->freeze);
+            else if (!bor_lua_stricmp(field, "freezetime")) lua_pushinteger(L, attack->freezetime);
+            else if (!bor_lua_stricmp(field, "grab")) lua_pushinteger(L, attack->grab);
+            else if (!bor_lua_stricmp(field, "grabdistance")) lua_pushinteger(L, attack->grab_distance);
+            else if (!bor_lua_stricmp(field, "guardcost")) lua_pushinteger(L, attack->guardcost);
+            else if (!bor_lua_stricmp(field, "hitflash")) lua_pushinteger(L, attack->hitflash);
+            else if (!bor_lua_stricmp(field, "hitsound")) lua_pushinteger(L, attack->hitsound);
+            else if (!bor_lua_stricmp(field, "jugglecost")) lua_pushinteger(L, attack->jugglecost);
+            else if (!bor_lua_stricmp(field, "maptime")) lua_pushinteger(L, attack->maptime);
+            else if (!bor_lua_stricmp(field, "noblock")) lua_pushinteger(L, attack->no_block);
+            else if (!bor_lua_stricmp(field, "noflash")) lua_pushinteger(L, attack->no_flash);
+            else if (!bor_lua_stricmp(field, "nopain")) lua_pushinteger(L, attack->no_pain);
+            else if (!bor_lua_stricmp(field, "otg")) lua_pushinteger(L, attack->otg);
+            else if (!bor_lua_stricmp(field, "pause")) lua_pushinteger(L, attack->pause_add);
+            else if (!bor_lua_stricmp(field, "seal")) lua_pushinteger(L, attack->seal);
+            else if (!bor_lua_stricmp(field, "sealtime")) lua_pushinteger(L, attack->sealtime);
+            else if (!bor_lua_stricmp(field, "staydown")) lua_pushlightuserdata(L, attack->staydown);
+            else if (!bor_lua_stricmp(field, "steal")) lua_pushinteger(L, attack->steal);
+            else if (!bor_lua_stricmp(field, "type")) lua_pushinteger(L, attack->attack_type);
             else return luaL_error(L, "unknown attack property '%s'", field);
         }
     }
@@ -1123,18 +1123,22 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     entity *ent = bor_lua_get_live_entity(L, 1);
     const char *prop;
     lua_Integer ivalue;
+    static const char *action_names[] = {"bomb_explode", "common_attack_proc", "common_block", "common_drop", "common_fall", "common_get", "common_grab", "common_grabattack", "common_grabbed", "common_jump", "common_land", "common_lie", "common_pain", "common_prejump", "common_rise", "common_spawn", "common_turn", "common_vault", "normal_prepare", "npc_warp", "player_blink", "suicide"};
+    static const void *actions[] = {bomb_explode, common_attack_proc, common_block, common_drop, common_fall, common_get, common_grab, common_grabattack, common_grabbed, common_jump, common_land, common_lie, common_pain, common_prejump, common_rise, common_spawn, common_turn, common_vault, normal_prepare, npc_warp, player_blink, suicide};
+    static const char *think_names[] = {"common_think", "player_think", "steam_think", "steamer_think", "text_think", "trap_think"};
+    static const void *think_functions[] = {common_think, player_think, steam_think, steamer_think, text_think, trap_think};
 
     if (!ent || !ent->exists) {
-        lua_pushboolean(L, 0);
+        lua_pushinteger(L, 0);
         return 1;
     }
 
     prop = luaL_checkstring(L, 2);
 
-    if (!strcmp(prop, "type")) {
+    if (!bor_lua_stricmp(prop, "type")) {
         ent->modeldata.type = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "candamage") || !strcmp(prop, "hostile") ||
-               !strcmp(prop, "projectilehit")) {
+    } else if (!bor_lua_stricmp(prop, "candamage") || !bor_lua_stricmp(prop, "hostile") ||
+               !bor_lua_stricmp(prop, "projectilehit")) {
         int i;
         int mask = 0;
         int ground = 0;
@@ -1143,126 +1147,126 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
             mask |= lua_legacy_entity_type_mask(L, i, &is_ground);
             if (is_ground) ground = 1;
         }
-        if (!strcmp(prop, "candamage")) {
+        if (!bor_lua_stricmp(prop, "candamage")) {
             ent->modeldata.candamage = (short)mask;
             if (ground) ent->modeldata.ground = 1;
-        } else if (!strcmp(prop, "hostile")) {
+        } else if (!bor_lua_stricmp(prop, "hostile")) {
             ent->modeldata.hostile = (short)mask;
         } else {
             ent->modeldata.projectilehit = (short)mask;
         }
-    } else if (!strcmp(prop, "health")) {
+    } else if (!bor_lua_stricmp(prop, "health")) {
         ivalue = luaL_checkinteger(L, 3);
         if (ivalue > ent->modeldata.health) ivalue = ent->modeldata.health;
         if (ivalue < 0) ivalue = 0;
         ent->health = (int)ivalue;
-    } else if (!strcmp(prop, "mp")) {
+    } else if (!bor_lua_stricmp(prop, "mp")) {
         ivalue = luaL_checkinteger(L, 3);
         if (ivalue > ent->modeldata.mp) ivalue = ent->modeldata.mp;
         if (ivalue < 0) ivalue = 0;
         ent->mp = (int)ivalue;
-    } else if (!strcmp(prop, "x"))          ent->x = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "z"))             ent->z = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "a"))             ent->a = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "xdir"))          ent->xdir = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "zdir"))          ent->zdir = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "tossv"))         ent->tossv = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "base"))          ent->base = (float)luaL_checknumber(L, 3);
-    else if (!strcmp(prop, "direction"))     ent->direction = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "map"))           ent->map = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "nextanim"))      ent->nextanim = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "nextthink"))     ent->nextthink = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "autokill"))      ent->autokill = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "invincible"))   ent->invincible = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "frozen"))        ent->frozen = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "seal"))          ent->seal = (char)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "position")) {
+    } else if (!bor_lua_stricmp(prop, "x"))          ent->x = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "z"))             ent->z = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "a"))             ent->a = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "xdir"))          ent->xdir = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "zdir"))          ent->zdir = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "tossv"))         ent->tossv = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "base"))          ent->base = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "direction"))     ent->direction = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "map"))           ent->map = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "nextanim"))      ent->nextanim = (unsigned int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "nextthink"))     ent->nextthink = (unsigned int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "autokill"))      ent->autokill = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "invincible"))   ent->invincible = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "frozen"))        ent->frozen = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "seal"))          ent->seal = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "position")) {
         ent->x = (float)luaL_checknumber(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->z = (float)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->a = (float)luaL_checknumber(L, 5);
-    } else if (!strcmp(prop, "velocity")) {
+    } else if (!bor_lua_stricmp(prop, "velocity")) {
         ent->xdir = (float)luaL_checknumber(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->zdir = (float)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->tossv = (float)luaL_checknumber(L, 5);
-    } else if (!strcmp(prop, "animation")) {
+    } else if (!bor_lua_stricmp(prop, "animation")) {
         int anim = (int)luaL_checkinteger(L, 3);
         int reset = lua_isnoneornil(L, 4) ? 1 : (int)luaL_checkinteger(L, 4);
         ent_set_anim(ent, anim, reset);
-    } else if (!strcmp(prop, "animpos")) {
+    } else if (!bor_lua_stricmp(prop, "animpos")) {
         ent->animpos = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "maxhealth")) {
+    } else if (!bor_lua_stricmp(prop, "maxhealth")) {
         ivalue = luaL_checkinteger(L, 3);
         ent->modeldata.health = (int)(ivalue < 0 ? 0 : ivalue);
         if (ent->health > ent->modeldata.health) ent->health = ent->modeldata.health;
-    } else if (!strcmp(prop, "maxmp")) {
+    } else if (!bor_lua_stricmp(prop, "maxmp")) {
         ivalue = luaL_checkinteger(L, 3);
         ent->modeldata.mp = (int)(ivalue < 0 ? 0 : ivalue);
         if (ent->mp > ent->modeldata.mp) ent->mp = ent->modeldata.mp;
-    } else if (!strcmp(prop, "speed")) {
+    } else if (!bor_lua_stricmp(prop, "speed")) {
         ent->modeldata.speed = (float)luaL_checknumber(L, 3);
-    } else if (!strcmp(prop, "weapon")) {
+    } else if (!bor_lua_stricmp(prop, "weapon")) {
         int weapon = (int)luaL_checkinteger(L, 3);
         int anim_flag = lua_isnoneornil(L, 4) ? 0 : (int)luaL_checkinteger(L, 4);
         set_weapon(ent, weapon, anim_flag);
-    } else if (!strcmp(prop, "trymove")) {
+    } else if (!bor_lua_stricmp(prop, "trymove")) {
         int mode = (int)luaL_checkinteger(L, 3);
         if (mode == 1) ent->trymove = common_trymove;
         else if (mode == 2) ent->trymove = player_trymove;
         else ent->trymove = NULL;
-    } else if (!strcmp(prop, "combostep")) {
+    } else if (!bor_lua_stricmp(prop, "combostep")) {
         int index = (int)luaL_checkinteger(L, 3);
         if (index < 0 || index >= MAX_SPECIAL_INPUTS) return luaL_error(L, "combostep index out of range");
         ent->combostep[index] = (unsigned char)luaL_checkinteger(L, 4);
-    } else if (!strcmp(prop, "mpset")) {
+    } else if (!bor_lua_stricmp(prop, "mpset")) {
         ent->modeldata.mp = (int)luaL_checknumber(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.mpstable = (int)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->modeldata.mpstableval = (int)luaL_checknumber(L, 5);
         if (!lua_isnoneornil(L, 6)) ent->modeldata.mprate = (int)luaL_checknumber(L, 6);
-    } else if (!strcmp(prop, "grabforce")) {
+    } else if (!bor_lua_stricmp(prop, "grabforce")) {
         ent->model->grabforce = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "iconposition")) {
+    } else if (!bor_lua_stricmp(prop, "iconposition")) {
         ent->modeldata.iconx = (short)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.icony = (short)luaL_checkinteger(L, 4);
-    } else if (!strcmp(prop, "lifeposition")) {
+    } else if (!bor_lua_stricmp(prop, "lifeposition")) {
         ent->modeldata.hpx = (short)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.hpy = (short)luaL_checkinteger(L, 4);
-    } else if (!strcmp(prop, "nameposition")) {
+    } else if (!bor_lua_stricmp(prop, "nameposition")) {
         ent->modeldata.namex = (short)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.namey = (short)luaL_checkinteger(L, 4);
-    } else if (!strcmp(prop, "setlayer")) {
+    } else if (!bor_lua_stricmp(prop, "setlayer")) {
         ent->modeldata.setlayer = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "throwdamage")) {
+    } else if (!bor_lua_stricmp(prop, "throwdamage")) {
         ent->modeldata.throwdamage = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "throwdist")) {
+    } else if (!bor_lua_stricmp(prop, "throwdist")) {
         ent->modeldata.throwdist = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "throwframewait")) {
+    } else if (!bor_lua_stricmp(prop, "throwframewait")) {
         ent->modeldata.throwframewait = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "throwheight")) {
+    } else if (!bor_lua_stricmp(prop, "throwheight")) {
         ent->modeldata.throwheight = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "alpha")) {
+    } else if (!bor_lua_stricmp(prop, "alpha")) {
         ent->modeldata.alpha = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "guardpoints")) {
+    } else if (!bor_lua_stricmp(prop, "guardpoints")) {
         ent->modeldata.guardpoints[0] = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "maxguardpoints")) {
+    } else if (!bor_lua_stricmp(prop, "maxguardpoints")) {
         ent->modeldata.guardpoints[1] = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "jugglepoints")) {
+    } else if (!bor_lua_stricmp(prop, "jugglepoints")) {
         ent->modeldata.jugglepoints[0] = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "maxjugglepoints")) {
+    } else if (!bor_lua_stricmp(prop, "maxjugglepoints")) {
         ent->modeldata.jugglepoints[1] = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "komap")) {
+    } else if (!bor_lua_stricmp(prop, "komap")) {
         ent->modeldata.komap[0] = (char)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.komap[1] = (char)luaL_checkinteger(L, 4);
-    } else if (!strcmp(prop, "rush_count")) {
+    } else if (!bor_lua_stricmp(prop, "rush_count")) {
         ent->rush[0] = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "rush_tally")) {
+    } else if (!bor_lua_stricmp(prop, "rush_tally")) {
         ent->rush[1] = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "rush_time")) {
+    } else if (!bor_lua_stricmp(prop, "rush_time")) {
         ent->rushtime = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "offense")) {
+    } else if (!bor_lua_stricmp(prop, "offense")) {
         int which = (int)luaL_checkinteger(L, 3);
         if (which < 0 || which >= MAX_ATKS) return luaL_error(L, "offense index out of range");
         ent->modeldata.offense_factors[which] = (float)luaL_checknumber(L, 4);
-    } else if (!strcmp(prop, "defense")) {
+    } else if (!bor_lua_stricmp(prop, "defense")) {
         int which = (int)luaL_checkinteger(L, 3);
         if (which < 0 || which >= MAX_ATKS) return luaL_error(L, "defense index out of range");
         ent->modeldata.defense_factors[which] = (float)luaL_checknumber(L, 4);
@@ -1272,85 +1276,192 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!lua_isnoneornil(L, 8)) ent->modeldata.defense_blockthreshold[which] = (float)luaL_checknumber(L, 8);
         if (!lua_isnoneornil(L, 9)) ent->modeldata.defense_blockratio[which] = (float)luaL_checknumber(L, 9);
         if (!lua_isnoneornil(L, 10)) ent->modeldata.defense_blocktype[which] = (float)luaL_checknumber(L, 10);
-    } else if (!strcmp(prop, "stats")) {
+    } else if (!bor_lua_stricmp(prop, "stats")) {
         int which = (int)luaL_checkinteger(L, 3);
         int index = (int)luaL_checkinteger(L, 4);
         if (index < 0 || index >= 20) return luaL_error(L, "stats index out of range");
         if (which == 1) ent->stats[index] = (float)luaL_checknumber(L, 5);
         else ent->modeldata.stats[index] = (float)luaL_checknumber(L, 5);
-    } else if (!strcmp(prop, "antigravity")) {
+    } else if (!bor_lua_stricmp(prop, "antigravity")) {
         float value = (float)luaL_checknumber(L, 3);
         ent->modeldata.antigravity = value;
         ent->antigravity = value;
-    } else if (!strcmp(prop, "maptime")) {
+    } else if (!bor_lua_stricmp(prop, "maptime")) {
         ent->maptime = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "tosstime")) {
+    } else if (!bor_lua_stricmp(prop, "tosstime")) {
         ent->toss_time = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "invinctime")) {
+    } else if (!bor_lua_stricmp(prop, "invinctime")) {
         ent->invinctime = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "lifespancountdown")) {
+    } else if (!bor_lua_stricmp(prop, "lifespancountdown")) {
         ent->lifespancountdown = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "freezetime")) {
+    } else if (!bor_lua_stricmp(prop, "freezetime")) {
         ent->freezetime = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "bounce")) {
+    } else if (!bor_lua_stricmp(prop, "bounce")) {
         ent->modeldata.bounce = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "antigrab")) {
+    } else if (!bor_lua_stricmp(prop, "antigrab")) {
         ent->model->antigrab = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "nodrop")) {
+    } else if (!bor_lua_stricmp(prop, "nodrop")) {
         ent->modeldata.nodrop = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "nopain")) {
+    } else if (!bor_lua_stricmp(prop, "nopain")) {
         ent->modeldata.nopain = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "no_adjust_base")) {
+    } else if (!bor_lua_stricmp(prop, "no_adjust_base")) {
         ent->modeldata.no_adjust_base = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "noaicontrol")) {
+    } else if (!bor_lua_stricmp(prop, "noaicontrol")) {
         ent->noaicontrol = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "nodieblink")) {
+    } else if (!bor_lua_stricmp(prop, "nodieblink")) {
         ent->modeldata.nodieblink = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "falldie")) {
+    } else if (!bor_lua_stricmp(prop, "falldie")) {
         ent->modeldata.falldie = (int)luaL_checkinteger(L, 3);
-    } else if (!strcmp(prop, "aiflag")) {
+    } else if (!bor_lua_stricmp(prop, "aiflag")) {
         const char *flag = luaL_checkstring(L, 3);
         int value = (int)luaL_checkinteger(L, 4);
-        if (!strcmp(flag, "dead")) ent->dead = value;
-        else if (!strcmp(flag, "jumping")) ent->jumping = value;
-        else if (!strcmp(flag, "idling")) ent->idling = value;
-        else if (!strcmp(flag, "drop")) ent->drop = value;
-        else if (!strcmp(flag, "attacking")) ent->attacking = value;
-        else if (!strcmp(flag, "getting")) ent->getting = value;
-        else if (!strcmp(flag, "turning")) ent->turning = value;
-        else if (!strcmp(flag, "charging")) ent->charging = value;
-        else if (!strcmp(flag, "blocking")) ent->blocking = value;
-        else if (!strcmp(flag, "falling")) ent->falling = value;
-        else if (!strcmp(flag, "running")) ent->running = value;
-        else if (!strcmp(flag, "inpain")) ent->inpain = value;
-        else if (!strcmp(flag, "projectile")) ent->projectile = value;
-        else if (!strcmp(flag, "frozen")) ent->frozen = value;
-        else if (!strcmp(flag, "toexplode")) ent->toexplode = value;
-        else if (!strcmp(flag, "animating")) ent->animating = value;
-        else if (!strcmp(flag, "blink")) ent->blink = value;
-        else if (!strcmp(flag, "invincible")) ent->invincible = value;
-        else if (!strcmp(flag, "autokill")) ent->autokill = value;
+        if (!bor_lua_stricmp(flag, "dead")) ent->dead = value;
+        else if (!bor_lua_stricmp(flag, "jumping")) ent->jumping = value;
+        else if (!bor_lua_stricmp(flag, "idling")) ent->idling = value;
+        else if (!bor_lua_stricmp(flag, "drop")) ent->drop = value;
+        else if (!bor_lua_stricmp(flag, "attacking")) ent->attacking = value;
+        else if (!bor_lua_stricmp(flag, "getting")) ent->getting = value;
+        else if (!bor_lua_stricmp(flag, "turning")) ent->turning = value;
+        else if (!bor_lua_stricmp(flag, "charging")) ent->charging = value;
+        else if (!bor_lua_stricmp(flag, "blocking")) ent->blocking = value;
+        else if (!bor_lua_stricmp(flag, "falling")) ent->falling = value;
+        else if (!bor_lua_stricmp(flag, "running")) ent->running = value;
+        else if (!bor_lua_stricmp(flag, "inpain")) ent->inpain = value;
+        else if (!bor_lua_stricmp(flag, "projectile")) ent->projectile = value;
+        else if (!bor_lua_stricmp(flag, "frozen")) ent->frozen = value;
+        else if (!bor_lua_stricmp(flag, "toexplode")) ent->toexplode = value;
+        else if (!bor_lua_stricmp(flag, "animating")) ent->animating = value;
+        else if (!bor_lua_stricmp(flag, "blink")) ent->blink = value;
+        else if (!bor_lua_stricmp(flag, "invincible")) ent->invincible = value;
+        else if (!bor_lua_stricmp(flag, "autokill")) ent->autokill = value;
         else return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
-    } else if (!strcmp(prop, "dead"))            ent->dead = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "blink"))             ent->blink = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "attacking"))         ent->attacking = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "projectile"))        ent->projectile = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "damage_on_landing")) ent->damage_on_landing = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "stalltime"))         ent->stalltime = (int)luaL_checkinteger(L, 3);
-    else if (!strcmp(prop, "staydown")) {
+    } else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "blink"))             ent->blink = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "attacking"))         ent->attacking = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "projectile"))        ent->projectile = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "damage_on_landing")) ent->damage_on_landing = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "stalltime"))         ent->stalltime = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "staydown")) {
         ent->staydown[0] = (int)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->staydown[1] = (int)luaL_checkinteger(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->staydown[2] = (int)luaL_checkinteger(L, 5);
-    } else if (!strcmp(prop, "stealth")) {
+    } else if (!bor_lua_stricmp(prop, "stealth")) {
         ent->modeldata.stealth[0] = (short)luaL_checkinteger(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.stealth[1] = (short)luaL_checkinteger(L, 4);
     }
-    else if (!strcmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "aggression")) ent->modeldata.aggression = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "aiattack")) ent->modeldata.aiattack = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "aimove")) ent->modeldata.aimove = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "animhits")) ent->animation->animhits = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "attackid")) ent->attack_id = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "blockback")) ent->modeldata.blockback = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "blockpain")) ent->modeldata.blockpain = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "detect")) ent->modeldata.stealth[1] = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "hitbyid")) ent->hit_by_attack_id = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "hmapl")) ent->modeldata.hmap1 = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "hmapu")) ent->modeldata.hmap2 = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "nograb")) ent->nograb = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "scroll")) ent->modeldata.scroll = (float)luaL_checknumber(L, 3);
+    else if (!bor_lua_stricmp(prop, "sealtime")) ent->sealtime = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_screen")) ent->modeldata.subject_to_screen = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_maxz")) ent->modeldata.subject_to_maxz = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_minz")) ent->modeldata.subject_to_minz = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_wall")) ent->modeldata.subject_to_wall = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_obstacle")) ent->modeldata.subject_to_obstacle = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_platform")) ent->modeldata.subject_to_platform = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_gravity")) ent->modeldata.subject_to_gravity = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "subject_to_hole")) ent->modeldata.subject_to_hole = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "owner") || !bor_lua_stricmp(prop, "parent") || !bor_lua_stricmp(prop, "opponent")) {
+        entity *other = lua_isnil(L, 3) ? NULL : bor_lua_get_live_entity(L, 3);
+        if (!lua_isnil(L, 3) && (!other || !other->exists))
+            return luaL_error(L, "changeentityproperty '%s' expects a live entity or nil", prop);
+        if (!bor_lua_stricmp(prop, "owner")) ent->owner = other;
+        else if (!bor_lua_stricmp(prop, "parent")) ent->parent = other;
+        else ent->opponent = other;
+    } else if (!bor_lua_stricmp(prop, "subentity")) {
+        entity *other = lua_isnil(L, 3) ? NULL : bor_lua_get_live_entity(L, 3);
+        if (!lua_isnil(L, 3) && (!other || !other->exists))
+            return luaL_error(L, "changeentityproperty 'subentity' expects a live entity or nil");
+        if (ent->subentity) ent->subentity->parent = NULL;
+        ent->subentity = other;
+        if (other) other->parent = ent;
+    } else if (!bor_lua_stricmp(prop, "name")) {
+        const char *name = luaL_checkstring(L, 3);
+        strncpy(ent->name, name, sizeof(ent->name) - 1);
+        ent->name[sizeof(ent->name) - 1] = '\0';
+    } else if (!bor_lua_stricmp(prop, "defaultname")) {
+        s_model *model = findmodel((char *)luaL_checkstring(L, 3));
+        if (!model) return luaL_error(L, "changeentityproperty defaultname requires an existing model");
+        ent->defaultmodel = model;
+    } else if (!bor_lua_stricmp(prop, "model")) {
+        const char *model_name = luaL_checkstring(L, 3);
+        int unload = lua_isnoneornil(L, 4) ? 0 : bor_lua_check_legacy_integer(L, 4, "changeentityproperty model");
+        set_model_ex(ent, (char *)model_name, -1, NULL, unload);
+        if (!ent->weapent) ent->weapent = ent;
+    } else if (!bor_lua_stricmp(prop, "colourmap")) {
+        int map_index = bor_lua_check_legacy_integer(L, 3, "changeentityproperty colourmap");
+        if (map_index < 0 || map_index > ent->modeldata.maps_loaded)
+            return luaL_error(L, "changeentityproperty colourmap index out of range");
+        ent->colourmap = ent->modeldata.colourmap[map_index - 1];
+    } else if (!bor_lua_stricmp(prop, "dot")) {
+        int index = bor_lua_check_legacy_integer(L, 3, "changeentityproperty dot");
+        if (index < 0 || index >= MAX_DOTS) return luaL_error(L, "dot index out of range");
+        ent->dot_time[index] = (int)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->dot[index] = (int)luaL_checknumber(L, 5);
+        if (!lua_isnoneornil(L, 6)) ent->dot_force[index] = (int)luaL_checknumber(L, 6);
+        if (!lua_isnoneornil(L, 7)) ent->dot_rate[index] = (int)luaL_checknumber(L, 7);
+        if (!lua_isnoneornil(L, 8)) ent->dot_atk[index] = (int)luaL_checknumber(L, 8);
+        if (!lua_isnoneornil(L, 9)) {
+            entity *owner = lua_isnil(L, 9) ? NULL : bor_lua_get_live_entity(L, 9);
+            if (!lua_isnil(L, 9) && (!owner || !owner->exists))
+                return luaL_error(L, "dot owner must be a live entity or nil");
+            ent->dot_owner[index] = owner;
+        }
+    } else if (!bor_lua_stricmp(prop, "edelay")) {
+        ent->modeldata.edelay.mode = bor_lua_check_legacy_integer(L, 3, "changeentityproperty edelay");
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.edelay.factor = (float)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->modeldata.edelay.cap_min = bor_lua_check_legacy_integer(L, 5, "changeentityproperty edelay");
+        if (!lua_isnoneornil(L, 6)) ent->modeldata.edelay.cap_max = bor_lua_check_legacy_integer(L, 6, "changeentityproperty edelay");
+        if (!lua_isnoneornil(L, 7)) ent->modeldata.edelay.range_min = bor_lua_check_legacy_integer(L, 7, "changeentityproperty edelay");
+        if (!lua_isnoneornil(L, 8)) ent->modeldata.edelay.range_max = bor_lua_check_legacy_integer(L, 8, "changeentityproperty edelay");
+    } else if (!bor_lua_stricmp(prop, "energycost")) {
+        int animation = bor_lua_check_legacy_integer(L, 3, "changeentityproperty energycost");
+        if (lua_gettop(L) != 6 || !validanim(ent, animation))
+            return luaL_error(L, "energycost expects entity, property, animation, cost, mponly, and disable");
+        ent->modeldata.animation[animation]->energycost[0] = bor_lua_check_legacy_integer(L, 4, "changeentityproperty energycost");
+        ent->modeldata.animation[animation]->energycost[1] = bor_lua_check_legacy_integer(L, 5, "changeentityproperty energycost");
+        ent->modeldata.animation[animation]->energycost[2] = bor_lua_check_legacy_integer(L, 6, "changeentityproperty energycost");
+    } else if (!bor_lua_stricmp(prop, "running")) {
+        ent->modeldata.runspeed = (float)luaL_checknumber(L, 3);
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.runjumpheight = (float)luaL_checknumber(L, 4);
+        if (!lua_isnoneornil(L, 5)) ent->modeldata.runjumpdist = (float)luaL_checknumber(L, 5);
+        if (!lua_isnoneornil(L, 6)) ent->modeldata.runhold = (int)luaL_checknumber(L, 6);
+        if (!lua_isnoneornil(L, 7)) ent->modeldata.runupdown = (int)luaL_checknumber(L, 7);
+    } else if (!bor_lua_stricmp(prop, "takeaction")) {
+        const char *action = luaL_checkstring(L, 3);
+        size_t n;
+        ent->takeaction = NULL;
+        for (n = 0; n < sizeof(action_names) / sizeof(action_names[0]); ++n) {
+            if (!bor_lua_stricmp(action, action_names[n])) {
+                ent->takeaction = (void *)actions[n];
+                break;
+            }
+        }
+    } else if (!bor_lua_stricmp(prop, "think")) {
+        const char *think_name = luaL_checkstring(L, 3);
+        size_t n;
+        for (n = 0; n < sizeof(think_names) / sizeof(think_names[0]); ++n) {
+            if (!bor_lua_stricmp(think_name, think_names[n])) {
+                ent->think = (void *)think_functions[n];
+                break;
+            }
+        }
+    } else if (!bor_lua_stricmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)luaL_checkinteger(L, 3);
     else {
         return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
     }
 
-    lua_pushboolean(L, 1);
+    lua_pushinteger(L, 1);
     return 1;
 }
 
