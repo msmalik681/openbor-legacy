@@ -3360,7 +3360,7 @@ static int lua_openbor_settextobj(lua_State *L)
     font = (int)bor_lua_check_legacy_integer(L, 4, "settextobj");
     z = (int)bor_lua_check_legacy_integer(L, 5, "settextobj");
     text = luaL_checkstring(L, 6);
-    if (lua_gettop(L) == 7)
+    if (lua_gettop(L) >= 7)
         time = (int)bor_lua_check_legacy_integer(L, 7, "settextobj");
 
     copy = (char *)malloc(strlen(text) + 1);
