@@ -1536,7 +1536,6 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushnumber(L, ent->staydown[which]);
     }
-    else if (!bor_lua_stricmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
     else if (!bor_lua_stricmp(prop, "dot")) {
         if (lua_gettop(L) < 4) { lua_pushnil(L); return 1; }
         int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
