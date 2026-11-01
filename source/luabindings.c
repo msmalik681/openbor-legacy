@@ -1945,6 +1945,86 @@ static s_filestream *bor_lua_get_filestream(lua_State *L, int arg)
     return &level->filestreams[index];
 }
 
+static int lua_openbor_createfilestream(lua_State *L)
+{
+    s_filestream *stream;
+    char *buffer;
+
+    if (!level)
+        return luaL_error(L, "createfilestream requires a loaded level");
+    if (level->numfilestreams >= LEVEL_MAX_FILESTREAMS)
+        return luaL_error(L, "maximum file streams exceeded");
+
+    buffer = (char *)malloc(1);
+    if (!buffer)
+        return luaL_error(L, "createfilestream ran out of memory");
+    buffer[0] = '\0';
+
+    stream = &level->filestreams[level->numfilestreams];
+    stream->buf = buffer;
+    stream->size = 0;
+    stream->pos = 0;
+
+    lua_pushinteger(L, level->numfilestreams);
+    ++level->numfilestreams;
+    return 1;
+}
+
+static int lua_openbor_savefilestream(lua_State *L)
+{
+    s_filestream *stream;
+    const char *filename;
+    char path[512] = {0};
+    char modname[256] = {0};
+    const char *base;
+    size_t pack_length;
+    size_t i;
+    FILE *handle;
+
+    if (lua_gettop(L) < 2 || lua_type(L, 2) != LUA_TSTRING)
+        return luaL_error(L, "savefilestream expects a stream index and filename");
+    stream = bor_lua_get_filestream(L, 1);
+    filename = lua_tostring(L, 2);
+
+    getBasePath(path, "Saves/", 0);
+
+    pack_length = strlen(packfile);
+    if (pack_length > 4)
+        pack_length -= 4;
+    else
+        pack_length = 0;
+
+    base = packfile;
+    for (i = 0; i < pack_length; ++i) {
+        if (packfile[i] == '/' || packfile[i] == '\\')
+            base = packfile + i + 1;
+    }
+    if (base >= packfile + pack_length)
+        base = packfile;
+
+    if (strlen(path) + strlen(base) + strlen(filename) + 3 >= sizeof(path))
+        return luaL_error(L, "savefilestream path is too long");
+    strncat(modname, base, sizeof(modname) - 1);
+    strncat(path, modname, sizeof(path) - strlen(path) - 1);
+    dirExists(path, 1);
+    strncat(path, "/", sizeof(path) - strlen(path) - 1);
+    strncat(path, filename, sizeof(path) - strlen(path) - 1);
+
+    handle = fopen(path, "wb");
+    if (!handle)
+        return luaL_error(L, "savefilestream could not open '%s'", path);
+    if (stream->size && fwrite(stream->buf, 1, stream->size, handle) != stream->size) {
+        fclose(handle);
+        return luaL_error(L, "savefilestream could not write '%s'", path);
+    }
+    if (fwrite("\r\n", 1, 2, handle) != 2) {
+        fclose(handle);
+        return luaL_error(L, "savefilestream could not finish '%s'", path);
+    }
+    fclose(handle);
+    return 0;
+}
+
 static int lua_openbor_openfilestream(lua_State *L)
 {
     const char *filename;
