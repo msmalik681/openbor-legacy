@@ -2024,6 +2024,9 @@ static int lua_openbor_clearglobalvar(lua_State *L)
 {
     lua_newtable(L);
     lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
+    /* Legacy global and script-local names shared one indexed storage pool. */
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
     return 0;
 }
 
