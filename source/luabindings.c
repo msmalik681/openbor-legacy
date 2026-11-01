@@ -420,18 +420,21 @@ static int lua_openbor_rand(lua_State *L) {
 }
 
 // openbor.drawstring(x, y, font, text, z)
-static int lua_openbor_drawstring(lua_State *L) {
-    int x = (int)bor_lua_check_legacy_integer(L, 1, "drawstring");
-    int y = (int)bor_lua_check_legacy_integer(L, 2, "drawstring");
-    int font = (int)bor_lua_check_legacy_integer(L, 3, "drawstring");
+static int lua_openbor_drawstring(lua_State *L)
+{
+    int top = lua_gettop(L);
+    int x = bor_lua_check_legacy_integer(L, 1, "drawstring");
+    int y = bor_lua_check_legacy_integer(L, 2, "drawstring");
+    int font = bor_lua_check_legacy_integer(L, 3, "drawstring");
+    int z = top >= 5 ? bor_lua_check_legacy_integer(L, 5, "drawstring") : 0;
     const char *text;
+
     bor_lua_push_legacy_string(L, 4);
     text = lua_tostring(L, -1);
-    int z = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawstring") : 0);
-
     font_printf(x, y, font, z, "%s", text);
     return 0;
 }
+
 
 // openbor.drawbox(x, y, width, height, z, color, lut)
 static int lua_openbor_drawbox(lua_State *L) {
