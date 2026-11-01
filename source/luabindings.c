@@ -1400,7 +1400,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!ent->weapent) ent->weapent = ent;
     } else if (!bor_lua_stricmp(prop, "colourmap")) {
         int map_index = bor_lua_check_legacy_integer(L, 3, "changeentityproperty colourmap");
-        if (map_index < 0 || map_index > ent->modeldata.maps_loaded)
+        if (map_index < 1 || map_index > ent->modeldata.maps_loaded)
             return luaL_error(L, "changeentityproperty colourmap index out of range");
         ent->colourmap = ent->modeldata.colourmap[map_index - 1];
     } else if (!bor_lua_stricmp(prop, "dot")) {
