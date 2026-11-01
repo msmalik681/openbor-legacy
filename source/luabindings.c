@@ -4154,6 +4154,25 @@ static int lua_openborconstant(lua_State *L)
         return 1;
     }
 
+    /* Built-in sample IDs are fields in the engine's sample table. */
+#define BOR_LUA_SAMPLE_CONSTANT(symbol, field) \
+    if (bor_lua_stricmp(name, #symbol) == 0) { lua_pushinteger(L, samples.field); return 1; }
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_GO, go);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_BEAT, beat);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_BLOCK, block);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_INDIRECT, indirect);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_GET, get);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_GET2, get2);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_FALL, fall);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_JUMP, jump);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_PUNCH, punch);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_1UP, oneup);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_TIMEOVER, timeover);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_BEEP, beep);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_BEEP2, beep2);
+    BOR_LUA_SAMPLE_CONSTANT(SAMPLE_BIKE, bike);
+#undef BOR_LUA_SAMPLE_CONSTANT
+
     /* Keep this list aligned with the legacy constant map and engine headers. */
 #define BOR_LUA_CONSTANT(symbol) \
     if (bor_lua_stricmp(name, #symbol) == 0) { lua_pushinteger(L, (lua_Integer)(symbol)); return 1; }
