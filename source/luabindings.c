@@ -3328,8 +3328,12 @@ static int lua_openbor_changemodelproperty(lua_State *L)
     if (index < 0 || (unsigned int)index >= models_cached || !model_cache)
         return 0;
 
-    /* Legacy properties 0-3 are no-ops; property 4 changes selectability. */
-    if (property == 4) {
+    /*
+     * The legacy switch intentionally/accidentally falls through from
+     * properties 0-3 into case 4. Preserve that observable behaviour:
+     * every property ID from 0 through 4 writes the selectable flag.
+     */
+    if (property >= 0 && property <= 4) {
         int value;
         if (lua_gettop(L) < 3 || lua_type(L, 3) != LUA_TNUMBER) {
             lua_pushinteger(L, 0);
