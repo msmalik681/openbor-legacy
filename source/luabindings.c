@@ -2212,16 +2212,16 @@ static int lua_openbor_fadeout(lua_State *L)
     int type;
     int speed;
 
-    if (lua_gettop(L) != 2)
-        return luaL_error(L, "fadeout expects 2 integer arguments");
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER ||
+        lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "fadeout expects 2 numeric arguments");
 
-    type = (int)luaL_checkinteger(L, 1);
-    speed = (int)luaL_checkinteger(L, 2);
+    type = (int)lua_tonumber(L, 1);
+    speed = (int)lua_tonumber(L, 2);
     fade_out(type, speed);
     return 0;
 }
 
-/* Legacy music and sample controls. */
 static int lua_openbor_playmusic(lua_State *L)
 {
     const char *filename;
