@@ -2762,7 +2762,7 @@ static int lua_openbor_allocscreen(lua_State *L)
     s_screen *screen;
     bor_lua_screen_handle *handle;
 
-    if (lua_gettop(L) != 2)
+    if (lua_gettop(L) < 2)
         return luaL_error(L, "allocscreen expects width and height");
     width = (int)bor_lua_check_legacy_integer(L, 1, "allocscreen");
     height = (int)bor_lua_check_legacy_integer(L, 2, "allocscreen");
@@ -2818,7 +2818,7 @@ static int lua_openbor_drawboxtoscreen(lua_State *L)
     int colour = (int)bor_lua_check_legacy_integer(L, 6, "drawboxtoscreen");
     int blend_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawboxtoscreen") : -1);
 
-    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+    if (lua_gettop(L) < 6)
         return luaL_error(L, "drawboxtoscreen expects screen, x, y, width, height, colour, and optional LUT");
     if (blend_index >= 0) blend_index %= MAX_BLENDINGS + 1;
 
@@ -2840,7 +2840,7 @@ static int lua_openbor_drawlinetoscreen(lua_State *L)
     int colour = (int)bor_lua_check_legacy_integer(L, 6, "drawlinetoscreen");
     int blend_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawlinetoscreen") : -1);
 
-    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+    if (lua_gettop(L) < 6)
         return luaL_error(L, "drawlinetoscreen expects screen, 5 integers, and optional LUT");
     if (blend_index >= 0) blend_index %= MAX_BLENDINGS + 1;
 
@@ -2860,7 +2860,7 @@ static int lua_openbor_drawdottoscreen(lua_State *L)
     int colour = (int)bor_lua_check_legacy_integer(L, 4, "drawdottoscreen");
     int blend_index = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawdottoscreen") : -1);
 
-    if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
+    if (lua_gettop(L) < 4)
         return luaL_error(L, "drawdottoscreen expects screen, x, y, colour, and optional LUT");
     if (blend_index >= 0) blend_index %= MAX_BLENDINGS + 1;
 
@@ -2880,7 +2880,7 @@ static int lua_openbor_drawscreen(lua_State *L)
     int z = (int)bor_lua_check_legacy_integer(L, 4, "drawscreen");
     s_drawmethod method;
 
-    if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
+    if (lua_gettop(L) < 4)
         return luaL_error(L, "drawscreen expects screen, x, y, z, and optional LUT");
     if (lua_gettop(L) == 4) {
         method = bor_lua_drawmethod;
@@ -2902,7 +2902,7 @@ static int lua_openbor_drawsprite(lua_State *L)
     int z = (int)bor_lua_check_legacy_integer(L, 4, "drawsprite");
     int sortid = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawsprite") : 0);
 
-    if (lua_gettop(L) < 4 || lua_gettop(L) > 5 || !sprite)
+    if (lua_gettop(L) < 4 || !sprite)
         return luaL_error(L, "drawsprite expects a sprite handle, x, y, z, and optional sort ID");
     spriteq_add_frame(x, y, z, sprite, &bor_lua_drawmethod, sortid);
     return 0;
@@ -2915,7 +2915,7 @@ static int lua_openbor_drawspritetoscreen(lua_State *L)
     int x = (int)bor_lua_check_legacy_integer(L, 3, "drawspritetoscreen");
     int y = (int)bor_lua_check_legacy_integer(L, 4, "drawspritetoscreen");
 
-    if (lua_gettop(L) != 4 || !sprite)
+    if (lua_gettop(L) < 4 || !sprite)
         return luaL_error(L, "drawspritetoscreen expects sprite, screen, x, and y");
     putsprite(x, y, sprite, screen, &bor_lua_drawmethod);
     return 0;
@@ -2928,7 +2928,7 @@ static int lua_openbor_setdrawmethod(lua_State *L)
     int values[12] = {0};
     int i;
 
-    if (lua_gettop(L) < 2 || lua_gettop(L) > 14)
+    if (lua_gettop(L) < 2)
         return luaL_error(L, "setdrawmethod expects an entity or nil, draw flags, and optional colourmap");
     if (!lua_isnil(L, 1)) {
         ent = bor_lua_get_live_entity(L, 1);
@@ -3108,7 +3108,7 @@ static int lua_openbor_changelight(lua_State *L)
 
 static int lua_openbor_changeshadowcolor(lua_State *L)
 {
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+    if (lua_gettop(L) < 1)
         return luaL_error(L, "changeshadowcolor expects a color and optional alpha");
 
     colors.shadow = (int)bor_lua_check_legacy_integer(L, 1, "changeshadowcolor");
@@ -3304,7 +3304,7 @@ static int lua_openbor_changetextobjproperty(lua_State *L)
     const char *property = luaL_checkstring(L, 2);
     s_textobj *obj;
 
-    if (lua_gettop(L) != 3)
+    if (lua_gettop(L) < 3)
         return luaL_error(L, "changetextobjproperty expects index, property, and value");
     if (!level)
         return luaL_error(L, "changetextobjproperty requires a loaded level");
@@ -3346,7 +3346,7 @@ static int lua_openbor_settextobj(lua_State *L)
     char *copy;
     int x, y, font, z, time = 0;
 
-    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+    if (lua_gettop(L) < 6)
         return luaL_error(L, "settextobj expects index, x, y, font, z, text, and optional time");
     if (!level)
         return luaL_error(L, "settextobj requires a loaded level");
@@ -3791,7 +3791,7 @@ static int lua_openbor_drawline(lua_State *L)
     int color = (int)bor_lua_check_legacy_integer(L, 6, "drawline");
     int blend_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawline") : -1);
 
-    if (lua_gettop(L) < 6 || lua_gettop(L) > 7)
+    if (lua_gettop(L) < 6)
         return luaL_error(L, "drawline expects 6 required arguments and 1 optional LUT");
 
     if (blend_index >= 0)
@@ -3809,7 +3809,7 @@ static int lua_openbor_drawdot(lua_State *L)
     int color = (int)bor_lua_check_legacy_integer(L, 4, "drawdot");
     int blend_index = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawdot") : -1);
 
-    if (lua_gettop(L) < 4 || lua_gettop(L) > 5)
+    if (lua_gettop(L) < 4)
         return luaL_error(L, "drawdot expects 4 required arguments and 1 optional LUT");
 
     if (blend_index >= 0)
