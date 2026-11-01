@@ -1421,8 +1421,15 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!bor_lua_stricmp(prop, "aiflag")) {
         const char *flag = NULL;
         int value;
+        size_t n;
         if (lua_type(L, 3) == LUA_TSTRING) {
             flag = lua_tostring(L, 3);
+            for (n = 0; n < sizeof(aiflag_names) / sizeof(aiflag_names[0]); ++n) {
+                if (!bor_lua_stricmp(flag, aiflag_names[n]))
+                    break;
+            }
+            if (n == sizeof(aiflag_names) / sizeof(aiflag_names[0]))
+                return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
         } else if (lua_isinteger(L, 3)) {
             lua_Integer flag_index = lua_tointeger(L, 3);
             if (flag_index >= 0 && flag_index < (lua_Integer)(sizeof(aiflag_names) / sizeof(aiflag_names[0])))
@@ -1452,14 +1459,6 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
             else if (!bor_lua_stricmp(flag, "blink")) ent->blink = value;
             else if (!bor_lua_stricmp(flag, "invincible")) ent->invincible = value;
             else if (!bor_lua_stricmp(flag, "autokill")) ent->autokill = value;
-        } else if (flag && lua_type(L, 3) == LUA_TSTRING) {
-            size_t n;
-            for (n = 0; n < sizeof(aiflag_names) / sizeof(aiflag_names[0]); ++n) {
-                if (!bor_lua_stricmp(flag, aiflag_names[n]))
-                    break;
-            }
-            if (n == sizeof(aiflag_names) / sizeof(aiflag_names[0]))
-                return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
         }
     } else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "blink"))             ent->blink = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
