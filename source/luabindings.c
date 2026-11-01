@@ -4391,6 +4391,9 @@ static int lua_openbor_strleft(lua_State *L)
         return luaL_error(L, "strleft character count cannot be negative");
     if ((lua_Unsigned)count > length)
         count = (lua_Integer)length;
+    /* The legacy implementation used a 66-byte temporary buffer. */
+    if (count > 65)
+        count = 65;
 
     lua_pushlstring(L, source, (size_t)count);
     return 1;
