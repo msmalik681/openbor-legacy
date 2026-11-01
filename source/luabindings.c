@@ -3129,7 +3129,7 @@ static int lua_openbor_jumptobranch(lua_State *L)
     extern int endgame;
     const char *name = luaL_checkstring(L, 1);
 
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
+    if (lua_gettop(L) < 1)
         return luaL_error(L, "jumptobranch expects a branch name and optional immediate flag");
 
     strncpy(branch_name, name, MAX_NAME_LEN);
