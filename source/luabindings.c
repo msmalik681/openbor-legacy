@@ -1229,6 +1229,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     static const char *action_names[] = {"bomb_explode", "common_attack_proc", "common_block", "common_drop", "common_fall", "common_get", "common_grab", "common_grabattack", "common_grabbed", "common_jump", "common_land", "common_lie", "common_pain", "common_prejump", "common_rise", "common_spawn", "common_turn", "common_vault", "normal_prepare", "npc_warp", "player_blink", "suicide"};
     static const void *actions[] = {bomb_explode, common_attack_proc, common_block, common_drop, common_fall, common_get, common_grab, common_grabattack, common_grabbed, common_jump, common_land, common_lie, common_pain, common_prejump, common_rise, common_spawn, common_turn, common_vault, normal_prepare, npc_warp, player_blink, suicide};
     static const char *think_names[] = {"common_think", "player_think", "steam_think", "steamer_think", "text_think", "trap_think"};
+    static const char *aiflag_names[] = {"animating", "attacking", "autokill", "blink", "blocking", "charging", "dead", "drop", "falling", "frozen", "getting", "idling", "inpain", "invincible", "jumping", "projectile", "running", "toexplode", "turning"};
     static const void *think_functions[] = {common_think, player_think, steam_think, steamer_think, text_think, trap_think};
 
     if (!ent || !ent->exists) {
@@ -1418,29 +1419,49 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     } else if (!bor_lua_stricmp(prop, "falldie")) {
         ent->modeldata.falldie = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "aiflag")) {
-        const char *flag = luaL_checkstring(L, 3);
-        int value = (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
-        if (!bor_lua_stricmp(flag, "dead")) ent->dead = value;
-        else if (!bor_lua_stricmp(flag, "jumping")) ent->jumping = value;
-        else if (!bor_lua_stricmp(flag, "idling")) ent->idling = value;
-        else if (!bor_lua_stricmp(flag, "drop")) ent->drop = value;
-        else if (!bor_lua_stricmp(flag, "attacking")) ent->attacking = value;
-        else if (!bor_lua_stricmp(flag, "getting")) ent->getting = value;
-        else if (!bor_lua_stricmp(flag, "turning")) ent->turning = value;
-        else if (!bor_lua_stricmp(flag, "charging")) ent->charging = value;
-        else if (!bor_lua_stricmp(flag, "blocking")) ent->blocking = value;
-        else if (!bor_lua_stricmp(flag, "falling")) ent->falling = value;
-        else if (!bor_lua_stricmp(flag, "running")) ent->running = value;
-        else if (!bor_lua_stricmp(flag, "inpain")) ent->inpain = value;
-        else if (!bor_lua_stricmp(flag, "projectile")) ent->projectile = value;
-        else if (!bor_lua_stricmp(flag, "frozen")) ent->frozen = value;
-        else if (!bor_lua_stricmp(flag, "toexplode")) ent->toexplode = value;
-        else if (!bor_lua_stricmp(flag, "animating")) ent->animating = value;
-        else if (!bor_lua_stricmp(flag, "blink")) ent->blink = value;
-        else if (!bor_lua_stricmp(flag, "invincible")) ent->invincible = value;
-        else if (!bor_lua_stricmp(flag, "autokill")) ent->autokill = value;
-        else return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
-    } else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        const char *flag = NULL;
+        int value;
+        if (lua_type(L, 3) == LUA_TSTRING) {
+            flag = lua_tostring(L, 3);
+        } else if (lua_isinteger(L, 3)) {
+            lua_Integer flag_index = lua_tointeger(L, 3);
+            if (flag_index >= 0 && flag_index < (lua_Integer)(sizeof(aiflag_names) / sizeof(aiflag_names[0])))
+                flag = aiflag_names[flag_index];
+        } else {
+            return luaL_error(L, "changeentityproperty aiflag expects a flag name or integer constant");
+        }
+
+        if (flag && lua_gettop(L) >= 4 && lua_type(L, 4) == LUA_TNUMBER) {
+            value = (int)lua_tonumber(L, 4);
+            if (!bor_lua_stricmp(flag, "dead")) ent->dead = value;
+            else if (!bor_lua_stricmp(flag, "jumping")) ent->jumping = value;
+            else if (!bor_lua_stricmp(flag, "idling")) ent->idling = value;
+            else if (!bor_lua_stricmp(flag, "drop")) ent->drop = value;
+            else if (!bor_lua_stricmp(flag, "attacking")) ent->attacking = value;
+            else if (!bor_lua_stricmp(flag, "getting")) ent->getting = value;
+            else if (!bor_lua_stricmp(flag, "turning")) ent->turning = value;
+            else if (!bor_lua_stricmp(flag, "charging")) ent->charging = value;
+            else if (!bor_lua_stricmp(flag, "blocking")) ent->blocking = value;
+            else if (!bor_lua_stricmp(flag, "falling")) ent->falling = value;
+            else if (!bor_lua_stricmp(flag, "running")) ent->running = value;
+            else if (!bor_lua_stricmp(flag, "inpain")) ent->inpain = value;
+            else if (!bor_lua_stricmp(flag, "projectile")) ent->projectile = value;
+            else if (!bor_lua_stricmp(flag, "frozen")) ent->frozen = value;
+            else if (!bor_lua_stricmp(flag, "toexplode")) ent->toexplode = value;
+            else if (!bor_lua_stricmp(flag, "animating")) ent->animating = value;
+            else if (!bor_lua_stricmp(flag, "blink")) ent->blink = value;
+            else if (!bor_lua_stricmp(flag, "invincible")) ent->invincible = value;
+            else if (!bor_lua_stricmp(flag, "autokill")) ent->autokill = value;
+        } else if (flag && lua_type(L, 3) == LUA_TSTRING) {
+            size_t n;
+            for (n = 0; n < sizeof(aiflag_names) / sizeof(aiflag_names[0]); ++n) {
+                if (!bor_lua_stricmp(flag, aiflag_names[n]))
+                    break;
+            }
+            if (n == sizeof(aiflag_names) / sizeof(aiflag_names[0]))
+                return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
+        }
+else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "blink"))             ent->blink = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "attacking"))         ent->attacking = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "projectile"))        ent->projectile = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
