@@ -1136,7 +1136,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     prop = luaL_checkstring(L, 2);
 
     if (!bor_lua_stricmp(prop, "type")) {
-        ent->modeldata.type = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.type = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "candamage") || !bor_lua_stricmp(prop, "hostile") ||
                !bor_lua_stricmp(prop, "projectilehit")) {
         int i;
@@ -1156,12 +1156,12 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
             ent->modeldata.projectilehit = (short)mask;
         }
     } else if (!bor_lua_stricmp(prop, "health")) {
-        ivalue = luaL_checkinteger(L, 3);
+        ivalue = bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (ivalue > ent->modeldata.health) ivalue = ent->modeldata.health;
         if (ivalue < 0) ivalue = 0;
         ent->health = (int)ivalue;
     } else if (!bor_lua_stricmp(prop, "mp")) {
-        ivalue = luaL_checkinteger(L, 3);
+        ivalue = bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (ivalue > ent->modeldata.mp) ivalue = ent->modeldata.mp;
         if (ivalue < 0) ivalue = 0;
         ent->mp = (int)ivalue;
@@ -1172,14 +1172,14 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     else if (!bor_lua_stricmp(prop, "zdir"))          ent->zdir = (float)luaL_checknumber(L, 3);
     else if (!bor_lua_stricmp(prop, "tossv"))         ent->tossv = (float)luaL_checknumber(L, 3);
     else if (!bor_lua_stricmp(prop, "base"))          ent->base = (float)luaL_checknumber(L, 3);
-    else if (!bor_lua_stricmp(prop, "direction"))     ent->direction = (char)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "map"))           ent->map = (char)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "nextanim"))      ent->nextanim = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "nextthink"))     ent->nextthink = (unsigned int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "autokill"))      ent->autokill = (char)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "invincible"))   ent->invincible = (char)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "frozen"))        ent->frozen = (char)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "seal"))          ent->seal = (char)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "direction"))     ent->direction = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "map"))           ent->map = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "nextanim"))      ent->nextanim = (unsigned int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "nextthink"))     ent->nextthink = (unsigned int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "autokill"))      ent->autokill = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "invincible"))   ent->invincible = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "frozen"))        ent->frozen = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "seal"))          ent->seal = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "position")) {
         ent->x = (float)luaL_checknumber(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->z = (float)luaL_checknumber(L, 4);
@@ -1189,85 +1189,85 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!lua_isnoneornil(L, 4)) ent->zdir = (float)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->tossv = (float)luaL_checknumber(L, 5);
     } else if (!bor_lua_stricmp(prop, "animation")) {
-        int anim = (int)luaL_checkinteger(L, 3);
-        int reset = lua_isnoneornil(L, 4) ? 1 : (int)luaL_checkinteger(L, 4);
+        int anim = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        int reset = lua_isnoneornil(L, 4) ? 1 : (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
         ent_set_anim(ent, anim, reset);
     } else if (!bor_lua_stricmp(prop, "animpos")) {
-        ent->animpos = (int)luaL_checkinteger(L, 3);
+        ent->animpos = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "maxhealth")) {
-        ivalue = luaL_checkinteger(L, 3);
+        ivalue = bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         ent->modeldata.health = (int)(ivalue < 0 ? 0 : ivalue);
         if (ent->health > ent->modeldata.health) ent->health = ent->modeldata.health;
     } else if (!bor_lua_stricmp(prop, "maxmp")) {
-        ivalue = luaL_checkinteger(L, 3);
+        ivalue = bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         ent->modeldata.mp = (int)(ivalue < 0 ? 0 : ivalue);
         if (ent->mp > ent->modeldata.mp) ent->mp = ent->modeldata.mp;
     } else if (!bor_lua_stricmp(prop, "speed")) {
         ent->modeldata.speed = (float)luaL_checknumber(L, 3);
     } else if (!bor_lua_stricmp(prop, "weapon")) {
-        int weapon = (int)luaL_checkinteger(L, 3);
-        int anim_flag = lua_isnoneornil(L, 4) ? 0 : (int)luaL_checkinteger(L, 4);
+        int weapon = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        int anim_flag = lua_isnoneornil(L, 4) ? 0 : (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
         set_weapon(ent, weapon, anim_flag);
     } else if (!bor_lua_stricmp(prop, "trymove")) {
-        int mode = (int)luaL_checkinteger(L, 3);
+        int mode = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (mode == 1) ent->trymove = common_trymove;
         else if (mode == 2) ent->trymove = player_trymove;
         else ent->trymove = NULL;
     } else if (!bor_lua_stricmp(prop, "combostep")) {
-        int index = (int)luaL_checkinteger(L, 3);
+        int index = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (index < 0 || index >= MAX_SPECIAL_INPUTS) return luaL_error(L, "combostep index out of range");
-        ent->combostep[index] = (unsigned char)luaL_checkinteger(L, 4);
+        ent->combostep[index] = (unsigned char)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "mpset")) {
         ent->modeldata.mp = (int)luaL_checknumber(L, 3);
         if (!lua_isnoneornil(L, 4)) ent->modeldata.mpstable = (int)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->modeldata.mpstableval = (int)luaL_checknumber(L, 5);
         if (!lua_isnoneornil(L, 6)) ent->modeldata.mprate = (int)luaL_checknumber(L, 6);
     } else if (!bor_lua_stricmp(prop, "grabforce")) {
-        ent->model->grabforce = (int)luaL_checkinteger(L, 3);
+        ent->model->grabforce = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "iconposition")) {
-        ent->modeldata.iconx = (short)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) ent->modeldata.icony = (short)luaL_checkinteger(L, 4);
+        ent->modeldata.iconx = (short)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.icony = (short)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "lifeposition")) {
-        ent->modeldata.hpx = (short)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) ent->modeldata.hpy = (short)luaL_checkinteger(L, 4);
+        ent->modeldata.hpx = (short)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.hpy = (short)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "nameposition")) {
-        ent->modeldata.namex = (short)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) ent->modeldata.namey = (short)luaL_checkinteger(L, 4);
+        ent->modeldata.namex = (short)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.namey = (short)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "setlayer")) {
-        ent->modeldata.setlayer = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.setlayer = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "throwdamage")) {
-        ent->modeldata.throwdamage = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.throwdamage = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "throwdist")) {
-        ent->modeldata.throwdist = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.throwdist = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "throwframewait")) {
-        ent->modeldata.throwframewait = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.throwframewait = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "throwheight")) {
-        ent->modeldata.throwheight = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.throwheight = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "alpha")) {
-        ent->modeldata.alpha = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.alpha = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "guardpoints")) {
-        ent->modeldata.guardpoints[0] = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.guardpoints[0] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "maxguardpoints")) {
-        ent->modeldata.guardpoints[1] = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.guardpoints[1] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "jugglepoints")) {
-        ent->modeldata.jugglepoints[0] = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.jugglepoints[0] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "maxjugglepoints")) {
-        ent->modeldata.jugglepoints[1] = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.jugglepoints[1] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "komap")) {
-        ent->modeldata.komap[0] = (char)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) ent->modeldata.komap[1] = (char)luaL_checkinteger(L, 4);
+        ent->modeldata.komap[0] = (char)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.komap[1] = (char)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "rush_count")) {
-        ent->rush[0] = (int)luaL_checkinteger(L, 3);
+        ent->rush[0] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "rush_tally")) {
-        ent->rush[1] = (int)luaL_checkinteger(L, 3);
+        ent->rush[1] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "rush_time")) {
-        ent->rushtime = (int)luaL_checkinteger(L, 3);
+        ent->rushtime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "offense")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (which < 0 || which >= MAX_ATKS) return luaL_error(L, "offense index out of range");
         ent->modeldata.offense_factors[which] = (float)luaL_checknumber(L, 4);
     } else if (!bor_lua_stricmp(prop, "defense")) {
-        int which = (int)luaL_checkinteger(L, 3);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
         if (which < 0 || which >= MAX_ATKS) return luaL_error(L, "defense index out of range");
         ent->modeldata.defense_factors[which] = (float)luaL_checknumber(L, 4);
         if (!lua_isnoneornil(L, 5)) ent->modeldata.defense_pain[which] = (float)luaL_checknumber(L, 5);
@@ -1277,8 +1277,8 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!lua_isnoneornil(L, 9)) ent->modeldata.defense_blockratio[which] = (float)luaL_checknumber(L, 9);
         if (!lua_isnoneornil(L, 10)) ent->modeldata.defense_blocktype[which] = (float)luaL_checknumber(L, 10);
     } else if (!bor_lua_stricmp(prop, "stats")) {
-        int which = (int)luaL_checkinteger(L, 3);
-        int index = (int)luaL_checkinteger(L, 4);
+        int which = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        int index = (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
         if (index < 0 || index >= 20) return luaL_error(L, "stats index out of range");
         if (which == 1) ent->stats[index] = (float)luaL_checknumber(L, 5);
         else ent->modeldata.stats[index] = (float)luaL_checknumber(L, 5);
@@ -1287,34 +1287,34 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         ent->modeldata.antigravity = value;
         ent->antigravity = value;
     } else if (!bor_lua_stricmp(prop, "maptime")) {
-        ent->maptime = (int)luaL_checkinteger(L, 3);
+        ent->maptime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "tosstime")) {
-        ent->toss_time = (int)luaL_checkinteger(L, 3);
+        ent->toss_time = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "invinctime")) {
-        ent->invinctime = (int)luaL_checkinteger(L, 3);
+        ent->invinctime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "lifespancountdown")) {
-        ent->lifespancountdown = (int)luaL_checkinteger(L, 3);
+        ent->lifespancountdown = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "freezetime")) {
-        ent->freezetime = (int)luaL_checkinteger(L, 3);
+        ent->freezetime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "bounce")) {
-        ent->modeldata.bounce = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.bounce = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "antigrab")) {
-        ent->model->antigrab = (int)luaL_checkinteger(L, 3);
+        ent->model->antigrab = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "nodrop")) {
-        ent->modeldata.nodrop = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.nodrop = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "nopain")) {
-        ent->modeldata.nopain = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.nopain = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "no_adjust_base")) {
-        ent->modeldata.no_adjust_base = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.no_adjust_base = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "noaicontrol")) {
-        ent->noaicontrol = (int)luaL_checkinteger(L, 3);
+        ent->noaicontrol = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "nodieblink")) {
-        ent->modeldata.nodieblink = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.nodieblink = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "falldie")) {
-        ent->modeldata.falldie = (int)luaL_checkinteger(L, 3);
+        ent->modeldata.falldie = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "aiflag")) {
         const char *flag = luaL_checkstring(L, 3);
-        int value = (int)luaL_checkinteger(L, 4);
+        int value = (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
         if (!bor_lua_stricmp(flag, "dead")) ent->dead = value;
         else if (!bor_lua_stricmp(flag, "jumping")) ent->jumping = value;
         else if (!bor_lua_stricmp(flag, "idling")) ent->idling = value;
@@ -1335,42 +1335,42 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         else if (!bor_lua_stricmp(flag, "invincible")) ent->invincible = value;
         else if (!bor_lua_stricmp(flag, "autokill")) ent->autokill = value;
         else return luaL_error(L, "changeentityproperty: unknown aiflag '%s'", flag);
-    } else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "blink"))             ent->blink = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "attacking"))         ent->attacking = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "projectile"))        ent->projectile = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "damage_on_landing")) ent->damage_on_landing = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "stalltime"))         ent->stalltime = (int)luaL_checkinteger(L, 3);
+    } else if (!bor_lua_stricmp(prop, "dead"))            ent->dead = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "blink"))             ent->blink = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "attacking"))         ent->attacking = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "projectile"))        ent->projectile = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "damage_on_landing")) ent->damage_on_landing = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "stalltime"))         ent->stalltime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "staydown")) {
-        ent->staydown[0] = (int)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) ent->staydown[1] = (int)luaL_checkinteger(L, 4);
-        if (!lua_isnoneornil(L, 5)) ent->staydown[2] = (int)luaL_checkinteger(L, 5);
+        ent->staydown[0] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isnoneornil(L, 4)) ent->staydown[1] = (int)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
+        if (!lua_isnoneornil(L, 5)) ent->staydown[2] = (int)bor_lua_check_legacy_integer(L, 5, "changeentityproperty");
     } else if (!bor_lua_stricmp(prop, "stealth")) {
-        ent->modeldata.stealth[0] = (short)luaL_checkinteger(L, 3);
-        if (!lua_isnoneornil(L, 4)) ent->modeldata.stealth[1] = (short)luaL_checkinteger(L, 4);
+        ent->modeldata.stealth[0] = (short)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isnoneornil(L, 4)) ent->modeldata.stealth[1] = (short)bor_lua_check_legacy_integer(L, 4, "changeentityproperty");
     }
-    else if (!bor_lua_stricmp(prop, "aggression")) ent->modeldata.aggression = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "aiattack")) ent->modeldata.aiattack = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "aimove")) ent->modeldata.aimove = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "animhits")) ent->animation->animhits = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "attackid")) ent->attack_id = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "blockback")) ent->modeldata.blockback = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "blockpain")) ent->modeldata.blockpain = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "detect")) ent->modeldata.stealth[1] = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "hitbyid")) ent->hit_by_attack_id = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "hmapl")) ent->modeldata.hmap1 = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "hmapu")) ent->modeldata.hmap2 = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "nograb")) ent->nograb = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "aggression")) ent->modeldata.aggression = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "aiattack")) ent->modeldata.aiattack = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "aimove")) ent->modeldata.aimove = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "animhits")) ent->animation->animhits = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "attackid")) ent->attack_id = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "blockback")) ent->modeldata.blockback = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "blockpain")) ent->modeldata.blockpain = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "detect")) ent->modeldata.stealth[1] = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "hitbyid")) ent->hit_by_attack_id = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "hmapl")) ent->modeldata.hmap1 = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "hmapu")) ent->modeldata.hmap2 = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "nograb")) ent->nograb = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "scroll")) ent->modeldata.scroll = (float)luaL_checknumber(L, 3);
-    else if (!bor_lua_stricmp(prop, "sealtime")) ent->sealtime = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_screen")) ent->modeldata.subject_to_screen = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_maxz")) ent->modeldata.subject_to_maxz = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_minz")) ent->modeldata.subject_to_minz = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_wall")) ent->modeldata.subject_to_wall = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_obstacle")) ent->modeldata.subject_to_obstacle = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_platform")) ent->modeldata.subject_to_platform = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_gravity")) ent->modeldata.subject_to_gravity = (int)luaL_checkinteger(L, 3);
-    else if (!bor_lua_stricmp(prop, "subject_to_hole")) ent->modeldata.subject_to_hole = (int)luaL_checkinteger(L, 3);
+    else if (!bor_lua_stricmp(prop, "sealtime")) ent->sealtime = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_screen")) ent->modeldata.subject_to_screen = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_maxz")) ent->modeldata.subject_to_maxz = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_minz")) ent->modeldata.subject_to_minz = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_wall")) ent->modeldata.subject_to_wall = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_obstacle")) ent->modeldata.subject_to_obstacle = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_platform")) ent->modeldata.subject_to_platform = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_gravity")) ent->modeldata.subject_to_gravity = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+    else if (!bor_lua_stricmp(prop, "subject_to_hole")) ent->modeldata.subject_to_hole = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else if (!bor_lua_stricmp(prop, "owner") || !bor_lua_stricmp(prop, "parent") || !bor_lua_stricmp(prop, "opponent")) {
         entity *other = lua_isnil(L, 3) ? NULL : bor_lua_get_live_entity(L, 3);
         if (!lua_isnil(L, 3) && (!other || !other->exists))
@@ -1456,7 +1456,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
                 break;
             }
         }
-    } else if (!bor_lua_stricmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)luaL_checkinteger(L, 3);
+    } else if (!bor_lua_stricmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else {
         return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
     }
