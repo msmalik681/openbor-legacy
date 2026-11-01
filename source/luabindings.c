@@ -1719,7 +1719,9 @@ void bor_lua_set_localvar(lua_State *L, const char *name, int index)
  * self and player retain their existing fallback behavior.
  */
 static int lua_openbor_getlocalvar(lua_State *L) {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
+    if (lua_gettop(L) != 1) return luaL_error(L, "getlocalvar expects exactly one name");
+    name = luaL_checkstring(L, 1);
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
     if (lua_istable(L, -1)) {
@@ -2056,7 +2058,9 @@ static int lua_openbor_globalvar(lua_State *L)
 
 static int lua_openbor_getglobalvar(lua_State *L)
 {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
+    if (lua_gettop(L) != 1) return luaL_error(L, "getglobalvar expects exactly one name");
+    name = luaL_checkstring(L, 1);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
     lua_pushstring(L, name);
     lua_rawget(L, -2);
@@ -2066,7 +2070,9 @@ static int lua_openbor_getglobalvar(lua_State *L)
 
 static int lua_openbor_setglobalvar(lua_State *L)
 {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
+    if (lua_gettop(L) != 2) return luaL_error(L, "setglobalvar expects a name and value");
+    name = luaL_checkstring(L, 1);
     luaL_checkany(L, 2);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
     lua_pushstring(L, name);
@@ -2422,7 +2428,7 @@ static int lua_openbor_free(lua_State *L)
     bor_lua_screen_handle *screen;
     bor_lua_sprite_handle *sprite;
 
-    if (lua_gettop(L) != 1)
+    if (lua_gettop(L) < 1)
         return luaL_error(L, "free expects exactly 1 allocated screen or sprite handle");
 
     screen = (bor_lua_screen_handle *)luaL_testudata(L, 1, BOR_LUA_SCREEN_METATABLE);
