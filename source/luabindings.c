@@ -2737,7 +2737,9 @@ static int lua_openbor_savefilestream(lua_State *L)
     memcpy(modname, base, modname_length);
     modname[modname_length] = '\0';
     strncat(path, modname, sizeof(path) - strlen(path) - 1);
+#ifndef DC
     dirExists(path, 1);
+#endif
     strncat(path, "/", sizeof(path) - strlen(path) - 1);
     strncat(path, filename, sizeof(path) - strlen(path) - 1);
 
