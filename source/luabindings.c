@@ -436,10 +436,24 @@ typedef struct {
 
 static s_sprite *bor_lua_check_sprite(lua_State *L, int index)
 {
-    bor_lua_sprite_handle *handle = (bor_lua_sprite_handle *)luaL_checkudata(L, index, BOR_LUA_SPRITE_METATABLE);
-    if (!handle->sprite)
-        luaL_error(L, "sprite handle has already been freed");
-    return handle->sprite;
+    bor_lua_sprite_handle *handle =
+        (bor_lua_sprite_handle *)luaL_testudata(L, index, BOR_LUA_SPRITE_METATABLE);
+
+    if (handle) {
+        if (!handle->sprite)
+            luaL_error(L, "sprite handle has already been freed");
+        return handle->sprite;
+    }
+
+    /* getentityproperty(..., "sprite"/"icon") exposes engine-owned sprites. */
+    if (lua_islightuserdata(L, index)) {
+        s_sprite *sprite = (s_sprite *)lua_touserdata(L, index);
+        if (sprite)
+            return sprite;
+    }
+
+    luaL_error(L, "expected a sprite handle or engine sprite pointer");
+    return NULL;
 }
 
 static int bor_lua_sprite_gc(lua_State *L)
