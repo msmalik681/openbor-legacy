@@ -179,6 +179,319 @@ static const char *const bor_lua_spawnentry_properties[] = {
     "flip", "health", "item", "itemalias", "itemhealth", "itemmap", "map",
     "mp", "multiple", "name", "nolife", "weapon"
 };
+static const char *const bor_lua_getentityproperty_properties[] = {
+    "a",
+    "aggression",
+    "aiattack",
+    "aiflag",
+    "aimove",
+    "alpha",
+    "animal",
+    "animating",
+    "animation",
+    "animationid",
+    "animheight",
+    "animhits",
+    "animnum",
+    "animpos",
+    "animvalid",
+    "antigravity",
+    "attack",
+    "attacking",
+    "attackid",
+    "autokill",
+    "base",
+    "bbox",
+    "blink",
+    "blockback",
+    "blockpain",
+    "bounce",
+    "chargerate",
+    "colourmap",
+    "colourtable",
+    "damage_on_landing",
+    "dead",
+    "defaultmodel",
+    "defaultname",
+    "defense",
+    "detect",
+    "direction",
+    "dot",
+    "dropframe",
+    "edelay",
+    "energycost",
+    "exists",
+    "falldie",
+    "flash",
+    "freezetime",
+    "frozen",
+    "gfxshadow",
+    "grabbing",
+    "guardpoints",
+    "health",
+    "height",
+    "hitbyid",
+    "hmapl",
+    "hmapu",
+    "icon",
+    "invincible",
+    "invinctime",
+    "jugglepoints",
+    "knockdowncount",
+    "komap",
+    "landframe",
+    "lifespancountdown",
+    "link",
+    "map",
+    "mapcount",
+    "mapdefault",
+    "maxguardpoints",
+    "maxhealth",
+    "maxjugglepoints",
+    "maxmp",
+    "model",
+    "mp",
+    "mpdroprate",
+    "mprate",
+    "mpstable",
+    "mpstableval",
+    "name",
+    "nextanim",
+    "nextthink",
+    "no_adjust_base",
+    "noaicontrol",
+    "nodieblink",
+    "nodrop",
+    "nograb",
+    "nopain",
+    "offense",
+    "opponent",
+    "owner",
+    "parent",
+    "path",
+    "playerindex",
+    "projectile",
+    "range",
+    "running",
+    "rush_count",
+    "rush_tally",
+    "rush_time",
+    "scroll",
+    "seal",
+    "sealtime",
+    "setlayer",
+    "spawntype",
+    "speed",
+    "sprite",
+    "stalltime",
+    "stats",
+    "staydown",
+    "staydownatk",
+    "stealth",
+    "subentity",
+    "subject_to_gravity",
+    "subject_to_hole",
+    "subject_to_maxz",
+    "subject_to_minz",
+    "subject_to_obstacle",
+    "subject_to_platform",
+    "subject_to_screen",
+    "subject_to_wall",
+    "subtype",
+    "throwdamage",
+    "throwdist",
+    "throwframewait",
+    "throwheight",
+    "tosstime",
+    "tossv",
+    "type",
+    "weapent",
+    "x",
+    "xdir",
+    "z",
+    "zdir"
+};
+static const char *const bor_lua_changeentityproperty_properties[] = {
+    "aggression",
+    "aiattack",
+    "aiflag",
+    "aimove",
+    "alpha",
+    "animation",
+    "animhits",
+    "animpos",
+    "antigrab",
+    "antigravity",
+    "attacking",
+    "attackid",
+    "autokill",
+    "base",
+    "blink",
+    "blockback",
+    "blockpain",
+    "bounce",
+    "candamage",
+    "combostep",
+    "colourmap",
+    "damage_on_landing",
+    "dead",
+    "defaultname",
+    "defense",
+    "detect",
+    "direction",
+    "dot",
+    "edelay",
+    "energycost",
+    "falldie",
+    "freezetime",
+    "frozen",
+    "gfxshadow",
+    "grabforce",
+    "guardpoints",
+    "health",
+    "hitbyid",
+    "hmapl",
+    "hmapu",
+    "hostile",
+    "iconposition",
+    "invincible",
+    "invinctime",
+    "jugglepoints",
+    "komap",
+    "lifeposition",
+    "lifespancountdown",
+    "map",
+    "maptime",
+    "maxguardpoints",
+    "maxhealth",
+    "maxjugglepoints",
+    "maxmp",
+    "model",
+    "mp",
+    "mpset",
+    "name",
+    "nameposition",
+    "nextanim",
+    "nextthink",
+    "no_adjust_base",
+    "noaicontrol",
+    "nodieblink",
+    "nodrop",
+    "nograb",
+    "nopain",
+    "offense",
+    "opponent",
+    "owner",
+    "parent",
+    "position",
+    "projectile",
+    "projectilehit",
+    "running",
+    "rush_count",
+    "rush_tally",
+    "rush_time",
+    "scroll",
+    "seal",
+    "sealtime",
+    "setlayer",
+    "speed",
+    "stalltime",
+    "stats",
+    "staydown",
+    "staydownatk",
+    "stealth",
+    "subentity",
+    "subject_to_gravity",
+    "subject_to_hole",
+    "subject_to_maxz",
+    "subject_to_minz",
+    "subject_to_obstacle",
+    "subject_to_platform",
+    "subject_to_screen",
+    "subject_to_wall",
+    "takeaction",
+    "think",
+    "throwdamage",
+    "throwdist",
+    "throwframewait",
+    "throwheight",
+    "tosstime",
+    "trymove",
+    "type",
+    "velocity",
+    "weapon"
+};
+static const char *const bor_lua_changeentityproperty_success[] = {
+    "model",
+    "weapon",
+    "maxhealth",
+    "health",
+    "maxmp",
+    "mp",
+    "setlayer",
+    "speed",
+    "throwdamage",
+    "throwdist",
+    "throwframewait",
+    "throwheight",
+    "animhits",
+    "alpha",
+    "guardpoints",
+    "maxguardpoints",
+    "jugglepoints",
+    "komap",
+    "maxjugglepoints",
+    "antigravity",
+    "map",
+    "maptime",
+    "colourmap",
+    "hmapl",
+    "hmapu",
+    "name",
+    "defaultname",
+    "position",
+    "base",
+    "direction",
+    "trymove",
+    "nextanim",
+    "nextthink",
+    "tosstime",
+    "velocity",
+    "defense",
+    "offense",
+    "animation",
+    "invincible",
+    "rush_count",
+    "rush_tally",
+    "blink",
+    "subject_to_screen",
+    "subject_to_maxz",
+    "subject_to_minz",
+    "subject_to_wall",
+    "subject_to_obstacle",
+    "subject_to_platform",
+    "subject_to_gravity",
+    "subject_to_hole",
+    "combostep",
+    "attacking",
+    "scroll",
+    "autokill",
+    "staydown",
+    "running",
+    "dot",
+    "edelay",
+    "energycost",
+    "mpset"
+};
+static int bor_lua_changeentityproperty_legacy_result(const char *property)
+{
+    size_t i;
+    for (i = 0; i < sizeof(bor_lua_changeentityproperty_success) / sizeof(bor_lua_changeentityproperty_success[0]); ++i) {
+        if (!bor_lua_stricmp(property, bor_lua_changeentityproperty_success[i]))
+            return 1;
+    }
+    return 0;
+}
 
 static int bor_lua_legacy_truthy(lua_State *L, int index)
 {
@@ -816,15 +1129,22 @@ static int lua_openbor_damageentity(lua_State *L) {
 // getentityproperty(entity, property, ...)
 // Lua implementation of the legacy OpenBOR entity-property query API.
 static int lua_openbor_getentityproperty(lua_State *L) {
-    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *ent;
     const char *prop;
+    int property_index;
 
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "getentityproperty expects an entity and property name or ID");
+    property_index = bor_lua_legacy_enum_index(L, 2, bor_lua_getentityproperty_properties,
+        sizeof(bor_lua_getentityproperty_properties) / sizeof(bor_lua_getentityproperty_properties[0]));
+    ent = bor_lua_get_live_entity(L, 1);
     if (!ent || !ent->exists) {
         lua_pushnil(L);
         return 1;
     }
-
-    prop = luaL_checkstring(L, 2);
+    if (property_index < 0)
+        return luaL_error(L, "getentityproperty: unsupported property");
+    prop = bor_lua_getentityproperty_properties[property_index];
 
     if (!bor_lua_stricmp(prop, "health"))              lua_pushinteger(L, ent->health);
     else if (!bor_lua_stricmp(prop, "mp"))             lua_pushinteger(L, ent->mp);
@@ -1326,8 +1646,9 @@ static int lua_legacy_entity_type_mask(lua_State *L, int index, int *is_ground)
 }
 
 static int lua_openbor_changeentityproperty(lua_State *L) {
-    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *ent;
     const char *prop;
+    int property_index;
     lua_Integer ivalue;
     static const char *action_names[] = {"bomb_explode", "common_attack_proc", "common_block", "common_drop", "common_fall", "common_get", "common_grab", "common_grabattack", "common_grabbed", "common_jump", "common_land", "common_lie", "common_pain", "common_prejump", "common_rise", "common_spawn", "common_turn", "common_vault", "normal_prepare", "npc_warp", "player_blink", "suicide"};
     static const void *actions[] = {bomb_explode, common_attack_proc, common_block, common_drop, common_fall, common_get, common_grab, common_grabattack, common_grabbed, common_jump, common_land, common_lie, common_pain, common_prejump, common_rise, common_spawn, common_turn, common_vault, normal_prepare, npc_warp, player_blink, suicide};
@@ -1335,12 +1656,18 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     static const char *aiflag_names[] = {"animating", "attacking", "autokill", "blink", "blocking", "charging", "dead", "drop", "falling", "frozen", "getting", "idling", "inpain", "invincible", "jumping", "projectile", "running", "toexplode", "turning"};
     static const void *think_functions[] = {common_think, player_think, steam_think, steamer_think, text_think, trap_think};
 
+    if (lua_gettop(L) < 3)
+        return luaL_error(L, "changeentityproperty expects an entity, property, and value");
+    property_index = bor_lua_legacy_enum_index(L, 2, bor_lua_changeentityproperty_properties,
+        sizeof(bor_lua_changeentityproperty_properties) / sizeof(bor_lua_changeentityproperty_properties[0]));
+    ent = bor_lua_get_live_entity(L, 1);
     if (!ent || !ent->exists) {
         lua_pushinteger(L, 0);
         return 1;
     }
-
-    prop = luaL_checkstring(L, 2);
+    if (property_index < 0)
+        return luaL_error(L, "changeentityproperty: unsupported property");
+    prop = bor_lua_changeentityproperty_properties[property_index];
 
     if (!bor_lua_stricmp(prop, "type")) {
         if (!lua_isinteger(L, 3))
@@ -1709,7 +2036,7 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         return luaL_error(L, "changeentityproperty: property '%s' is not implemented yet", prop);
     }
 
-    lua_pushinteger(L, 1);
+    lua_pushinteger(L, bor_lua_changeentityproperty_legacy_result(prop));
     return 1;
 }
 
