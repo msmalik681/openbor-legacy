@@ -116,6 +116,52 @@ static void bor_lua_push_legacy_string(lua_State *L, int index)
     lua_pushstring(L, buffer);
 }
 
+static int bor_lua_legacy_enum_index(lua_State *L, int index, const char *const *names, size_t count)
+{
+    size_t i;
+
+    if (lua_isinteger(L, index)) {
+        lua_Integer value = lua_tointeger(L, index);
+        return value >= 0 && value < (lua_Integer)count ? (int)value : -1;
+    }
+    if (lua_type(L, index) != LUA_TSTRING)
+        return -1;
+
+    for (i = 0; i < count; ++i) {
+        if (!bor_lua_stricmp(lua_tostring(L, index), names[i]))
+            return (int)i;
+    }
+    return -1;
+}
+
+static const char *const bor_lua_gep_aiflag[] = {
+    "animating", "attacking", "autokill", "blink", "blocking", "charging",
+    "dead", "drop", "falling", "freezetime", "frozen", "getting", "idling",
+    "inpain", "invincible", "jumping", "projectile", "running", "toexplode", "turning"
+};
+static const char *const bor_lua_gep_defense[] = {
+    "blockpower", "blockratio", "blockthreshold", "blocktype", "factor", "knockdown", "pain"
+};
+static const char *const bor_lua_gep_running[] = {
+    "jumpx", "jumpy", "land", "movez", "speed"
+};
+static const char *const bor_lua_gep_dot[] = {
+    "force", "mode", "owner", "rate", "time", "type"
+};
+static const char *const bor_lua_gep_attack[] = {
+    "blast", "blockflash", "blocksound", "coords", "counterattack", "direction", "dol",
+    "dot", "dotforce", "dotindex", "dotrate", "dottime", "drop", "dropv", "force",
+    "forcemap", "freeze", "freezetime", "grab", "grabdistance", "guardcost", "hitflash",
+    "hitsound", "jugglecost", "maptime", "noblock", "noflash", "nopain", "otg",
+    "pause", "seal", "sealtime", "staydown", "steal", "type"
+};
+static const char *const bor_lua_gep_range[] = {
+    "amax", "amin", "bmax", "bmin", "xmax", "xmin", "zmax", "zmin"
+};
+static const char *const bor_lua_gep_edelay[] = {
+    "cap_max", "cap_min", "factor", "mode", "range_max", "range_min"
+};
+
 static int bor_lua_legacy_truthy(lua_State *L, int index)
 {
     switch (lua_type(L, index)) {
@@ -932,7 +978,17 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushnil(L);
     }
     else if (!bor_lua_stricmp(prop, "aiflag")) {
-        const char *flag = luaL_optstring(L, 3, "");
+        int flag_index;
+        const char *flag;
+        if (lua_gettop(L) < 3) { lua_pushnil(L); return 1; }
+        flag_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_aiflag, sizeof(bor_lua_gep_aiflag) / sizeof(bor_lua_gep_aiflag[0]));
+        if (flag_index < 0) {
+            if (lua_type(L, 3) == LUA_TSTRING)
+                return luaL_error(L, "unknown aiflag property '%s'", lua_tostring(L, 3));
+            lua_pushnil(L);
+            return 1;
+        }
+        flag = bor_lua_gep_aiflag[flag_index];
         if (!bor_lua_stricmp(flag, "dead")) lua_pushinteger(L, ent->dead ? 1 : 0);
         else if (!bor_lua_stricmp(flag, "jumping")) lua_pushinteger(L, ent->jumping ? 1 : 0);
         else if (!bor_lua_stricmp(flag, "idling")) lua_pushinteger(L, ent->idling ? 1 : 0);
@@ -985,7 +1041,12 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     }
     else if (!bor_lua_stricmp(prop, "defense")) {
         int which = (int)(lua_gettop(L) >= 3 && !lua_isnil(L, 3) ? bor_lua_check_legacy_integer(L, 3, "getentityproperty") : 0);
-        const char *field = luaL_optstring(L, 4, "factor");
+        int field_index = lua_gettop(L) >= 4 ?
+            bor_lua_legacy_enum_index(L, 4, bor_lua_gep_defense, sizeof(bor_lua_gep_defense) / sizeof(bor_lua_gep_defense[0])) : 4;
+        const char *field;
+        if (field_index < 0)
+            return luaL_error(L, "unknown defense property");
+        field = bor_lua_gep_defense[field_index];
         if (which < 0 || which >= MAX_ATKS)
             lua_pushnil(L);
         else if (!bor_lua_stricmp(field, "factor")) lua_pushnumber(L, ent->modeldata.defense_factors[which]);
@@ -1043,7 +1104,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         }
     }
     else if (!bor_lua_stricmp(prop, "edelay")) {
-        const char *field = luaL_checkstring(L, 3);
+        int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_edelay, sizeof(bor_lua_gep_edelay) / sizeof(bor_lua_gep_edelay[0]));
+        const char *field;
+        if (field_index < 0)
+            return luaL_error(L, "unknown edelay property");
+        field = bor_lua_gep_edelay[field_index];
         if (!bor_lua_stricmp(field, "mode")) lua_pushinteger(L, ent->modeldata.edelay.mode);
         else if (!bor_lua_stricmp(field, "factor")) lua_pushnumber(L, ent->modeldata.edelay.factor);
         else if (!bor_lua_stricmp(field, "cap_min")) lua_pushinteger(L, ent->modeldata.edelay.cap_min);
@@ -1053,7 +1118,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown edelay property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "running")) {
-        const char *field = luaL_checkstring(L, 3);
+        int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_running, sizeof(bor_lua_gep_running) / sizeof(bor_lua_gep_running[0]));
+        const char *field;
+        if (field_index < 0)
+            return luaL_error(L, "unknown running property");
+        field = bor_lua_gep_running[field_index];
         if (!bor_lua_stricmp(field, "speed")) lua_pushnumber(L, ent->modeldata.runspeed);
         else if (!bor_lua_stricmp(field, "jumpy")) lua_pushnumber(L, ent->modeldata.runjumpheight);
         else if (!bor_lua_stricmp(field, "jumpx")) lua_pushnumber(L, ent->modeldata.runjumpdist);
@@ -1073,9 +1142,13 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushinteger(L, ent->modeldata.animation[anim]->bbox_coords[frame][coord]);
     }
     else if (!bor_lua_stricmp(prop, "range")) {
-        const char *field = luaL_checkstring(L, 3);
+        int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_range, sizeof(bor_lua_gep_range) / sizeof(bor_lua_gep_range[0]));
+        const char *field;
         int anim = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         int idx = -1;
+        if (field_index < 0)
+            return luaL_error(L, "unknown range property");
+        field = bor_lua_gep_range[field_index];
         if (!validanim(ent, anim)) lua_pushnil(L);
         else {
             if (!bor_lua_stricmp(field, "xmin")) idx = 0;
@@ -1113,7 +1186,11 @@ static int lua_openbor_getentityproperty(lua_State *L) {
     else if (!bor_lua_stricmp(prop, "staydownatk")) lua_pushnumber(L, ent->staydown[1]);
     else if (!bor_lua_stricmp(prop, "dot")) {
         int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
-        const char *field = luaL_checkstring(L, 4);
+        int field_index = bor_lua_legacy_enum_index(L, 4, bor_lua_gep_dot, sizeof(bor_lua_gep_dot) / sizeof(bor_lua_gep_dot[0]));
+        const char *field;
+        if (field_index < 0)
+            return luaL_error(L, "unknown dot property");
+        field = bor_lua_gep_dot[field_index];
         if (which < 0 || which >= MAX_DOTS) lua_pushnil(L);
         else if (!bor_lua_stricmp(field, "time")) lua_pushinteger(L, ent->dot_time[which]);
         else if (!bor_lua_stricmp(field, "mode")) lua_pushinteger(L, ent->dot[which]);
@@ -1127,8 +1204,12 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown dot property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "attack")) {
-        const char *field = luaL_checkstring(L, 3);
+        int field_index = bor_lua_legacy_enum_index(L, 3, bor_lua_gep_attack, sizeof(bor_lua_gep_attack) / sizeof(bor_lua_gep_attack[0]));
+        const char *field;
         int anim = (int)bor_lua_check_legacy_integer(L, 5, "getentityproperty");
+        if (field_index < 0)
+            return luaL_error(L, "unknown attack property");
+        field = bor_lua_gep_attack[field_index];
         int frame = (int)bor_lua_check_legacy_integer(L, 6, "getentityproperty");
         int arg = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "getentityproperty") : 0);
         s_attack *attack;
