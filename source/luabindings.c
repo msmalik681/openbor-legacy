@@ -2452,8 +2452,14 @@ void bor_lua_clear_all_entity_vars(void)
 
 static int lua_openbor_getentityvar(lua_State *L)
 {
-    entity *ent = bor_lua_get_live_entity(L, 1);
+    entity *ent;
     lua_Integer index;
+
+    if (lua_gettop(L) < 2)
+        return luaL_error(L, "getentityvar expects an entity and index");
+    ent = bor_lua_get_live_entity(L, 1);
+    if (!lua_isnil(L, 1) && !ent)
+        return luaL_error(L, "getentityvar expects a valid entity handle or nil");
 
     if (!ent) {
         lua_pushnil(L);
