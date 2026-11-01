@@ -1239,7 +1239,9 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
     prop = luaL_checkstring(L, 2);
 
     if (!bor_lua_stricmp(prop, "type")) {
-        ent->modeldata.type = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
+        if (!lua_isinteger(L, 3))
+            return luaL_error(L, "changeentityproperty type expects an integer constant");
+        ent->modeldata.type = (int)lua_tointeger(L, 3);
     } else if (!bor_lua_stricmp(prop, "candamage") || !bor_lua_stricmp(prop, "hostile") ||
                !bor_lua_stricmp(prop, "projectilehit")) {
         int i;
