@@ -2504,25 +2504,33 @@ numeric_error:
 static int lua_openbor_projectile(lua_State *L)
 {
     const char *name;
-    float x, z, a;
-    int direction, projectile_type, projectile_subtype, map;
+    int value[7];
+    int i;
     entity *ent;
 
     if (lua_gettop(L) != 8)
         return luaL_error(L, "projectile expects 8 arguments");
-    name = luaL_checkstring(L, 1);
-    x = (float)luaL_checknumber(L, 2);
-    z = (float)luaL_checknumber(L, 3);
-    a = (float)luaL_checknumber(L, 4);
-    direction = (int)luaL_checkinteger(L, 5);
-    projectile_type = (int)luaL_checkinteger(L, 6);
-    projectile_subtype = (int)luaL_checkinteger(L, 7);
-    map = (int)luaL_checkinteger(L, 8);
+    if (lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "projectile expects a string model name");
+    name = lua_tostring(L, 1);
 
-    if (projectile_type == 1)
-        ent = bomb_spawn((char *)name, -1, x, z, a, direction, map);
+    /*
+     * The original ScriptVariant_IntegerValue accepted integer and decimal
+     * variants, truncating decimals before the coordinates were converted
+     * back to float for knife_spawn()/bomb_spawn().
+     */
+    for (i = 0; i < 7; ++i) {
+        if (lua_type(L, i + 2) != LUA_TNUMBER)
+            return luaL_error(L, "projectile argument %d must be numeric", i + 2);
+        value[i] = (int)lua_tonumber(L, i + 2);
+    }
+
+    if (value[4] == 1)
+        ent = bomb_spawn((char *)name, -1, (float)value[0], (float)value[1],
+                         (float)value[2], value[3], value[6]);
     else
-        ent = knife_spawn((char *)name, -1, x, z, a, direction, projectile_subtype, map);
+        ent = knife_spawn((char *)name, -1, (float)value[0], (float)value[1],
+                          (float)value[2], value[3], value[4], value[6]);
 
     bor_lua_push_entity(L, ent);
     return 1;
