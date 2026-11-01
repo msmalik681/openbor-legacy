@@ -1528,23 +1528,39 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         if (!lua_isnoneornil(L, 6)) ent->modeldata.runhold = (int)luaL_checknumber(L, 6);
         if (!lua_isnoneornil(L, 7)) ent->modeldata.runupdown = (int)luaL_checknumber(L, 7);
     } else if (!bor_lua_stricmp(prop, "takeaction")) {
-        const char *action = luaL_checkstring(L, 3);
         size_t n;
-        ent->takeaction = NULL;
-        for (n = 0; n < sizeof(action_names) / sizeof(action_names[0]); ++n) {
-            if (!bor_lua_stricmp(action, action_names[n])) {
-                ent->takeaction = (void *)actions[n];
-                break;
+        if (lua_type(L, 3) == LUA_TSTRING) {
+            const char *action = lua_tostring(L, 3);
+            ent->takeaction = NULL;
+            for (n = 0; n < sizeof(action_names) / sizeof(action_names[0]); ++n) {
+                if (!bor_lua_stricmp(action, action_names[n])) {
+                    ent->takeaction = (void *)actions[n];
+                    break;
+                }
             }
+        } else if (lua_isinteger(L, 3)) {
+            lua_Integer action = lua_tointeger(L, 3);
+            if (action >= 0 && action < (lua_Integer)(sizeof(actions) / sizeof(actions[0])))
+                ent->takeaction = (void *)actions[action];
+        } else {
+            return luaL_error(L, "changeentityproperty takeaction expects an action name or integer constant");
         }
     } else if (!bor_lua_stricmp(prop, "think")) {
-        const char *think_name = luaL_checkstring(L, 3);
         size_t n;
-        for (n = 0; n < sizeof(think_names) / sizeof(think_names[0]); ++n) {
-            if (!bor_lua_stricmp(think_name, think_names[n])) {
-                ent->think = (void *)think_functions[n];
-                break;
+        if (lua_type(L, 3) == LUA_TSTRING) {
+            const char *think_name = lua_tostring(L, 3);
+            for (n = 0; n < sizeof(think_names) / sizeof(think_names[0]); ++n) {
+                if (!bor_lua_stricmp(think_name, think_names[n])) {
+                    ent->think = (void *)think_functions[n];
+                    break;
+                }
             }
+        } else if (lua_isinteger(L, 3)) {
+            lua_Integer think = lua_tointeger(L, 3);
+            if (think >= 0 && think < (lua_Integer)(sizeof(think_functions) / sizeof(think_functions[0])))
+                ent->think = (void *)think_functions[think];
+        } else {
+            return luaL_error(L, "changeentityproperty think expects a think name or integer constant");
         }
     } else if (!bor_lua_stricmp(prop, "gfxshadow"))         ent->modeldata.gfxshadow = (int)bor_lua_check_legacy_integer(L, 3, "changeentityproperty");
     else {
