@@ -4115,11 +4115,19 @@ static int lua_openborconstant(lua_State *L)
 
 // getlevelproperty(name)
 // Preserve the legacy getter's case-insensitive property lookup and integer results.
-static int lua_openbor_getlevelproperty(lua_State *L) {
-    const char *name = luaL_checkstring(L, 1);
+static int lua_openbor_getlevelproperty(lua_State *L)
+{
+    const char *name;
 
-    if (!level)
-        return luaL_error(L, "getlevelproperty requires a loaded level");
+    if (lua_type(L, 1) != LUA_TSTRING) {
+        lua_pushnil(L);
+        return 1;
+    }
+    name = lua_tostring(L, 1);
+    if (!level) {
+        lua_pushnil(L);
+        return 1;
+    }
 
     if (!stricmp(name, "bgspeed"))
         lua_pushinteger(L, (lua_Integer)level->bgspeed);
@@ -4128,66 +4136,47 @@ static int lua_openbor_getlevelproperty(lua_State *L) {
     else if (!stricmp(name, "camerazoffset"))
         lua_pushinteger(L, level->camerazoffset);
     else
-        return luaL_error(L, "Property name '%s' is not supported by function getlevelproperty", name);
+        lua_pushnil(L);
 
     return 1;
 }
 
 // changelevelproperty(name, value)
 // Preserve the legacy setter's case-sensitive names and return behavior.
-static int lua_openbor_changelevelproperty(lua_State *L) {
+static int lua_openbor_changelevelproperty(lua_State *L)
+{
     const char *name;
-    lua_Integer value;
+    int value;
 
-    if (lua_gettop(L) < 2) {
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TSTRING) {
         lua_pushnil(L);
         return 1;
     }
-    if (lua_type(L, 1) != LUA_TSTRING) {
-        lua_pushnil(L);
-        return 1;
-    }
-
     name = lua_tostring(L, 1);
-    if (!level)
-        return luaL_error(L, "changelevelproperty requires a loaded level");
-
-    /* The legacy setter reports success for unknown names without changing anything. */
-    lua_pushinteger(L, 1);
-    if (!strcmp(name, "rock")) {
-        if (lua_isnumber(L, 2)) {
-            value = lua_tointeger(L, 2);
-            level->rocking = (int)value;
-        } else {
-            lua_pop(L, 1);
-            lua_pushinteger(L, 0);
-        }
-    } else if (!strcmp(name, "bgspeed")) {
-        if (lua_isnumber(L, 2)) {
-            value = lua_tointeger(L, 2);
-            level->bgspeed = (float)value;
-        } else {
-            lua_pop(L, 1);
-            lua_pushinteger(L, 0);
-        }
-    } else if (!strcmp(name, "cameraxoffset")) {
-        if (lua_isnumber(L, 2)) {
-            value = lua_tointeger(L, 2);
-            level->cameraxoffset = (int)value;
-        } else {
-            lua_pop(L, 1);
-            lua_pushinteger(L, 0);
-        }
-    } else if (!strcmp(name, "camerazoffset")) {
-        if (lua_isnumber(L, 2)) {
-            value = lua_tointeger(L, 2);
-            level->camerazoffset = (int)value;
-        } else {
-            lua_pop(L, 1);
-            lua_pushinteger(L, 0);
-        }
+    if (!level) {
+        lua_pushinteger(L, 0);
+        return 1;
     }
 
+    /* Legacy reports success for unknown names; only known names mutate state. */
+    if (!strcmp(name, "rock") || !strcmp(name, "bgspeed") ||
+        !strcmp(name, "cameraxoffset") || !strcmp(name, "camerazoffset")) {
+        if (lua_type(L, 2) != LUA_TNUMBER) {
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        value = (int)lua_tonumber(L, 2);
+        if (!strcmp(name, "rock"))
+            level->rocking = value;
+        else if (!strcmp(name, "bgspeed"))
+            level->bgspeed = (float)value;
+        else if (!strcmp(name, "cameraxoffset"))
+            level->cameraxoffset = value;
+        else
+            level->camerazoffset = value;
+    }
+
+    lua_pushinteger(L, 1);
     return 1;
 }
 
