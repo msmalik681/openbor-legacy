@@ -2181,47 +2181,19 @@ static int lua_openbor_changeanimation(lua_State *L) {
 
 // openbor.spawn(model, x, z, a, direction)
 // The public Lua API uses a model name; x/z/a match OpenBOR's native spawn().
-static int lua_openbor_spawn(lua_State *L) {
-    const char *model;
-    if (lua_gettop(L) == 0) {
-        entity *configured;
-        if (!level)
-            return luaL_error(L, "spawn called without an active level");
-        configured = smartspawn(&bor_lua_spawnentry);
-        bor_lua_push_entity(L, configured);
-        return 1;
-    }
-    model = luaL_checkstring(L, 1);
-    float x = (float)luaL_optnumber(L, 2, 0.0);
-    float z = (float)luaL_optnumber(L, 3, 0.0);
-    float a = (float)luaL_optnumber(L, 4, 0.0);
-    int direction = (int)luaL_optinteger(L, 5, 1);
+static int lua_openbor_spawn(lua_State *L)
+{
     entity *ent;
-    extern entity *ent_list[MAX_ENTS];
 
     /*
-     * spawn() expects the entity pool to have been allocated. The select
-     * screen can have a Lua VM but no active entity pool, so calling the
-     * native spawn() there can dereference a NULL ent_list entry.
+     * Legacy spawn() takes no arguments. It creates an entity from the
+     * current spawnentry configured by setspawnentry().
      */
-    if (!level) {
+    (void)L;
+    if (!level)
         return luaL_error(L, "spawn called without an active level");
-    }
 
-    if (!ent_list[0]) {
-        return luaL_error(L, "spawn called before entity pool initialization");
-    }
-
-    if (!model[0]) {
-        return luaL_error(L, "spawn called with an empty model name");
-    }
-
-    ent = spawn(x, z, a, direction, (char *)model, -1, NULL);
-    if (!ent || !ent->exists) {
-        lua_pushnil(L);
-        return 1;
-    }
-
+    ent = smartspawn(&bor_lua_spawnentry);
     bor_lua_push_entity(L, ent);
     return 1;
 }
