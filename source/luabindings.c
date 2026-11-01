@@ -2162,13 +2162,17 @@ static int lua_openbor_filestreamappend(lua_State *L)
 
 static int lua_openbor_loadsample(lua_State *L)
 {
-    const char *filename = luaL_checkstring(L, 1);
-    int log_errors = (int)luaL_optinteger(L, 2, 0);
+    const char *filename;
+    int log_errors = 0;
     int sample;
-
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 2)
-        return luaL_error(L, "loadsample expects a filename and optional log flag");
-
+    if (lua_gettop(L) < 1 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "loadsample expects a filename string");
+    filename = lua_tostring(L, 1);
+    if (lua_gettop(L) >= 2) {
+        if (!lua_isinteger(L, 2))
+            return luaL_error(L, "loadsample log flag must be an integer");
+        log_errors = (int)lua_tointeger(L, 2);
+    }
     sample = sound_load_sample((char *)filename, packfile, log_errors);
     lua_pushinteger(L, sample);
     return 1;
@@ -2220,104 +2224,101 @@ static int lua_openbor_fadeout(lua_State *L)
 /* Legacy music and sample controls. */
 static int lua_openbor_playmusic(lua_State *L)
 {
-    if (lua_gettop(L) == 0) {
-        sound_close_music();
-        return 0;
+    const char *filename;
+    int loop = 0;
+    long offset = 0;
+    if (lua_gettop(L) == 0) { sound_close_music(); return 0; }
+    if (lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "playmusic expects a filename string");
+    filename = lua_tostring(L, 1);
+    if (lua_gettop(L) >= 2) loop = lua_toboolean(L, 2);
+    if (lua_gettop(L) >= 3) {
+        if (lua_type(L, 3) != LUA_TNUMBER)
+            return luaL_error(L, "playmusic offset must be numeric");
+        offset = (long)lua_tonumber(L, 3);
     }
-    if (lua_gettop(L) > 3)
-        return luaL_error(L, "playmusic expects a filename and up to 2 optional arguments");
-
-    music((char *)luaL_checkstring(L, 1),
-          lua_toboolean(L, 2),
-          (long)luaL_optinteger(L, 3, 0));
+    music((char *)filename, loop, offset);
     return 0;
 }
 
 static int lua_openbor_fademusic(lua_State *L)
 {
-    if (lua_gettop(L) < 1 || lua_gettop(L) > 4)
-        return luaL_error(L, "fademusic expects a fade value and optional filename, loop, and offset");
-
-    musicfade[0] = (float)luaL_checknumber(L, 1);
+    if (lua_gettop(L) < 1 || lua_type(L, 1) != LUA_TNUMBER)
+        return luaL_error(L, "fademusic expects a numeric fade value");
+    musicfade[0] = (float)lua_tonumber(L, 1);
     musicfade[1] = (float)savedata.musicvol;
-
     if (lua_gettop(L) == 4) {
-        const char *name = luaL_checkstring(L, 2);
-        strncpy(musicname, name, sizeof(musicname) - 1);
+        if (lua_type(L, 2) != LUA_TSTRING || lua_type(L, 3) != LUA_TNUMBER ||
+            lua_type(L, 4) != LUA_TNUMBER)
+            return luaL_error(L, "fademusic trigger arguments have invalid types");
+        strncpy(musicname, lua_tostring(L, 2), sizeof(musicname) - 1);
         musicname[sizeof(musicname) - 1] = '\0';
-        musicloop = (int)luaL_checkinteger(L, 3);
-        musicoffset = (u32)luaL_checkinteger(L, 4);
+        musicloop = (int)lua_tonumber(L, 3);
+        musicoffset = (u32)lua_tonumber(L, 4);
     }
     return 0;
 }
 
 static int lua_openbor_setmusicvolume(lua_State *L)
 {
-    int left;
-    int right;
-
-    if (lua_gettop(L) == 0)
-        return 0;
-    if (lua_gettop(L) > 2)
-        return luaL_error(L, "setmusicvolume expects 1 or 2 integer values");
-
-    left = (int)luaL_checkinteger(L, 1);
-    right = (int)luaL_optinteger(L, 2, left);
+    int left, right;
+    if (lua_gettop(L) == 0) return 0;
+    if (lua_type(L, 1) != LUA_TNUMBER)
+        return luaL_error(L, "setmusicvolume values must be numeric");
+    left = (int)lua_tonumber(L, 1);
+    right = left;
+    if (lua_gettop(L) >= 2) {
+        if (lua_type(L, 2) != LUA_TNUMBER)
+            return luaL_error(L, "setmusicvolume values must be numeric");
+        right = (int)lua_tonumber(L, 2);
+    }
     sound_volume_music(left, right);
     return 0;
 }
 
 static int lua_openbor_setmusictempo(lua_State *L)
 {
-    if (lua_gettop(L) > 1)
-        return luaL_error(L, "setmusictempo expects at most 1 integer value");
-    if (lua_gettop(L) == 1)
-        sound_music_tempo((int)luaL_checkinteger(L, 1));
+    if (lua_gettop(L) == 0) return 0;
+    if (lua_type(L, 1) != LUA_TNUMBER)
+        return luaL_error(L, "setmusictempo value must be numeric");
+    sound_music_tempo((int)lua_tonumber(L, 1));
     return 0;
 }
 
 static int lua_openbor_pausemusic(lua_State *L)
 {
-    if (lua_gettop(L) > 1)
-        return luaL_error(L, "pausemusic expects at most 1 boolean value");
-    if (lua_gettop(L) == 1)
+    if (lua_gettop(L) > 0)
         sound_pause_music(lua_toboolean(L, 1));
     return 0;
 }
 
 static int lua_openbor_playsample(lua_State *L)
 {
-    int id, priority, left, right, speed, loop;
-
+    int values[6], i;
     if (lua_gettop(L) != 6)
         return luaL_error(L, "playsample expects 6 integer arguments");
-
-    id = (int)luaL_checkinteger(L, 1);
-    priority = (int)luaL_checkinteger(L, 2);
-    left = (int)luaL_checkinteger(L, 3);
-    right = (int)luaL_checkinteger(L, 4);
-    speed = (int)luaL_checkinteger(L, 5);
-    loop = (int)luaL_checkinteger(L, 6);
-
-    if (id < 0)
+    for (i = 0; i < 6; ++i) {
+        if (lua_type(L, i + 1) != LUA_TNUMBER)
+            return luaL_error(L, "playsample arguments must be numeric");
+        values[i] = (int)lua_tonumber(L, i + 1);
+    }
+    if (values[0] < 0)
         return luaL_error(L, "playsample sample ID cannot be negative");
-
-    if (loop)
-        sound_loop_sample(id, (unsigned int)priority, left, right, (unsigned int)speed);
+    if (values[5])
+        sound_loop_sample(values[0], (unsigned int)values[1], values[2], values[3], (unsigned int)values[4]);
     else
-        sound_play_sample(id, (unsigned int)priority, left, right, (unsigned int)speed);
+        sound_play_sample(values[0], (unsigned int)values[1], values[2], values[3], (unsigned int)values[4]);
     return 0;
 }
 
 static int lua_openbor_unloadsample(lua_State *L)
 {
-    if (lua_gettop(L) != 1)
-        return luaL_error(L, "unloadsample expects exactly 1 integer argument");
-    sound_unload_sample((int)luaL_checkinteger(L, 1));
+    if (lua_gettop(L) != 1 || lua_type(L, 1) != LUA_TNUMBER)
+        return luaL_error(L, "unloadsample expects exactly 1 numeric argument");
+    sound_unload_sample((int)lua_tonumber(L, 1));
     return 0;
 }
 
-/* Legacy spawn-entry configuration API. */
 static int lua_openbor_clearspawnentry(lua_State *L)
 {
     (void)L;
