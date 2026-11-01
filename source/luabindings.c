@@ -1367,6 +1367,8 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else lua_pushinteger(L, ent->modeldata.animation[anim]->landframe[0]);
     }
     else if (!bor_lua_stricmp(prop, "energycost")) {
+        if (lua_gettop(L) != 4)
+            return luaL_error(L, "getentityproperty energycost expects exactly 4 arguments");
         int anim = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         int arg = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         if (!validanim(ent, anim) || arg < 0 || arg >= MAX_ATTACKS)
@@ -1374,6 +1376,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         lua_pushinteger(L, ent->modeldata.animation[anim]->energycost[arg]);
     }
     else if (!bor_lua_stricmp(prop, "komap")) {
+        if (lua_gettop(L) < 3) { lua_pushnil(L); return 1; }
         int which = (int)bor_lua_check_legacy_integer(L, 3, "getentityproperty");
         if (which < 0 || which > 1) lua_pushnil(L);
         else lua_pushinteger(L, ent->modeldata.komap[which]);
@@ -1477,6 +1480,7 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         else return luaL_error(L, "unknown running property '%s'", field);
     }
     else if (!bor_lua_stricmp(prop, "bbox")) {
+        if (lua_gettop(L) < 6) { lua_pushnil(L); return 1; }
         int anim = (int)bor_lua_check_legacy_integer(L, 4, "getentityproperty");
         int frame = (int)bor_lua_check_legacy_integer(L, 5, "getentityproperty");
         int coord = (int)bor_lua_check_legacy_integer(L, 6, "getentityproperty");
