@@ -2961,8 +2961,9 @@ static int lua_openbor_filestreamappend(lua_State *L)
     if (lua_type(L, 3) != LUA_TNUMBER)
         return luaL_error(L, "filestreamappend type must be numeric");
     append_type = (int)lua_tonumber(L, 3);
+    /* Legacy treats unknown append modes as a successful no-op. */
     if (append_type != 0 && append_type != 1)
-        return luaL_error(L, "filestreamappend type must be 0 or 1");
+        return 0;
 
     append_length = strlen(append);
     extra = append_length + (append_type == 0 ? 3 : 1);
