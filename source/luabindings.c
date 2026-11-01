@@ -2135,6 +2135,7 @@ static int lua_openbor_savefilestream(lua_State *L)
     char modname[256] = {0};
     const char *base;
     size_t pack_length;
+    size_t modname_length;
     size_t i;
     FILE *handle;
 
@@ -2158,10 +2159,14 @@ static int lua_openbor_savefilestream(lua_State *L)
     }
     if (base >= packfile + pack_length)
         base = packfile;
+    modname_length = (size_t)((packfile + pack_length) - base);
+    if (modname_length >= sizeof(modname))
+        modname_length = sizeof(modname) - 1;
 
-    if (strlen(path) + strlen(base) + strlen(filename) + 3 >= sizeof(path))
+    if (strlen(path) + modname_length + strlen(filename) + 3 >= sizeof(path))
         return luaL_error(L, "savefilestream path is too long");
-    strncat(modname, base, sizeof(modname) - 1);
+    memcpy(modname, base, modname_length);
+    modname[modname_length] = '\0';
     strncat(path, modname, sizeof(path) - strlen(path) - 1);
     dirExists(path, 1);
     strncat(path, "/", sizeof(path) - strlen(path) - 1);
