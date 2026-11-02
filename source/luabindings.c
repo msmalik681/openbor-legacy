@@ -2403,7 +2403,7 @@ static int lua_openbor_setindexedvar(lua_State *L)
 
     lua_pushvalue(L, -2);
     lua_pushvalue(L, 2);
-    lua_rawset(L, -4);
+    lua_rawset(L, -3);
     lua_pop(L, 2);
 
     lua_pushinteger(L, 1);
