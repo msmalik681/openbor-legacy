@@ -2325,7 +2325,11 @@ static int lua_openbor_getindexedvar(lua_State *L)
 {
     lua_Integer index = bor_lua_check_legacy_integer(L, 1, "getindexedvar");
 
-    if (index < 0) {
+    if (max_indexed_vars <= 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (index < 0 || index >= max_indexed_vars) {
         lua_pushnil(L);
         return 1;
     }
@@ -2343,7 +2347,11 @@ static int lua_openbor_setindexedvar(lua_State *L)
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setindexedvar expects an index and value");
-    if (index < 0) {
+    if (max_indexed_vars <= 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (index < 0 || index >= max_indexed_vars) {
         lua_pushinteger(L, 0);
         return 1;
     }
@@ -2393,7 +2401,11 @@ static int lua_openbor_getscriptvar(lua_State *L)
 {
     lua_Integer index = bor_lua_check_legacy_integer(L, 1, "getscriptvar");
 
-    if (index < 0) {
+    if (max_script_vars <= 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (index < 0 || index >= max_script_vars) {
         lua_pushnil(L);
         return 1;
     }
@@ -2411,7 +2423,11 @@ static int lua_openbor_setscriptvar(lua_State *L)
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "setscriptvar expects an index and value");
-    if (index < 0) {
+    if (max_script_vars <= 0) {
+        lua_pushnil(L);
+        return 1;
+    }
+    if (index < 0 || index >= max_script_vars) {
         lua_pushinteger(L, 0);
         return 1;
     }
@@ -2457,6 +2473,10 @@ static int lua_openbor_getentityvar(lua_State *L)
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "getentityvar expects an entity and index");
+    if (max_entity_vars <= 0) {
+        lua_pushnil(L);
+        return 1;
+    }
     ent = bor_lua_get_live_entity(L, 1);
     if (!lua_isnil(L, 1) && !ent)
         return luaL_error(L, "getentityvar expects a valid entity handle or nil");
@@ -2478,7 +2498,7 @@ static int lua_openbor_getentityvar(lua_State *L)
     /* Legacy returns an empty value for entities without an allocated var list
        before validating the requested index. */
     index = bor_lua_check_legacy_integer(L, 2, "getentityvar");
-    if (index < 0) {
+    if (index < 0 || index >= max_entity_vars) {
         lua_pop(L, 2);
         lua_pushnil(L);
         return 1;
@@ -2498,6 +2518,10 @@ static int lua_openbor_setentityvar(lua_State *L)
 
     if (lua_gettop(L) < 3)
         return luaL_error(L, "setentityvar expects an entity, index, and value");
+    if (max_entity_vars <= 0) {
+        lua_pushnil(L);
+        return 1;
+    }
     ent = bor_lua_get_live_entity(L, 1);
     if (!lua_isnil(L, 1) && !ent)
         return luaL_error(L, "setentityvar expects a valid entity handle or nil");
@@ -2507,7 +2531,7 @@ static int lua_openbor_setentityvar(lua_State *L)
     }
 
     index = bor_lua_check_legacy_integer(L, 2, "setentityvar");
-    if (index < 0) {
+    if (index < 0 || index >= max_entity_vars) {
         lua_pushinteger(L, 0);
         return 1;
     }
