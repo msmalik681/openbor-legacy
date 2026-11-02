@@ -2323,12 +2323,14 @@ static int bor_lua_count_global_and_local_vars(lua_State *L)
 
 static int lua_openbor_getindexedvar(lua_State *L)
 {
-    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "getindexedvar");
+    lua_Integer index;
 
-    if (max_indexed_vars <= 0) {
+    if (lua_gettop(L) < 1 || max_indexed_vars <= 0) {
         lua_pushnil(L);
         return 1;
     }
+
+    index = bor_lua_check_legacy_integer(L, 1, "getindexedvar");
     if (index < 0 || index >= max_indexed_vars) {
         lua_pushnil(L);
         return 1;
@@ -2343,14 +2345,14 @@ static int lua_openbor_getindexedvar(lua_State *L)
 
 static int lua_openbor_setindexedvar(lua_State *L)
 {
-    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "setindexedvar");
+    lua_Integer index;
 
-    if (lua_gettop(L) < 2)
-        return luaL_error(L, "setindexedvar expects an index and value");
-    if (max_indexed_vars <= 0) {
+    if (lua_gettop(L) < 2 || max_indexed_vars <= 0) {
         lua_pushnil(L);
         return 1;
     }
+
+    index = bor_lua_check_legacy_integer(L, 1, "setindexedvar");
     if (index < 0 || index >= max_indexed_vars) {
         lua_pushinteger(L, 0);
         return 1;
@@ -2399,12 +2401,14 @@ static int bor_lua_push_script_var_table(lua_State *L)
 
 static int lua_openbor_getscriptvar(lua_State *L)
 {
-    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "getscriptvar");
+    lua_Integer index;
 
-    if (max_script_vars <= 0) {
+    if (lua_gettop(L) < 1 || max_script_vars <= 0) {
         lua_pushnil(L);
         return 1;
     }
+
+    index = bor_lua_check_legacy_integer(L, 1, "getscriptvar");
     if (index < 0 || index >= max_script_vars) {
         lua_pushnil(L);
         return 1;
@@ -2419,14 +2423,14 @@ static int lua_openbor_getscriptvar(lua_State *L)
 
 static int lua_openbor_setscriptvar(lua_State *L)
 {
-    lua_Integer index = bor_lua_check_legacy_integer(L, 1, "setscriptvar");
+    lua_Integer index;
 
-    if (lua_gettop(L) < 2)
-        return luaL_error(L, "setscriptvar expects an index and value");
-    if (max_script_vars <= 0) {
+    if (lua_gettop(L) < 2 || max_script_vars <= 0) {
         lua_pushnil(L);
         return 1;
     }
+
+    index = bor_lua_check_legacy_integer(L, 1, "setscriptvar");
     if (index < 0 || index >= max_script_vars) {
         lua_pushinteger(L, 0);
         return 1;
@@ -2439,31 +2443,6 @@ static int lua_openbor_setscriptvar(lua_State *L)
     lua_pop(L, 1);
     lua_pushinteger(L, 1);
     return 1;
-}
-
-#define BOR_LUA_ENTITY_VARS "OpenBOR.EntityVars"
-
-void bor_lua_clear_entity_vars(struct entity *ent)
-{
-    lua_State *L = g_lua_engine_state;
-    if (!L || !ent)
-        return;
-    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
-    if (lua_istable(L, -1)) {
-        lua_pushlightuserdata(L, ent);
-        lua_pushnil(L);
-        lua_rawset(L, -3);
-    }
-    lua_pop(L, 1);
-}
-
-void bor_lua_clear_all_entity_vars(void)
-{
-    lua_State *L = g_lua_engine_state;
-    if (!L)
-        return;
-    lua_newtable(L);
-    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
 }
 
 static int lua_openbor_getentityvar(lua_State *L)
