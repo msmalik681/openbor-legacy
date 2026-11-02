@@ -2321,48 +2321,90 @@ static int bor_lua_count_global_and_local_vars(lua_State *L)
     return count;
 }
 
+static int bor_lua_indexedvar_key(lua_State *L, int arg, const char *function_name)
+{
+    if (lua_type(L, arg) == LUA_TSTRING) {
+        lua_pushvalue(L, arg);
+        return 1;
+    }
+
+    if (lua_isnumber(L, arg)) {
+        lua_Integer index = bor_lua_check_legacy_integer(L, arg, function_name);
+        if (index < 0 || index >= max_indexed_vars)
+            return 0;
+        lua_pushinteger(L, index);
+        return 1;
+    }
+
+    return luaL_error(L, "%s expects a string name or numeric index", function_name);
+}
+
+static int bor_lua_indexedvar_count(lua_State *L, int table_index)
+{
+    int count = 0;
+    table_index = lua_absindex(L, table_index);
+    lua_pushnil(L);
+    while (lua_next(L, table_index)) {
+        count++;
+        lua_pop(L, 1);
+    }
+    return count;
+}
+
 static int lua_openbor_getindexedvar(lua_State *L)
 {
-    lua_Integer index;
-
     if (lua_gettop(L) < 1 || max_indexed_vars <= 0) {
         lua_pushnil(L);
         return 1;
     }
 
-    index = bor_lua_check_legacy_integer(L, 1, "getindexedvar");
-    if (index < 0 || index >= max_indexed_vars) {
+    if (!bor_lua_indexedvar_key(L, 1, "getindexedvar")) {
         lua_pushnil(L);
         return 1;
     }
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
-    lua_pushinteger(L, index);
+    lua_pushvalue(L, -2);
     lua_rawget(L, -2);
+    lua_remove(L, -2);
     lua_remove(L, -2);
     return 1;
 }
 
 static int lua_openbor_setindexedvar(lua_State *L)
 {
-    lua_Integer index;
+    int key_is_string;
 
     if (lua_gettop(L) < 2 || max_indexed_vars <= 0) {
         lua_pushnil(L);
         return 1;
     }
 
-    index = bor_lua_check_legacy_integer(L, 1, "setindexedvar");
-    if (index < 0 || index >= max_indexed_vars) {
+    key_is_string = (lua_type(L, 1) == LUA_TSTRING);
+    if (!bor_lua_indexedvar_key(L, 1, "setindexedvar")) {
         lua_pushinteger(L, 0);
         return 1;
     }
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
-    lua_pushinteger(L, index);
+
+    /* Named keys consume one configured indexed-variable slot each. */
+    if (key_is_string) {
+        lua_pushvalue(L, -2);
+        lua_rawget(L, -2);
+        if (lua_isnil(L, -1) &&
+            bor_lua_indexedvar_count(L, -2) >= max_indexed_vars) {
+            lua_pop(L, 3);
+            lua_pushinteger(L, 0);
+            return 1;
+        }
+        lua_pop(L, 1);
+    }
+
+    lua_pushvalue(L, -2);
     lua_pushvalue(L, 2);
-    lua_rawset(L, -3);
-    lua_pop(L, 1);
+    lua_rawset(L, -4);
+    lua_pop(L, 2);
 
     lua_pushinteger(L, 1);
     return 1;
