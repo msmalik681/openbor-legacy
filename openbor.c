@@ -213,6 +213,11 @@ int healthcheat = 0;
 
 int keyscriptrate = 0;
 
+/* Legacy ScriptLib indexed variable limits (configured by data/script.txt). */
+int max_indexed_vars = 0;
+int max_script_vars = 0;
+int max_entity_vars = 0;
+
 int showtimeover = 0;
 int sameplayer = 0;		// 7-1-2005  flag to determine if players can use the same character
 int PLAYER_LIVES = 3;		// 7-1-2005  default setting for Lives
@@ -5712,6 +5717,12 @@ int load_script_setting() {
 			if(stricmp(command, "keyscriptrate") == 0)	// Rate that keyscripts fire when holding a key.
 			{
 				keyscriptrate = GET_INT_ARG(1);
+			} else if(stricmp(command, "maxscriptvars") == 0) {
+				max_script_vars = MAX(0, GET_INT_ARG(1));
+			} else if(stricmp(command, "maxentityvars") == 0) {
+				max_entity_vars = MAX(0, GET_INT_ARG(1));
+			} else if(stricmp(command, "maxindexedvars") == 0) {
+				max_indexed_vars = MAX(0, GET_INT_ARG(1));
 			}
 		}
 		// Go to next line
