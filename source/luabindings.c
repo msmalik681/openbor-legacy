@@ -4470,7 +4470,7 @@ static int lua_openbor_checkplatformbelow(lua_State *L)
         return luaL_error(L, "checkplatformbelow expects x, z, and altitude");
     if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER ||
         lua_type(L, 3) != LUA_TNUMBER || !level) {
-        lua_pushnumber(L, 0);
+        lua_pushnil(L);
         return 1;
     }
     x = (float)lua_tonumber(L, 1);
