@@ -2430,6 +2430,21 @@ static int bor_lua_push_script_var_table(lua_State *L)
     if (!lua_istable(L, -1))
         return luaL_error(L, "script variable storage is not initialized");
 
+    /*
+     * Script variables belong to the entity executing the script, not merely
+     * to the source file. Two entities can run the same Lua file while keeping
+     * independent legacy script-variable state.
+     */
+    lua_pushlightuserdata(L, self);
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        lua_newtable(L);
+        lua_pushlightuserdata(L, self);
+        lua_pushvalue(L, -2);
+        lua_rawset(L, -4);
+    }
+
     lua_getfield(L, -1, frame.source);
     if (!lua_istable(L, -1)) {
         lua_pop(L, 1);
@@ -2437,6 +2452,8 @@ static int bor_lua_push_script_var_table(lua_State *L)
         lua_pushvalue(L, -1);
         lua_setfield(L, -3, frame.source);
     }
+
+    lua_remove(L, -2);
     lua_remove(L, -2);
     return 1;
 }
