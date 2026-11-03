@@ -5186,7 +5186,7 @@ void openbor_register_lua_api(void) {
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
 
-    /* Script variables are isolated by the Lua source file that calls the API. */
+    /* Script variables are isolated by entity and calling Lua source file. */
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
 
