@@ -582,13 +582,26 @@ static int lua_openbor_get_time(lua_State *L) {
 // changeopenborvariant(name, value)
 // Implements the numeric legacy system-property setters.
 static int lua_changeopenborvariant(lua_State *L) {
+    static const char *const properties[] = {
+        "blockade", "elapsed_time", "lasthita", "lasthitc", "lasthitt",
+        "lasthitx", "lasthitz", "levelpos", "scrollmaxz", "scrollminz",
+        "slowmotion", "slowmotion_duration", "smartbomber", "textbox",
+        "xpos", "ypos"
+    };
     const char *name;
     lua_Integer value;
 
     if (lua_gettop(L) != 2)
         return luaL_error(L, "changeopenborvariant expects exactly 2 arguments");
 
-    name = luaL_checkstring(L, 1);
+    if (lua_isinteger(L, 1)) {
+        lua_Integer index = lua_tointeger(L, 1);
+        if (index < 0 || index >= (lua_Integer)(sizeof(properties) / sizeof(properties[0])))
+            return luaL_error(L, "changeopenborvariant: property index is out of range");
+        name = properties[index];
+    } else {
+        name = luaL_checkstring(L, 1);
+    }
 
     /* The legacy API accepts entity pointers for these two properties. */
     if (!bor_lua_stricmp(name, "smartbomber") || !bor_lua_stricmp(name, "textbox")) {
@@ -650,13 +663,34 @@ static int lua_changeopenborvariant(lua_State *L) {
 // openborvariant(name)
 // First compatibility milestone: read-only legacy system properties.
 static int lua_openborvariant(lua_State *L) {
+    static const char *const properties[] = {
+        "branchname", "count_enemies", "count_entities", "count_npcs",
+        "count_players", "current_level", "current_palette", "current_set",
+        "current_stage", "elapsed_time", "ent_max", "game_paused",
+        "game_speed", "gfx_y_offset", "hResolution", "in_level",
+        "in_selectscreen", "lasthita", "lasthitc", "lasthitt", "lasthitx",
+        "lasthitz", "levelheight", "levelwidth", "lightx", "lightz",
+        "maxentityvars", "maxglobalvars", "maxindexedvars", "maxplayers",
+        "maxscriptvars", "models_cached", "models_loaded", "numpalettes",
+        "pixelformat", "player", "player1", "player2", "player3", "player4",
+        "player_max_z", "player_min_z", "shadowalpha", "shadowcolor",
+        "slowmotion", "slowmotion_duration", "totalram", "freeram",
+        "usedram", "vResolution", "xpos", "ypos"
+    };
     const char *name;
     extern s_player player[4];
 
     if (lua_gettop(L) != 1)
         return luaL_error(L, "openborvariant expects exactly 1 argument");
 
-    name = luaL_checkstring(L, 1);
+    if (lua_isinteger(L, 1)) {
+        lua_Integer index = lua_tointeger(L, 1);
+        if (index < 0 || index >= (lua_Integer)(sizeof(properties) / sizeof(properties[0])))
+            return luaL_error(L, "openborvariant: property index is out of range");
+        name = properties[index];
+    } else {
+        name = luaL_checkstring(L, 1);
+    }
 
     if (!bor_lua_stricmp(name, "branchname")) {
         lua_pushstring(L, branch_name);
