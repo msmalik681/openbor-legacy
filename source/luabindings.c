@@ -1152,8 +1152,13 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         lua_pushnil(L);
         return 1;
     }
-    if (property_index < 0)
+    if (property_index < 0) {
+        if (lua_isinteger(L, 2)) {
+            lua_pushnil(L);
+            return 1;
+        }
         return luaL_error(L, "getentityproperty: unsupported property");
+    }
     prop = bor_lua_getentityproperty_properties[property_index];
 
     if (!bor_lua_stricmp(prop, "health"))              lua_pushinteger(L, ent->health);
@@ -1684,8 +1689,13 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         lua_pushinteger(L, 0);
         return 1;
     }
-    if (property_index < 0)
+    if (property_index < 0) {
+        if (lua_isinteger(L, 2)) {
+            lua_pushinteger(L, 1);
+            return 1;
+        }
         return luaL_error(L, "changeentityproperty: unsupported property");
+    }
     prop = bor_lua_changeentityproperty_properties[property_index];
 
     if (!bor_lua_stricmp(prop, "type")) {
@@ -3343,8 +3353,13 @@ static int lua_openbor_setspawnentry(lua_State *L)
 
     property_index = bor_lua_legacy_enum_index(L, 1, bor_lua_spawnentry_properties,
                                                 sizeof(bor_lua_spawnentry_properties) / sizeof(bor_lua_spawnentry_properties[0]));
-    if (property_index < 0)
+    if (property_index < 0) {
+        if (lua_isinteger(L, 1)) {
+            lua_pushinteger(L, 1);
+            return 1;
+        }
         return luaL_error(L, "setspawnentry: unsupported property");
+    }
     property = bor_lua_spawnentry_properties[property_index];
 
     if (bor_lua_stricmp(property, "name") == 0) {
