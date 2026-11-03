@@ -3513,6 +3513,8 @@ static int lua_openbor_allocscreen(lua_State *L)
 
 static int lua_openbor_clearscreen(lua_State *L)
 {
+    if (lua_gettop(L) != 1)
+        return luaL_error(L, "clearscreen expects exactly one screen handle");
     clearscreen(bor_lua_check_screen(L, 1));
     return 0;
 }
