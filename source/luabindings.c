@@ -2268,6 +2268,17 @@ static int lua_openbor_getlocalvar(lua_State *L) {
     }
     lua_pop(L, 1);
 
+    /* Persistent local variables belong to the current script instance. */
+    if (lua_getstack(L, 1, &(lua_Debug){0})) {
+        bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
+        lua_pushstring(L, name);
+        lua_rawget(L, -2);
+        lua_remove(L, -2);
+        if (!lua_isnil(L, -1))
+            return 1;
+        lua_pop(L, 1);
+    }
+
     if (!strcmp(name, "self")) {
         if (self && self->exists)
             bor_lua_push_entity(L, self);
@@ -2308,12 +2319,31 @@ static int bor_lua_count_global_and_local_vars(lua_State *L)
     }
     lua_pop(L, 1);
 
-    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    /*
+     * The legacy global-variable index is a shared pool of global names and
+     * persistent names owned by each script instance. Callback context values
+     * (self, damage, player, etc.) are transient and do not consume pool slots.
+     */
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
     if (lua_istable(L, -1)) {
-        table_index = lua_gettop(L);
+        int entity_index = lua_gettop(L);
         lua_pushnil(L);
-        while (lua_next(L, table_index) != 0) {
-            ++count;
+        while (lua_next(L, entity_index) != 0) {
+            if (lua_istable(L, -1)) {
+                int source_index = lua_gettop(L);
+                lua_pushnil(L);
+                while (lua_next(L, source_index) != 0) {
+                    if (lua_istable(L, -1)) {
+                        int vars_index = lua_gettop(L);
+                        lua_pushnil(L);
+                        while (lua_next(L, vars_index) != 0) {
+                            ++count;
+                            lua_pop(L, 1);
+                        }
+                    }
+                    lua_pop(L, 1);
+                }
+            }
             lua_pop(L, 1);
         }
     }
@@ -2418,22 +2448,23 @@ static int lua_openbor_clearindexedvar(lua_State *L)
 }
 
 #define BOR_LUA_SCRIPT_VARS "OpenBOR.ScriptVars"
+#define BOR_LUA_SCRIPT_LOCAL_VARS "OpenBOR.ScriptLocalVars"
 
-static int bor_lua_push_script_var_table(lua_State *L)
+static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_key)
 {
     lua_Debug frame;
 
     if (!lua_getstack(L, 1, &frame) || !lua_getinfo(L, "S", &frame) || !frame.source)
         return luaL_error(L, "script variable access requires a Lua script caller");
 
-    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+    lua_getfield(L, LUA_REGISTRYINDEX, registry_key);
     if (!lua_istable(L, -1))
         return luaL_error(L, "script variable storage is not initialized");
 
     /*
-     * Script variables belong to the entity executing the script, not merely
-     * to the source file. Two entities can run the same Lua file while keeping
-     * independent legacy script-variable state.
+     * Legacy Script state belongs to the executing script instance. In Lua,
+     * the entity plus calling source identifies that instance: two entities
+     * running one source keep independent local and indexed script variables.
      */
     lua_pushlightuserdata(L, self);
     lua_rawget(L, -2);
@@ -2456,6 +2487,11 @@ static int bor_lua_push_script_var_table(lua_State *L)
     lua_remove(L, -2);
     lua_remove(L, -2);
     return 1;
+}
+
+static int bor_lua_push_script_var_table(lua_State *L)
+{
+    return bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_VARS);
 }
 
 static int lua_openbor_getscriptvar(lua_State *L)
@@ -2620,6 +2656,14 @@ void bor_lua_clear_entity_vars(struct entity *ent)
         lua_rawset(L, -3);
     }
     lua_pop(L, 1);
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        lua_pushlightuserdata(L, ent);
+        lua_pushnil(L);
+        lua_rawset(L, -3);
+    }
+    lua_pop(L, 1);
 }
 
 void bor_lua_clear_all_entity_vars(void)
@@ -2634,6 +2678,9 @@ void bor_lua_clear_all_entity_vars(void)
 
     lua_newtable(L);
     lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
 }
 
 /* Legacy utility and variable functions retained from the original script API. */
@@ -2661,32 +2708,34 @@ static int lua_openbor_maxglobalvarindex(lua_State *L)
 
 static int lua_openbor_setlocalvar(lua_State *L)
 {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
 
-    if (lua_gettop(L) < 2)
-        return luaL_error(L, "setlocalvar expects a name and value");
+    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "setlocalvar expects a string name and value");
+    name = lua_tostring(L, 1);
 
-    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
-    if (!lua_istable(L, -1)) {
+    if (!lua_isnil(L, 2)) {
+        bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
+        lua_pushstring(L, name);
+        lua_rawget(L, -2);
+        if (lua_isnil(L, -1) &&
+            bor_lua_count_global_and_local_vars(L) >= BOR_LUA_MAX_GLOBAL_VARS) {
+            lua_pop(L, 2);
+            lua_pushinteger(L, 0);
+            return 1;
+        }
         lua_pop(L, 1);
-        lua_newtable(L);
-        lua_pushvalue(L, -1);
-        lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+        lua_pushstring(L, name);
+        lua_pushvalue(L, 2);
+        lua_rawset(L, -3);
+        lua_pop(L, 1);
+    } else {
+        bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
+        lua_pushstring(L, name);
+        lua_pushnil(L);
+        lua_rawset(L, -3);
+        lua_pop(L, 1);
     }
-
-    lua_pushstring(L, name);
-    lua_rawget(L, -2);
-    if (lua_isnil(L, -1) && !lua_isnil(L, 2) &&
-        bor_lua_count_global_and_local_vars(L) >= BOR_LUA_MAX_GLOBAL_VARS) {
-        lua_pop(L, 2);
-        lua_pushinteger(L, 0);
-        return 1;
-    }
-    lua_pop(L, 1);
-    lua_pushstring(L, name);
-    lua_pushvalue(L, 2);
-    lua_rawset(L, -3);
-    lua_pop(L, 1);
 
     lua_pushinteger(L, 1);
     return 1;
@@ -2694,8 +2743,14 @@ static int lua_openbor_setlocalvar(lua_State *L)
 
 static int lua_openbor_clearlocalvar(lua_State *L)
 {
-    lua_pushnil(L);
-    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
+    lua_newtable(L);
+    lua_replace(L, -2);
+
+    /* Script_Local_Clear() also clears this Script instance's indexed slots. */
+    bor_lua_push_script_var_table(L);
+    lua_newtable(L);
+    lua_replace(L, -2);
     return 0;
 }
 
@@ -2703,9 +2758,9 @@ static int lua_openbor_clearglobalvar(lua_State *L)
 {
     lua_newtable(L);
     lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
-    /* Legacy global and script-local names shared one indexed storage pool. */
+    /* Legacy resets the shared global/local name pool, not scriptvar slots. */
     lua_newtable(L);
-    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
     return 0;
 }
 
@@ -5189,6 +5244,9 @@ void openbor_register_lua_api(void) {
     /* Script variables are isolated by entity and calling Lua source file. */
     lua_newtable(g_lua_engine_state);
     lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+
+    lua_newtable(g_lua_engine_state);
+    lua_setfield(g_lua_engine_state, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
 
     /* Indexed variables use a Lua table with legacy zero-based indices. */
     lua_newtable(g_lua_engine_state);
