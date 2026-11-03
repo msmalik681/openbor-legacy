@@ -4566,9 +4566,9 @@ static int lua_openbor_strleft(lua_State *L)
     lua_Integer count;
     size_t length = strlen(source);
 
-    if (lua_type(L, 2) != LUA_TNUMBER)
-        return luaL_error(L, "strleft requires a numeric character count");
-    count = (lua_Integer)lua_tonumber(L, 2);
+    if (!lua_isinteger(L, 2))
+        return luaL_error(L, "strleft requires an integer character count");
+    count = lua_tointeger(L, 2);
     if (count < 0)
         return luaL_error(L, "strleft character count cannot be negative");
     if ((lua_Unsigned)count > length)
@@ -4594,9 +4594,9 @@ static int lua_openbor_strright(lua_State *L)
     lua_Integer start;
     size_t length = strlen(source);
 
-    if (lua_type(L, 2) != LUA_TNUMBER)
-        return luaL_error(L, "strright requires a numeric start position");
-    start = (lua_Integer)lua_tonumber(L, 2);
+    if (!lua_isinteger(L, 2))
+        return luaL_error(L, "strright requires an integer start position");
+    start = lua_tointeger(L, 2);
     if (start < 0)
         return luaL_error(L, "strright start position cannot be negative");
     if ((lua_Unsigned)start > length)
