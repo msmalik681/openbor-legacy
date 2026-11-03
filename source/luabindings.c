@@ -2593,6 +2593,49 @@ static int lua_openbor_setentityvar(lua_State *L)
     return 1;
 }
 
+/*
+ * Release per-entity Lua storage when an engine entity is destroyed or its
+ * slot is recycled. Script vars and entity vars are separate legacy stores,
+ * but both are owned by the entity lifetime.
+ */
+void bor_lua_clear_entity_vars(struct entity *ent)
+{
+    lua_State *L = g_lua_engine_state;
+
+    if (!L || !ent)
+        return;
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+    if (lua_istable(L, -1)) {
+        lua_pushlightuserdata(L, ent);
+        lua_pushnil(L);
+        lua_rawset(L, -3);
+    }
+    lua_pop(L, 1);
+
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+    if (lua_istable(L, -1)) {
+        lua_pushlightuserdata(L, ent);
+        lua_pushnil(L);
+        lua_rawset(L, -3);
+    }
+    lua_pop(L, 1);
+}
+
+void bor_lua_clear_all_entity_vars(void)
+{
+    lua_State *L = g_lua_engine_state;
+
+    if (!L)
+        return;
+
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_ENTITY_VARS);
+
+    lua_newtable(L);
+    lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_VARS);
+}
+
 /* Legacy utility and variable functions retained from the original script API. */
 static int lua_openbor_isempty(lua_State *L)
 {
