@@ -2257,8 +2257,8 @@ void bor_lua_set_localvar(lua_State *L, const char *name, int index)
 }
 
 /*
- * Legacy getlocalvar() compatibility. Callback-scoped values take precedence;
- * self and player retain their existing fallback behavior.
+ * Legacy getlocalvar() compatibility. Callback values are checked first,
+ * followed by persistent locals owned by the current script instance.
  */
 static int lua_openbor_getlocalvar(lua_State *L) {
     const char *name;
@@ -2286,22 +2286,6 @@ static int lua_openbor_getlocalvar(lua_State *L) {
         if (!lua_isnil(L, -1))
             return 1;
         lua_pop(L, 1);
-    }
-
-    if (!strcmp(name, "self")) {
-        if (self && self->exists)
-            bor_lua_push_entity(L, self);
-        else
-            lua_pushnil(L);
-        return 1;
-    }
-
-    if (!strcmp(name, "player")) {
-        if (g_lua_current_player_index >= 0)
-            lua_pushinteger(L, (lua_Integer)g_lua_current_player_index);
-        else
-            lua_pushnil(L);
-        return 1;
     }
 
     lua_pushnil(L);
