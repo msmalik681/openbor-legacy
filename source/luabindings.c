@@ -2500,10 +2500,8 @@ static int lua_openbor_getentityvar(lua_State *L)
 
     if (lua_gettop(L) < 2)
         return luaL_error(L, "getentityvar expects an entity and index");
-    if (max_entity_vars <= 0) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (max_entity_vars <= 0)
+        return luaL_error(L, "getentityvar requires configured entity-variable storage");
     ent = bor_lua_get_live_entity(L, 1);
     if (!lua_isnil(L, 1) && !ent)
         return luaL_error(L, "getentityvar expects a valid entity handle or nil");
@@ -2545,15 +2543,15 @@ static int lua_openbor_setentityvar(lua_State *L)
 
     if (lua_gettop(L) < 3)
         return luaL_error(L, "setentityvar expects an entity, index, and value");
-    if (max_entity_vars <= 0) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (max_entity_vars <= 0)
+        return luaL_error(L, "setentityvar requires configured entity-variable storage");
     ent = bor_lua_get_live_entity(L, 1);
     if (!lua_isnil(L, 1) && !ent)
         return luaL_error(L, "setentityvar expects a valid entity handle or nil");
-    if (!ent)
-        return 0;
+    if (!ent) {
+        lua_pushinteger(L, 0);
+        return 1;
+    }
 
     index = bor_lua_check_legacy_integer(L, 2, "setentityvar");
     if (index < 0 || index >= max_entity_vars) {
