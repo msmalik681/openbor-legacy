@@ -821,7 +821,7 @@ static int lua_openbor_drawbox(lua_State *L) {
     int h = (int)bor_lua_check_legacy_integer(L, 4, "drawbox");
     int z = (int)bor_lua_check_legacy_integer(L, 5, "drawbox");
     int color = (int)bor_lua_check_legacy_integer(L, 6, "drawbox");
-    int lut_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawbox") : -1); 
+    int lut_index = (int)(lua_gettop(L) >= 7 ? bor_lua_check_legacy_integer(L, 7, "drawbox") : -1); 
 
     if (lut_index >= 0) {
         lut_index %= MAX_BLENDINGS + 1;
@@ -3579,7 +3579,7 @@ static int lua_openbor_drawboxtoscreen(lua_State *L)
     int width = (int)bor_lua_check_legacy_integer(L, 4, "drawboxtoscreen");
     int height = (int)bor_lua_check_legacy_integer(L, 5, "drawboxtoscreen");
     int colour = (int)bor_lua_check_legacy_integer(L, 6, "drawboxtoscreen");
-    int blend_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawboxtoscreen") : -1);
+    int blend_index = (int)(lua_gettop(L) >= 7 ? bor_lua_check_legacy_integer(L, 7, "drawboxtoscreen") : -1);
 
     if (lua_gettop(L) < 6)
         return luaL_error(L, "drawboxtoscreen expects screen, x, y, width, height, colour, and optional LUT");
@@ -3601,7 +3601,7 @@ static int lua_openbor_drawlinetoscreen(lua_State *L)
     int x2 = (int)bor_lua_check_legacy_integer(L, 4, "drawlinetoscreen");
     int y2 = (int)bor_lua_check_legacy_integer(L, 5, "drawlinetoscreen");
     int colour = (int)bor_lua_check_legacy_integer(L, 6, "drawlinetoscreen");
-    int blend_index = (int)(lua_gettop(L) >= 7 && !lua_isnil(L, 7) ? bor_lua_check_legacy_integer(L, 7, "drawlinetoscreen") : -1);
+    int blend_index = (int)(lua_gettop(L) >= 7 ? bor_lua_check_legacy_integer(L, 7, "drawlinetoscreen") : -1);
 
     if (lua_gettop(L) < 6)
         return luaL_error(L, "drawlinetoscreen expects screen, 5 integers, and optional LUT");
@@ -3621,7 +3621,7 @@ static int lua_openbor_drawdottoscreen(lua_State *L)
     int x = (int)bor_lua_check_legacy_integer(L, 2, "drawdottoscreen");
     int y = (int)bor_lua_check_legacy_integer(L, 3, "drawdottoscreen");
     int colour = (int)bor_lua_check_legacy_integer(L, 4, "drawdottoscreen");
-    int blend_index = (int)(lua_gettop(L) >= 5 && !lua_isnil(L, 5) ? bor_lua_check_legacy_integer(L, 5, "drawdottoscreen") : -1);
+    int blend_index = (int)(lua_gettop(L) >= 5 ? bor_lua_check_legacy_integer(L, 5, "drawdottoscreen") : -1);
 
     if (lua_gettop(L) < 4)
         return luaL_error(L, "drawdottoscreen expects screen, x, y, colour, and optional LUT");
