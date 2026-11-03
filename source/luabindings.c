@@ -2354,90 +2354,44 @@ static int bor_lua_count_global_and_local_vars(lua_State *L)
     return count;
 }
 
-static int bor_lua_indexedvar_key(lua_State *L, int arg, const char *function_name)
-{
-    if (lua_type(L, arg) == LUA_TSTRING) {
-        lua_pushvalue(L, arg);
-        return 1;
-    }
-
-    if (lua_isnumber(L, arg)) {
-        lua_Integer index = bor_lua_check_legacy_integer(L, arg, function_name);
-        if (index < 0 || index >= max_indexed_vars)
-            return 0;
-        lua_pushinteger(L, index);
-        return 1;
-    }
-
-    return luaL_error(L, "%s expects a string name or numeric index", function_name);
-}
-
-static int bor_lua_indexedvar_count(lua_State *L, int table_index)
-{
-    int count = 0;
-    table_index = lua_absindex(L, table_index);
-    lua_pushnil(L);
-    while (lua_next(L, table_index)) {
-        count++;
-        lua_pop(L, 1);
-    }
-    return count;
-}
-
 static int lua_openbor_getindexedvar(lua_State *L)
 {
-    if (lua_gettop(L) < 1 || max_indexed_vars <= 0) {
-        lua_pushnil(L);
-        return 1;
-    }
+    lua_Integer index;
 
-    if (!bor_lua_indexedvar_key(L, 1, "getindexedvar")) {
+    if (lua_gettop(L) < 1 || max_indexed_vars <= 0)
+        return luaL_error(L, "getindexedvar requires an index and configured indexed-variable storage");
+
+    index = bor_lua_check_legacy_integer(L, 1, "getindexedvar");
+    if (index < 0 || index >= max_indexed_vars) {
         lua_pushnil(L);
         return 1;
     }
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
-    lua_pushvalue(L, -2);
+    lua_pushinteger(L, index);
     lua_rawget(L, -2);
-    lua_remove(L, -2);
     lua_remove(L, -2);
     return 1;
 }
 
 static int lua_openbor_setindexedvar(lua_State *L)
 {
-    int key_is_string;
+    lua_Integer index;
 
-    if (lua_gettop(L) < 2 || max_indexed_vars <= 0) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (lua_gettop(L) < 2 || max_indexed_vars <= 0)
+        return luaL_error(L, "setindexedvar requires an index, value, and configured indexed-variable storage");
 
-    key_is_string = (lua_type(L, 1) == LUA_TSTRING);
-    if (!bor_lua_indexedvar_key(L, 1, "setindexedvar")) {
+    index = bor_lua_check_legacy_integer(L, 1, "setindexedvar");
+    if (index < 0 || index >= max_indexed_vars) {
         lua_pushinteger(L, 0);
         return 1;
     }
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_INDEXED_VARS);
-
-    /* Named keys consume one configured indexed-variable slot each. */
-    if (key_is_string) {
-        lua_pushvalue(L, -2);
-        lua_rawget(L, -2);
-        if (lua_isnil(L, -1) &&
-            bor_lua_indexedvar_count(L, -2) >= max_indexed_vars) {
-            lua_pop(L, 3);
-            lua_pushinteger(L, 0);
-            return 1;
-        }
-        lua_pop(L, 1);
-    }
-
-    lua_pushvalue(L, -2);
+    lua_pushinteger(L, index);
     lua_pushvalue(L, 2);
     lua_rawset(L, -3);
-    lua_pop(L, 2);
+    lua_pop(L, 1);
 
     lua_pushinteger(L, 1);
     return 1;
@@ -2500,10 +2454,8 @@ static int lua_openbor_getscriptvar(lua_State *L)
 {
     lua_Integer index;
 
-    if (lua_gettop(L) < 1 || max_script_vars <= 0) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (lua_gettop(L) < 1 || max_script_vars <= 0)
+        return luaL_error(L, "getscriptvar requires an index and configured script-variable storage");
 
     index = bor_lua_check_legacy_integer(L, 1, "getscriptvar");
     if (index < 0 || index >= max_script_vars) {
@@ -2522,10 +2474,8 @@ static int lua_openbor_setscriptvar(lua_State *L)
 {
     lua_Integer index;
 
-    if (lua_gettop(L) < 2 || max_script_vars <= 0) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (lua_gettop(L) < 2 || max_script_vars <= 0)
+        return luaL_error(L, "setscriptvar requires an index, value, and configured script-variable storage");
 
     index = bor_lua_check_legacy_integer(L, 1, "setscriptvar");
     if (index < 0 || index >= max_script_vars) {
