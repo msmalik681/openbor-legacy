@@ -4549,7 +4549,7 @@ static int lua_openbor_strinlast(lua_State *L)
     const char *match = NULL;
     const char *cursor;
 
-    /* The original implementation searches for the first character of arg 2. */
+    /* Legacy strinlast is character-based, using the first character of arg 2. */
     if (*search) {
         cursor = source;
         while ((cursor = strchr(cursor, *search)) != NULL) {
