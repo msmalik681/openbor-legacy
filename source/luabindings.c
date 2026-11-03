@@ -5115,10 +5115,8 @@ static int lua_openbor_playerkeys(lua_State *L) {
     int i;
     u32 keys;
 
-    if (top < 3) {
-        lua_pushnil(L);
-        return 1;
-    }
+    if (top < 3)
+        return luaL_error(L, "playerkeys expects a player index, key state, and at least one button");
 
     if (lua_type(L, 1) == LUA_TNUMBER)
         index = (int)lua_tonumber(L, 1);
