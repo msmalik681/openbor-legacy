@@ -1144,6 +1144,9 @@ static int lua_openbor_getentityproperty(lua_State *L) {
         return luaL_error(L, "getentityproperty expects an entity and property name or ID");
     property_index = bor_lua_legacy_enum_index(L, 2, bor_lua_getentityproperty_properties,
         sizeof(bor_lua_getentityproperty_properties) / sizeof(bor_lua_getentityproperty_properties[0]));
+    if (!lua_isnil(L, 1) && !lua_islightuserdata(L, 1) &&
+        !luaL_testudata(L, 1, BOR_LUA_ENTITY_METATABLE))
+        return luaL_error(L, "getentityproperty expects an entity handle or nil");
     ent = bor_lua_get_live_entity(L, 1);
     if (!ent || !ent->exists) {
         lua_pushnil(L);
@@ -1673,6 +1676,9 @@ static int lua_openbor_changeentityproperty(lua_State *L) {
         return luaL_error(L, "changeentityproperty expects an entity, property, and value");
     property_index = bor_lua_legacy_enum_index(L, 2, bor_lua_changeentityproperty_properties,
         sizeof(bor_lua_changeentityproperty_properties) / sizeof(bor_lua_changeentityproperty_properties[0]));
+    if (!lua_isnil(L, 1) && !lua_islightuserdata(L, 1) &&
+        !luaL_testudata(L, 1, BOR_LUA_ENTITY_METATABLE))
+        return luaL_error(L, "changeentityproperty expects an entity handle or nil");
     ent = bor_lua_get_live_entity(L, 1);
     if (!ent || !ent->exists) {
         lua_pushinteger(L, 0);
