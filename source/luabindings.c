@@ -3799,10 +3799,10 @@ static int lua_openbor_getmodelproperty(lua_State *L)
     int index;
     int property;
 
-    if (!lua_isinteger(L, 1) || !lua_isinteger(L, 2))
-        return luaL_error(L, "getmodelproperty expects integer model and property indices");
-    index = (int)lua_tointeger(L, 1);
-    property = (int)lua_tointeger(L, 2);
+    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "getmodelproperty expects numeric model and property indices");
+    index = (int)lua_tonumber(L, 1);
+    property = (int)lua_tonumber(L, 2);
     if (index < 0 || (unsigned int)index >= models_cached || !model_cache) {
         lua_pushnil(L);
         return 1;
@@ -3840,10 +3840,10 @@ static int lua_openbor_changemodelproperty(lua_State *L)
     if (lua_gettop(L) < 2)
         return luaL_error(L, "changemodelproperty expects model index and property index");
 
-    if (!lua_isinteger(L, 1) || !lua_isinteger(L, 2))
-        return luaL_error(L, "changemodelproperty expects integer model and property indices");
-    index = (int)lua_tointeger(L, 1);
-    property = (int)lua_tointeger(L, 2);
+    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "changemodelproperty expects numeric model and property indices");
+    index = (int)lua_tonumber(L, 1);
+    property = (int)lua_tonumber(L, 2);
 
     if (index < 0 || (unsigned int)index >= models_cached || !model_cache)
         return 0;
@@ -4566,9 +4566,9 @@ static int lua_openbor_strleft(lua_State *L)
     lua_Integer count;
     size_t length = strlen(source);
 
-    if (!lua_isinteger(L, 2))
-        return luaL_error(L, "strleft requires an integer character count");
-    count = lua_tointeger(L, 2);
+    if (lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "strleft requires a numeric character count");
+    count = (lua_Integer)lua_tonumber(L, 2);
     if (count < 0)
         return luaL_error(L, "strleft character count cannot be negative");
     if ((lua_Unsigned)count > length)
@@ -4594,9 +4594,9 @@ static int lua_openbor_strright(lua_State *L)
     lua_Integer start;
     size_t length = strlen(source);
 
-    if (!lua_isinteger(L, 2))
-        return luaL_error(L, "strright requires an integer start position");
-    start = lua_tointeger(L, 2);
+    if (lua_type(L, 2) != LUA_TNUMBER)
+        return luaL_error(L, "strright requires a numeric start position");
+    start = (lua_Integer)lua_tonumber(L, 2);
     if (start < 0)
         return luaL_error(L, "strright start position cannot be negative");
     if ((lua_Unsigned)start > length)
