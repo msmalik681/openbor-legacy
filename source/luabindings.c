@@ -2741,16 +2741,32 @@ static int lua_openbor_setlocalvar(lua_State *L)
     return 1;
 }
 
+static void bor_lua_clear_table(lua_State *L, int index)
+{
+    index = lua_absindex(L, index);
+    lua_pushnil(L);
+    while (lua_next(L, index) != 0) {
+        lua_pop(L, 1);
+        lua_pushvalue(L, -1);
+        lua_pushnil(L);
+        lua_rawset(L, index);
+    }
+}
+
 static int lua_openbor_clearlocalvar(lua_State *L)
 {
+    /* Clear named variables owned by this script instance. */
     bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
-    lua_newtable(L);
-    lua_replace(L, -2);
+    bor_lua_clear_table(L, -1);
+    lua_pop(L, 1);
 
     /* Script_Local_Clear() also clears this Script instance's indexed slots. */
     bor_lua_push_script_var_table(L);
-    lua_newtable(L);
-    lua_replace(L, -2);
+    bor_lua_clear_table(L, -1);
+    lua_pop(L, 1);
+
+    /* Callback context is the Lua bridge's representation of built-in locals. */
+    bor_lua_clear_localvars(L);
     return 0;
 }
 
