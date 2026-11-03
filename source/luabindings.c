@@ -3799,10 +3799,10 @@ static int lua_openbor_getmodelproperty(lua_State *L)
     int index;
     int property;
 
-    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER)
-        return luaL_error(L, "getmodelproperty expects numeric model and property indices");
-    index = (int)lua_tonumber(L, 1);
-    property = (int)lua_tonumber(L, 2);
+    if (!lua_isinteger(L, 1) || !lua_isinteger(L, 2))
+        return luaL_error(L, "getmodelproperty expects integer model and property indices");
+    index = (int)lua_tointeger(L, 1);
+    property = (int)lua_tointeger(L, 2);
     if (index < 0 || (unsigned int)index >= models_cached || !model_cache) {
         lua_pushnil(L);
         return 1;
@@ -3840,10 +3840,10 @@ static int lua_openbor_changemodelproperty(lua_State *L)
     if (lua_gettop(L) < 2)
         return luaL_error(L, "changemodelproperty expects model index and property index");
 
-    if (lua_type(L, 1) != LUA_TNUMBER || lua_type(L, 2) != LUA_TNUMBER)
-        return luaL_error(L, "changemodelproperty expects numeric model and property indices");
-    index = (int)lua_tonumber(L, 1);
-    property = (int)lua_tonumber(L, 2);
+    if (!lua_isinteger(L, 1) || !lua_isinteger(L, 2))
+        return luaL_error(L, "changemodelproperty expects integer model and property indices");
+    index = (int)lua_tointeger(L, 1);
+    property = (int)lua_tointeger(L, 2);
 
     if (index < 0 || (unsigned int)index >= models_cached || !model_cache)
         return 0;
