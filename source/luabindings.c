@@ -2219,6 +2219,8 @@ static int lua_openbor_get_self(lua_State *L) {
  * These values are installed by the engine immediately around a callback.
  */
 #define BOR_LUA_LOCAL_VARS "OpenBOR.LocalVars"
+#define BOR_LUA_SCRIPT_LOCAL_VARS "OpenBOR.ScriptLocalVars"
+static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_key);
 
 void bor_lua_clear_localvars(lua_State *L)
 {
@@ -2255,8 +2257,8 @@ void bor_lua_set_localvar(lua_State *L, const char *name, int index)
 static int lua_openbor_getlocalvar(lua_State *L) {
     const char *name;
     lua_Debug frame;
-    if (lua_gettop(L) != 1) return luaL_error(L, "getlocalvar expects exactly one name");
-    name = luaL_checkstring(L, 1);
+    if (lua_gettop(L) != 1 || lua_type(L, 1) != LUA_TSTRING) return luaL_error(L, "getlocalvar expects exactly one string name");
+    name = lua_tostring(L, 1);
 
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
     if (lua_istable(L, -1)) {
@@ -2449,7 +2451,6 @@ static int lua_openbor_clearindexedvar(lua_State *L)
 }
 
 #define BOR_LUA_SCRIPT_VARS "OpenBOR.ScriptVars"
-#define BOR_LUA_SCRIPT_LOCAL_VARS "OpenBOR.ScriptLocalVars"
 
 static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_key)
 {
@@ -2790,7 +2791,10 @@ static int lua_openbor_clearglobalvar(lua_State *L)
 
 static int lua_openbor_globalvar(lua_State *L)
 {
-    const char *name = luaL_checkstring(L, 1);
+    const char *name;
+    if (lua_gettop(L) != 1 || lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "globalvar expects exactly one string name");
+    name = lua_tostring(L, 1);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
     lua_pushstring(L, name);
     lua_rawget(L, -2);
@@ -2813,8 +2817,8 @@ static int lua_openbor_globalvar(lua_State *L)
 static int lua_openbor_getglobalvar(lua_State *L)
 {
     const char *name;
-    if (lua_gettop(L) != 1) return luaL_error(L, "getglobalvar expects exactly one name");
-    name = luaL_checkstring(L, 1);
+    if (lua_gettop(L) != 1 || lua_type(L, 1) != LUA_TSTRING) return luaL_error(L, "getglobalvar expects exactly one string name");
+    name = lua_tostring(L, 1);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
     lua_pushstring(L, name);
     lua_rawget(L, -2);
@@ -2825,8 +2829,8 @@ static int lua_openbor_getglobalvar(lua_State *L)
 static int lua_openbor_setglobalvar(lua_State *L)
 {
     const char *name;
-    if (lua_gettop(L) != 2) return luaL_error(L, "setglobalvar expects a name and value");
-    name = luaL_checkstring(L, 1);
+    if (lua_gettop(L) != 2 || lua_type(L, 1) != LUA_TSTRING) return luaL_error(L, "setglobalvar expects a string name and value");
+    name = lua_tostring(L, 1);
     luaL_checkany(L, 2);
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_GLOBAL_VARS);
     lua_pushstring(L, name);
