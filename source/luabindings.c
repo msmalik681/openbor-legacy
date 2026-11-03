@@ -4079,9 +4079,10 @@ static int lua_openbor_changetextobjproperty(lua_State *L)
         char *copy;
         if (lua_type(L, 3) != LUA_TSTRING) return luaL_error(L, "changetextobjproperty text value must be a string");
         value_text = lua_tostring(L, 3);
-        copy = (char *)malloc(strlen(value_text) + 1);
+        copy = (char *)malloc(MAX_STR_VAR_LEN);
         if (!copy) return luaL_error(L, "out of memory changing text object");
-        strcpy(copy, value_text);
+        strncpy(copy, value_text, MAX_STR_VAR_LEN - 1);
+        copy[MAX_STR_VAR_LEN - 1] = '\0';
         free(obj->text);
         obj->text = copy;
     } else {
@@ -4111,9 +4112,10 @@ static int lua_openbor_settextobj(lua_State *L)
     if (index < 0 || index >= LEVEL_MAX_TEXTOBJS) { lua_pushinteger(L, 0); return 1; }
     if (lua_type(L, 6) != LUA_TSTRING) return luaL_error(L, "settextobj text must be a string");
     text = lua_tostring(L, 6);
-    copy = (char *)malloc(strlen(text) + 1);
+    copy = (char *)malloc(MAX_STR_VAR_LEN);
     if (!copy) return luaL_error(L, "out of memory setting text object");
-    strcpy(copy, text);
+    strncpy(copy, text, MAX_STR_VAR_LEN - 1);
+    copy[MAX_STR_VAR_LEN - 1] = '\0';
     obj = &level->textobjs[index];
     if (lua_type(L, 2) == LUA_TNUMBER) obj->x = (int)lua_tonumber(L, 2);
     if (lua_type(L, 3) == LUA_TNUMBER) obj->y = (int)lua_tonumber(L, 3);
