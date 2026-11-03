@@ -2410,9 +2410,20 @@ static int lua_openbor_clearindexedvar(lua_State *L)
 static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_key)
 {
     lua_Debug frame;
+    entity *script_entity = NULL;
 
     if (!lua_getstack(L, 1, &frame) || !lua_getinfo(L, "S", &frame) || !frame.source)
         return luaL_error(L, "script variable access requires a Lua script caller");
+
+    /* Use this callback's self localvar, not a possibly stale engine global. */
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        lua_getfield(L, -1, "self");
+        script_entity = bor_lua_get_live_entity(L, -1);
+        lua_pop(L, 2);
+    } else {
+        lua_pop(L, 1);
+    }
 
     lua_getfield(L, LUA_REGISTRYINDEX, registry_key);
     if (!lua_istable(L, -1))
@@ -2423,12 +2434,12 @@ static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_ke
      * the entity plus calling source identifies that instance: two entities
      * running one source keep independent local and indexed script variables.
      */
-    lua_pushlightuserdata(L, self);
+    lua_pushlightuserdata(L, script_entity);
     lua_rawget(L, -2);
     if (!lua_istable(L, -1)) {
         lua_pop(L, 1);
         lua_newtable(L);
-        lua_pushlightuserdata(L, self);
+        lua_pushlightuserdata(L, script_entity);
         lua_pushvalue(L, -2);
         lua_rawset(L, -4);
     }
