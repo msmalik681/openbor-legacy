@@ -4202,6 +4202,8 @@ static int lua_openbor_getplayerproperty(lua_State *L)
     if (index < 0 || index >= 4) { lua_pushnil(L); return 1; }
     ent = player[index].ent;
     if (!ent) { lua_pushnil(L); return 1; }
+    if (property < 0)
+        return luaL_error(L, "getplayerproperty: unsupported property");
     switch (property) {
     case 0: lua_pushinteger(L, noshare ? player[index].credits : credits); break;
     case 1: case 2: bor_lua_push_entity(L, ent); break;
@@ -4227,7 +4229,8 @@ static int lua_openbor_changeplayerproperty(lua_State *L)
     if (index < 0 || index >= 4) { lua_pushinteger(L, 0); return 1; }
     ent = player[index].ent;
     if (!ent) { lua_pushinteger(L, 1); return 1; }
-    if (property < 0 || property >= 6) { lua_pushinteger(L, 1); return 1; }
+    if (property < 0 || property >= 6)
+        return luaL_error(L, "changeplayerproperty: unsupported property");
     if (property == 5) {
         int weapon, animation = 0;
         if (lua_type(L, 3) != LUA_TNUMBER) goto invalid_value;
