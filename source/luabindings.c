@@ -2330,9 +2330,20 @@ static int bor_lua_count_global_and_local_vars(lua_State *L)
 
     /*
      * The legacy global-variable index is a shared pool of global names and
-     * persistent names owned by each script instance. Callback context values
-     * (self, damage, player, etc.) are transient and do not consume pool slots.
+     * all current local names. This includes the engine-installed callback
+     * values (self, damage, player, etc.) while a script callback is running.
      */
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        table_index = lua_gettop(L);
+        lua_pushnil(L);
+        while (lua_next(L, table_index) != 0) {
+            ++count;
+            lua_pop(L, 1);
+        }
+    }
+    lua_pop(L, 1);
+
     lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
     if (lua_istable(L, -1)) {
         int entity_index = lua_gettop(L);
@@ -2671,6 +2682,28 @@ static int lua_openbor_setlocalvar(lua_State *L)
     if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TSTRING)
         return luaL_error(L, "setlocalvar expects a string name and value");
     name = lua_tostring(L, 1);
+
+    /*
+     * Engine callback arguments are installed as current-script locals.
+     * Updating one of those names must replace the active callback value,
+     * rather than create a second persistent variable with the same name.
+     */
+    lua_getfield(L, LUA_REGISTRYINDEX, BOR_LUA_LOCAL_VARS);
+    if (lua_istable(L, -1)) {
+        lua_pushstring(L, name);
+        lua_rawget(L, -2);
+        if (!lua_isnil(L, -1)) {
+            lua_pop(L, 1);
+            lua_pushstring(L, name);
+            lua_pushvalue(L, 2);
+            lua_rawset(L, -3);
+            lua_pop(L, 1);
+            lua_pushinteger(L, 1);
+            return 1;
+        }
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
 
     if (!lua_isnil(L, 2)) {
         bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
