@@ -3013,7 +3013,12 @@ static int lua_openbor_getfilestreamline(lua_State *L)
            stream->buf[end] != '\n' && stream->buf[end] != '\r')
         ++end;
 
-    lua_pushlstring(L, stream->buf + stream->pos, end - (size_t)stream->pos);
+    {
+        size_t length = end - (size_t)stream->pos;
+        if (length > MAX_STR_VAR_LEN)
+            length = MAX_STR_VAR_LEN;
+        lua_pushlstring(L, stream->buf + stream->pos, length);
+    }
     return 1;
 }
 
@@ -3047,8 +3052,12 @@ static int lua_openbor_getfilestreamargument(lua_State *L)
     line[end - (size_t)stream->pos] = '\0';
 
     value = findarg(line, (int)argument);
-    if (bor_lua_stricmp(type, "string") == 0)
-        lua_pushstring(L, value ? value : "");
+    if (bor_lua_stricmp(type, "string") == 0) {
+        size_t length = value ? strlen(value) : 0;
+        if (length > MAX_STR_VAR_LEN)
+            length = MAX_STR_VAR_LEN;
+        lua_pushlstring(L, value ? value : "", length);
+    }
     else if (bor_lua_stricmp(type, "int") == 0)
         lua_pushinteger(L, value ? (lua_Integer)atoi(value) : 0);
     else if (bor_lua_stricmp(type, "float") == 0)
