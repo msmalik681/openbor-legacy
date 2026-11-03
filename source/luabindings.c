@@ -5191,8 +5191,8 @@ static int lua_openbor_playerkeys(lua_State *L) {
         u32 flag = 0;
         int j;
 
-        if (lua_isinteger(L, i)) {
-            button = lua_tointeger(L, i);
+        if (lua_type(L, i) == LUA_TNUMBER) {
+            button = (lua_Integer)lua_tonumber(L, i);
         } else if (lua_type(L, i) == LUA_TSTRING) {
             const char *name = lua_tostring(L, i);
             for (j = 0; j < (int)(sizeof(buttons) / sizeof(buttons[0])); j++) {
