@@ -2254,6 +2254,7 @@ void bor_lua_set_localvar(lua_State *L, const char *name, int index)
  */
 static int lua_openbor_getlocalvar(lua_State *L) {
     const char *name;
+    lua_Debug frame;
     if (lua_gettop(L) != 1) return luaL_error(L, "getlocalvar expects exactly one name");
     name = luaL_checkstring(L, 1);
 
@@ -2269,7 +2270,7 @@ static int lua_openbor_getlocalvar(lua_State *L) {
     lua_pop(L, 1);
 
     /* Persistent local variables belong to the current script instance. */
-    if (lua_getstack(L, 1, &(lua_Debug){0})) {
+    if (lua_getstack(L, 1, &frame)) {
         bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
         lua_pushstring(L, name);
         lua_rawget(L, -2);
@@ -2777,6 +2778,7 @@ static int lua_openbor_clearglobalvar(lua_State *L)
     /* Legacy resets the shared global/local name pool, not scriptvar slots. */
     lua_newtable(L);
     lua_setfield(L, LUA_REGISTRYINDEX, BOR_LUA_SCRIPT_LOCAL_VARS);
+    bor_lua_clear_localvars(L);
     return 0;
 }
 
