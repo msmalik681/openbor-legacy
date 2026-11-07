@@ -4202,8 +4202,8 @@ static int bor_lua_layer_property(lua_State *L, int foreground, int change, int 
 #define BOR_LAYER_INT(field, id) do { \
     if (property == id) { \
         if (change) { \
-            if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
-            value = (int)lua_tonumber(L, 3); \
+            if (lua_type(L, value_arg) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
+            value = (int)lua_tonumber(L, value_arg); \
             if (foreground) level->fglayers[index].field = value; else level->bglayers[index].field = value; \
             lua_pushinteger(L, 1); \
         } else lua_pushinteger(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
@@ -4213,8 +4213,8 @@ static int bor_lua_layer_property(lua_State *L, int foreground, int change, int 
 #define BOR_LAYER_FLOAT(field, id) do { \
     if (property == id) { \
         if (change) { \
-            if (lua_type(L, 3) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
-            decimal = (float)lua_tonumber(L, 3); \
+            if (lua_type(L, value_arg) != LUA_TNUMBER) { lua_pushinteger(L, 0); return 1; } \
+            decimal = (float)lua_tonumber(L, value_arg); \
             if (foreground) level->fglayers[index].field = decimal; else level->bglayers[index].field = decimal; \
             lua_pushinteger(L, 1); \
         } else lua_pushnumber(L, foreground ? level->fglayers[index].field : level->bglayers[index].field); \
