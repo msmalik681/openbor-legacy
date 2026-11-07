@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"strings"
-	"unicode"
 )
 
 type tokenKind uint8
@@ -202,7 +201,7 @@ func isHexDigit(c byte) bool {
 	return isDigit(c) || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'
 }
 func isIdentifierStart(c byte) bool {
-	return c == '_' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= 0x80 && unicode.IsLetter(rune(c))
+	return c == '_' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
 }
 func isIdentifierPart(c byte) bool {
 	return isIdentifierStart(c) || isDigit(c)
