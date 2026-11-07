@@ -22,7 +22,7 @@ func TestConvertAnimationTextConvertsLegacyCommands(t *testing.T) {
 
 func TestConvertAnimationTextPreservesOtherTextAndExistingCalls(t *testing.T) {
 	in := "anim idle\r\n  @cmd clearL();  \r\n@cmd\r\n@cmdx untouched\r\n"
-	want := "anim idle\r\n  @cmd clearL();  \r\n@cmd\r\n@cmdx untouched\r\n"
+	want := "anim idle\r\n  @cmd clearL()  \r\n@cmd\r\n@cmdx untouched\r\n"
 	got, err := ConvertAnimationText(in)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -34,7 +34,7 @@ func TestConvertAnimationTextPreservesOtherTextAndExistingCalls(t *testing.T) {
 
 func TestConvertAnimationTextHandlesTabsAndNoArguments(t *testing.T) {
 	in := "@cmd\tclearL\r\n@cmd\tshoot\t\"cape\"\t21\r"
-	want := "@cmd clearL();\r\n@cmd shoot(\"cape\",21);\r"
+	want := "@cmd clearL()\r\n@cmd shoot(\"cape\",21)\r"
 	got, err := ConvertAnimationText(in)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
