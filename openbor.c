@@ -54,7 +54,135 @@ s_sprite_map *sprite_map;
 s_anim_list *anim_list;
 s_modelcache *model_cache;
 static char lua_command_scratch[4096];
+static char lua_call_scratch[4096];
 static char lua_frame_scratch[8192];
+
+/*
+ * Convert the legacy whitespace form of an @cmd directive into a Lua call.
+ * The animation parser has already reassembled its argument tokens, so this
+ * scanner only splits on whitespace outside strings and nested expressions.
+ * Parenthesised Lua calls are passed through unchanged.
+ */
+static int bor_lua_build_command_call(const char *source,
+                                      char *output,
+                                      size_t output_size)
+{
+    const char *name_end;
+    const char *p;
+    size_t used = 0;
+    size_t name_length;
+    int argument_count = 0;
+
+    if (!source || !output || output_size == 0)
+        return 0;
+
+    while (*source == ' ' || *source == '\t')
+        source++;
+
+    if (!*source)
+        return 0;
+
+    name_end = source;
+    while (*name_end && *name_end != ' ' && *name_end != '\t' &&
+           *name_end != '(')
+        name_end++;
+
+    name_length = (size_t)(name_end - source);
+    if (name_length == 0)
+        return 0;
+
+    /* Existing Lua call syntax must not be rewritten. */
+    p = name_end;
+    while (*p == ' ' || *p == '\t')
+        p++;
+    if (*name_end == '(' || *p == '(') {
+        size_t length = strlen(source);
+        if (length + 1 > output_size)
+            return 0;
+        memcpy(output, source, length + 1);
+        return 1;
+    }
+
+    if (name_length + 3 > output_size)
+        return 0;
+    memcpy(output, source, name_length);
+    used = name_length;
+    output[used++] = '(';
+    output[used] = '\0';
+
+    p = name_end;
+    while (*p) {
+        const char *token_start;
+        size_t token_length;
+        char quote = 0;
+        int escaped = 0;
+        int paren_depth = 0;
+        int bracket_depth = 0;
+        int brace_depth = 0;
+
+        while (*p == ' ' || *p == '\t')
+            p++;
+        if (!*p)
+            break;
+
+        token_start = p;
+        while (*p) {
+            char ch = *p;
+
+            if (quote) {
+                if (escaped)
+                    escaped = 0;
+                else if (ch == '\\')
+                    escaped = 1;
+                else if (ch == quote)
+                    quote = 0;
+            } else {
+                if (ch == '"' || ch == '\'')
+                    quote = ch;
+                else if (ch == '(')
+                    paren_depth++;
+                else if (ch == ')' && paren_depth > 0)
+                    paren_depth--;
+                else if (ch == '[')
+                    bracket_depth++;
+                else if (ch == ']' && bracket_depth > 0)
+                    bracket_depth--;
+                else if (ch == '{')
+                    brace_depth++;
+                else if (ch == '}' && brace_depth > 0)
+                    brace_depth--;
+                else if ((ch == ' ' || ch == '\t') &&
+                         paren_depth == 0 &&
+                         bracket_depth == 0 &&
+                         brace_depth == 0)
+                    break;
+            }
+            p++;
+        }
+
+        if (quote || paren_depth || bracket_depth || brace_depth)
+            return 0;
+
+        token_length = (size_t)(p - token_start);
+        if (token_length == 0)
+            return 0;
+
+        if (used + token_length + (argument_count ? 1 : 0) + 2 > output_size)
+            return 0;
+        if (argument_count)
+            output[used++] = ',';
+        memcpy(output + used, token_start, token_length);
+        used += token_length;
+        output[used] = '\0';
+        argument_count++;
+    }
+
+    if (used + 2 > output_size)
+        return 0;
+    output[used++] = ')';
+    output[used] = '\0';
+    return 1;
+}
 
 s_player_min_max_z_bgheight player_min_max_z_bgheight = {
 	160, 232, 160
@@ -5482,31 +5610,55 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				    if(ani_id < 0) {
 				        shutdown(1, "command '@cmd' must follow an animation!");
 				    }
-				    
+
 				    lua_command_scratch[0] = '\0';
+				    lua_call_scratch[0] = '\0';
 				    lua_frame_scratch[0] = '\0';
-				    
-				    // Extract the raw command argument tokens
+
+				    /* Reassemble the raw command text. ParseArgs splits on spaces,
+				       including spaces inside quotes, so joining restores the text. */
 				    for(j = 1; j < arglist.count; j++) {
 				        value = GET_ARG(j);
 				        if(value && value[0]) {
-				            if(j > 1) strcat(lua_command_scratch, " ");
-				            if(strlen(lua_command_scratch) + strlen(value) < 4096) {
-				                strcat(lua_command_scratch, value);
+				            size_t used = strlen(lua_command_scratch);
+				            size_t value_length = strlen(value);
+				            size_t separator = used ? 1 : 0;
+				            if(used + separator + value_length >= sizeof(lua_command_scratch)) {
+				                lua_command_scratch[0] = '\0';
+				                break;
 				            }
+				            if(separator)
+				                lua_command_scratch[used++] = ' ';
+				            memcpy(lua_command_scratch + used, value, value_length + 1);
 				        }
 				    }
-				    
+
 				    if(lua_command_scratch[0]) {
-				        // Map the current exact animation and timeline index directly to a global Lua lookup string!
-				        int active_target_frame = newanim ? newanim->numframes : 0;
-				        
-				        snprintf(lua_frame_scratch, sizeof(lua_frame_scratch), 
-				                 "char_%s_anim_%d_frame_%d = function() %s end\n", 
-				                 newchar->name, ani_id, active_target_frame, lua_command_scratch);
-				        
-				        if(strlen(scriptbuf) + strlen(lua_frame_scratch) < (1024 * 1024)) {
-				            strcat(scriptbuf, lua_frame_scratch);
+				        if(!bor_lua_build_command_call(lua_command_scratch,
+				                                       lua_call_scratch,
+				                                       sizeof(lua_call_scratch))) {
+				            printf("Invalid or oversized @cmd directive in '%s', line %u: %s\n",
+				                   filename, line, lua_command_scratch);
+				            break;
+				        }
+
+				        /* Register the call for this exact animation frame. */
+				        {
+				            int active_target_frame = newanim ? newanim->numframes : 0;
+				            int frame_length = snprintf(lua_frame_scratch,
+				                                        sizeof(lua_frame_scratch),
+				                                        "char_%s_anim_%d_frame_%d = function() %s end\n",
+				                                        newchar->name, ani_id,
+				                                        active_target_frame, lua_call_scratch);
+
+				            if(frame_length > 0 &&
+				               (size_t)frame_length < sizeof(lua_frame_scratch) &&
+				               strlen(scriptbuf) + (size_t)frame_length < (1024 * 1024)) {
+				                strcat(scriptbuf, lua_frame_scratch);
+				            } else {
+				                printf("Could not register @cmd directive in '%s', line %u\n",
+				                       filename, line);
+				            }
 				        }
 				    }
 				    break;
