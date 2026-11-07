@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestLexPreservesSourceAndClassifiesTokens(t *testing.T) {
-	source := "void test() {\n  // comment\n  float x = 1.25e-2;\n  char *s = \"a\\\\\"b\";\n  self->health += 1;\n}"
+	source := "void test() {\n  // comment\n  float x = 1.25e-2;\n  char *s = \"a\\\"b\";\n  self->health += 1;\n}"
 	got, err := lex(source)
 	if err != nil {
 		t.Fatalf("lex failed: %v", err)
@@ -27,7 +27,7 @@ func TestLexPreservesSourceAndClassifiesTokens(t *testing.T) {
 	assertToken("void", tokenIdentifier)
 	assertToken("// comment", tokenComment)
 	assertToken("1.25e-2", tokenNumber)
-	assertToken("\"a\\\\\"b\"", tokenString)
+	assertToken("\"a\\\"b\"", tokenString)
 	assertToken("->", tokenOperator)
 	assertToken("+=", tokenOperator)
 }
