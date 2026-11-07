@@ -34,11 +34,13 @@ Build from this directory:
 go build -o openbor-smart .
 ```
 
-Convert an animation text file:
+Convert a script or animation file:
 
 ```sh
-./openbor-smart -in path/to/animation.txt -out converted/animation.txt
+./openbor-smart -in path/to/animation.txt
 ```
+
+The converted file is written beside the input, with its extension replaced by `.lua`. For example, `data/scripts/boss.c` produces `data/scripts/boss.lua`, and `data/chars/player/player.txt` produces `data/chars/player/player.lua`. The original file is left untouched.
 
 Run the tests:
 

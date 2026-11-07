@@ -49,3 +49,20 @@ func TestConvertAnimationTextRejectsUnterminatedQuotedArgument(t *testing.T) {
 		t.Fatal("expected an error for an unterminated quoted argument")
 	}
 }
+
+func TestOutputPathForInput(t *testing.T) {
+	cases := []struct {
+		input string
+		want  string
+	}{
+		{input: "game/data/scripts/boss.c", want: "game/data/scripts/boss.lua"},
+		{input: "game/data/chars/player/player.txt", want: "game/data/chars/player/player.lua"},
+		{input: "script", want: "script.lua"},
+		{input: "boss.C", want: "boss.lua"},
+	}
+	for _, tc := range cases {
+		if got := outputPathForInput(tc.input); got != tc.want {
+			t.Errorf("outputPathForInput(%q) = %q, want %q", tc.input, got, tc.want)
+		}
+	}
+}
