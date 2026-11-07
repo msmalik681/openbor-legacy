@@ -5,6 +5,9 @@
 #include <lauxlib.h>
 #include <string.h>
 #include <stdlib.h>
+
+/* Legacy OpenBOR ScriptVariant string storage limit. */
+#define MAX_STR_VAR_LEN 64
 extern int sprite_map_max_items;
 extern int MAX_WALL_HEIGHT;
 static s_spawn_entry bor_lua_spawnentry;
@@ -2439,6 +2442,7 @@ static int lua_openbor_clearindexedvar(lua_State *L)
     return 0;
 }
 
+#define BOR_LUA_ENTITY_VARS "OpenBOR.EntityVars"
 #define BOR_LUA_SCRIPT_VARS "OpenBOR.ScriptVars"
 
 static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_key)
