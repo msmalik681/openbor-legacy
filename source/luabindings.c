@@ -4185,18 +4185,19 @@ static int lua_openbor_cleartextobj(lua_State *L)
     return 1;
 }
 
-static int bor_lua_layer_property(lua_State *L, int foreground, int change)
+static int bor_lua_layer_property(lua_State *L, int foreground, int change, int offset)
 {
     int index, property, count, value;
+    int index_arg = 1 + offset, property_arg = 2 + offset, value_arg = 3 + offset;
     float decimal;
-    if (lua_gettop(L) < 2 || lua_type(L, 1) != LUA_TNUMBER)
+    if (lua_gettop(L) < property_arg || lua_type(L, index_arg) != LUA_TNUMBER)
         return luaL_error(L, "layer property access expects a numeric index and property name or ID");
-    index = (int)lua_tonumber(L, 1);
+    index = (int)lua_tonumber(L, index_arg);
     if (!level) return luaL_error(L, "layer property access requires a loaded level");
-    if (change && lua_gettop(L) < 3) return luaL_error(L, "layer property change expects a value");
+    if (change && lua_gettop(L) < value_arg) return luaL_error(L, "layer property change expects a value");
     count = foreground ? level->numfglayers : level->numbglayers;
     if (index < 0 || index >= count) { lua_pushinteger(L, 0); return 1; }
-    property = bor_lua_legacy_enum_index(L, 2, bor_lua_layer_properties, 16);
+    property = bor_lua_legacy_enum_index(L, property_arg, bor_lua_layer_properties, 16);
     if (property < 0) return luaL_error(L, "unsupported layer property");
 #define BOR_LAYER_INT(field, id) do { \
     if (property == id) { \
@@ -4243,22 +4244,39 @@ static int bor_lua_layer_property(lua_State *L, int foreground, int change)
 
 static int lua_openbor_getbglayerproperty(lua_State *L)
 {
-    return bor_lua_layer_property(L, 0, 0);
+    return bor_lua_layer_property(L, 0, 0, 0);
 }
 
 static int lua_openbor_changebglayerproperty(lua_State *L)
 {
-    return bor_lua_layer_property(L, 0, 1);
+    return bor_lua_layer_property(L, 0, 1, 0);
 }
 
 static int lua_openbor_getfglayerproperty(lua_State *L)
 {
-    return bor_lua_layer_property(L, 1, 0);
+    return bor_lua_layer_property(L, 1, 0, 0);
 }
 
 static int lua_openbor_changefglayerproperty(lua_State *L)
 {
-    return bor_lua_layer_property(L, 1, 1);
+    return bor_lua_layer_property(L, 1, 1, 0);
+}
+
+/* Generic legacy-style layer setter. This engine currently exposes background
+ * and foreground layer arrays, so only those two layer types are supported. */
+static int lua_openbor_changelayerproperty(lua_State *L)
+{
+    const char *type;
+    int foreground;
+    if (lua_gettop(L) < 4)
+        return luaL_error(L, "changelayerproperty expects type, index, property, and value");
+    if (lua_type(L, 1) != LUA_TSTRING)
+        return luaL_error(L, "changelayerproperty expects a layer type string");
+    type = lua_tostring(L, 1);
+    if (!bor_lua_stricmp(type, "bglayer")) foreground = 0;
+    else if (!bor_lua_stricmp(type, "fglayer")) foreground = 1;
+    else return luaL_error(L, "changelayerproperty supports only 'bglayer' and 'fglayer' in this engine");
+    return bor_lua_layer_property(L, foreground, 1, 1);
 }
 
 /* Legacy player property accessors. */
@@ -5435,6 +5453,9 @@ void openbor_register_lua_api(void) {
 
     lua_pushcfunction(g_lua_engine_state, lua_openbor_changefglayerproperty);
     lua_setglobal(g_lua_engine_state, "changefglayerproperty");
+
+    lua_pushcfunction(g_lua_engine_state, lua_openbor_changelayerproperty);
+    lua_setglobal(g_lua_engine_state, "changelayerproperty");
 
     memset(&bor_lua_spawnentry, 0, sizeof(bor_lua_spawnentry));
     bor_lua_spawnentry.index = -1;
