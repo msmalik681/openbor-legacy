@@ -68,7 +68,7 @@ func convertCommandLine(line string) (string, error) {
 		return "", fmt.Errorf("@cmd: invalid command name %q", command)
 	}
 	if commandEnd == len(rest) {
-		return indent + directive + " " + command + "();", nil
+		return indent + directive + " " + command + "()", nil
 	}
 	args, err := splitLegacyCommandArgs(rest[commandEnd:])
 	if err != nil {
@@ -86,7 +86,7 @@ func convertCommandLine(line string) (string, error) {
 		}
 		result.WriteString(arg)
 	}
-	result.WriteString(");")
+	result.WriteByte(')')
 	return result.String(), nil
 }
 

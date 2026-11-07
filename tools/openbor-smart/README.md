@@ -17,10 +17,10 @@ For example:
 becomes:
 
 ```text
-@cmd changeentityproperty(getlocalvar("self"),"velocity",0,1,0);
+@cmd changeentityproperty(getlocalvar("self"),"velocity",0,1,0)
 ```
 
-Quoted arguments are kept intact, including spaces inside quoted strings. Commands already written with parentheses are not rewritten. A command with no arguments becomes a zero-argument call, such as `@cmd clearL();`.
+Quoted arguments are kept intact, including spaces inside quoted strings. Commands already written with parentheses are not rewritten. A command with no arguments becomes a zero-argument call, such as `@cmd clearL()`.
 
 The current pass treats whitespace outside quoted strings as the separator between command arguments. It does not parse nested expressions containing whitespace, comments, or arbitrary C expressions; those forms must be tested against the original engine before being accepted as supported syntax.
 

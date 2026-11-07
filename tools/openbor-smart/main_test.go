@@ -7,9 +7,9 @@ func TestConvertAnimationTextConvertsLegacyCommands(t *testing.T) {
 		"@cmd shoot \"cape with space\" 21 13 0\n" +
 		"@cmd keyint \"ANI_FREESPECIAL16\" 0 \"UA\" 0 200\n" +
 		"@cmd clearL\n"
-	want := "anim idle\n\t@cmd changeentityproperty(getlocalvar(\"self\"),\"velocity\",0,1,0);\n" +
-		"@cmd shoot(\"cape with space\",21,13,0);\n" +
-		"@cmd keyint(\"ANI_FREESPECIAL16\",0,\"UA\",0,200);\n" +
+	want := "anim idle\n\t@cmd changeentityproperty(getlocalvar(\"self\"),\"velocity\",0,1,0)\n" +
+		"@cmd shoot(\"cape with space\",21,13,0)\n" +
+		"@cmd keyint(\"ANI_FREESPECIAL16\",0,\"UA\",0,200)\n" +
 		"@cmd clearL();\n"
 	got, err := ConvertAnimationText(in)
 	if err != nil {
