@@ -22,7 +22,7 @@ becomes:
 
 Quoted arguments are kept intact, including spaces inside quoted strings. Commands already written with parentheses are not rewritten. A command with no arguments becomes a zero-argument call, such as `@cmd clearL();`.
 
-The current pass follows the legacy command convention: whitespace between top-level command arguments is the argument separator. It does not yet parse arbitrary C expressions containing whitespace; such syntax must be tested against the original engine before being accepted as a supported form.
+The current pass treats whitespace outside quoted strings as the separator between command arguments. It does not parse nested expressions containing whitespace, comments, or arbitrary C expressions; those forms must be tested against the original engine before being accepted as supported syntax.
 
 The actual C-style script-to-Lua conversion is the next major implementation task. It must handle standalone `.c` script files and C-style `@script` blocks embedded in animation text, while preserving legacy function names, callback entry points, and engine API calls. API compatibility checks must use the target-era OpenBOR source (around builds 3000–4000); newer APIs must not be assumed to exist.
 
