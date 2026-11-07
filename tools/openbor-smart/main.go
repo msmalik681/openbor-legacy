@@ -17,6 +17,18 @@ func ConvertAnimationText(input string) (string, error) {
 	return input, nil
 }
 
+func isLuaIdentifier(value string) bool {
+	if value == "" || !isIdentifierStart(value[0]) {
+		return false
+	}
+	for i := 1; i < len(value); i++ {
+		if !isIdentifierPart(value[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func run() error {
 	inputPath := flag.String("in", "", "input animation text file")
 	outputPath := flag.String("out", "", "output file")
