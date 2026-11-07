@@ -5,39 +5,16 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
-func convertCmdLine(line string) (string, bool, error) {
-	trimmed := strings.TrimLeft(line, " \t\r")
-	indent := line[:len(line)-len(trimmed)]
-	fields := strings.Fields(trimmed)
-	if len(fields) == 0 || !strings.EqualFold(fields[0], "@cmd") {
-		return line, false, nil
-	}
-	if len(fields) < 2 {
-		return "", true, fmt.Errorf("@cmd is missing a function name")
-	}
-	return indent + "@cmd " + fields[1] + "(" + strings.Join(fields[2:], ",") + ")", true, nil
-}
-
+// ConvertAnimationText currently preserves animation text verbatim.
+//
+// Legacy OpenBOR already accepts whitespace-separated @cmd arguments. Rewriting
+// those commands as parenthesized Lua calls would change valid source text and
+// can break expressions containing spaces, quotes, or nested calls. Animation
+// script blocks will be translated by a separate, syntax-aware conversion pass.
 func ConvertAnimationText(input string) (string, error) {
-	lines := strings.Split(input, "\n")
-	for i, line := range lines {
-		cr := strings.HasSuffix(line, "\r")
-		body := strings.TrimSuffix(line, "\r")
-		converted, changed, err := convertCmdLine(body)
-		if err != nil {
-			return "", fmt.Errorf("line %d: %w", i+1, err)
-		}
-		if changed {
-			if cr {
-				converted += "\r"
-			}
-			lines[i] = converted
-		}
-	}
-	return strings.Join(lines, "\n"), nil
+	return input, nil
 }
 
 func run() error {
