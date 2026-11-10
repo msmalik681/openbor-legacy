@@ -11,6 +11,479 @@
 extern int sprite_map_max_items;
 extern int MAX_WALL_HEIGHT;
 static s_spawn_entry bor_lua_spawnentry;
+
+/*
+ * Accept the OpenBOR-style function wrapper:
+ *
+ *     function test(int number)
+ *     {
+ *         ...
+ *     }
+ *
+ * Lua itself receives:
+ *
+ *     function test(number)
+ *         ...
+ *     end
+ *
+ * This is deliberately limited to function wrappers and parameter
+ * declarations. Normal Lua table constructors, strings, and comments
+ * are left untouched. The source buffer is never modified.
+ */
+typedef struct bor_lua_source_edit {
+    size_t start;
+    size_t end;
+    const char *replacement;
+    size_t replacement_length;
+} bor_lua_source_edit;
+
+static int bor_lua_source_edit_compare(const void *left, const void *right)
+{
+    const bor_lua_source_edit *a = (const bor_lua_source_edit *)left;
+    const bor_lua_source_edit *b = (const bor_lua_source_edit *)right;
+
+    if (a->start < b->start) return -1;
+    if (a->start > b->start) return 1;
+    return 0;
+}
+
+static int bor_lua_add_source_edit(bor_lua_source_edit **edits,
+                                   size_t *count,
+                                   size_t *capacity,
+                                   size_t start,
+                                   size_t end,
+                                   const char *replacement,
+                                   size_t replacement_length)
+{
+    bor_lua_source_edit *grown;
+
+    if (*count == *capacity) {
+        size_t new_capacity = *capacity ? *capacity * 2 : 16;
+        grown = (bor_lua_source_edit *)realloc(
+            *edits, new_capacity * sizeof(bor_lua_source_edit));
+        if (!grown)
+            return 0;
+        *edits = grown;
+        *capacity = new_capacity;
+    }
+
+    (*edits)[*count].start = start;
+    (*edits)[*count].end = end;
+    (*edits)[*count].replacement = replacement;
+    (*edits)[*count].replacement_length = replacement_length;
+    (*count)++;
+    return 1;
+}
+
+static int bor_lua_source_ident_start(char c)
+{
+    return (c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z') || c == '_';
+}
+
+static int bor_lua_source_ident_part(char c)
+{
+    return bor_lua_source_ident_start(c) || (c >= '0' && c <= '9');
+}
+
+static int bor_lua_source_space(char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' ||
+           c == '\r' || c == '\v' || c == '\f';
+}
+
+/* Return the end of a Lua long-bracket string/comment, or start if absent. */
+static size_t bor_lua_skip_long_bracket(const char *source,
+                                        size_t size,
+                                        size_t start)
+{
+    size_t p = start + 1;
+    size_t equals = 0;
+    size_t q;
+
+    if (start >= size || source[start] != '[')
+        return start;
+
+    while (p < size && source[p] == '=') {
+        equals++;
+        p++;
+    }
+    if (p >= size || source[p] != '[')
+        return start;
+
+    p++;
+    while (p < size) {
+        if (source[p] == ']') {
+            q = p + 1;
+            while (q < size && source[q] == '=' && q - (p + 1) < equals)
+                q++;
+            if (q - (p + 1) == equals && q < size && source[q] == ']')
+                return q + 1;
+        }
+        p++;
+    }
+
+    return size;
+}
+
+/* Skip a quoted string, Lua long string, or Lua comment at position start. */
+static size_t bor_lua_skip_lexical_item(const char *source,
+                                        size_t size,
+                                        size_t start)
+{
+    size_t p;
+
+    if (start >= size)
+        return start;
+
+    if (source[start] == '"' || source[start] == '\'') {
+        char quote = source[start];
+        p = start + 1;
+        while (p < size) {
+            if (source[p] == '\\') {
+                p += (p + 1 < size) ? 2 : 1;
+                continue;
+            }
+            if (source[p] == quote)
+                return p + 1;
+            p++;
+        }
+        return size;
+    }
+
+    if (source[start] == '[') {
+        p = bor_lua_skip_long_bracket(source, size, start);
+        if (p != start)
+            return p;
+    }
+
+    if (source[start] == '-' && start + 1 < size &&
+        source[start + 1] == '-') {
+        p = start + 2;
+        if (p < size && source[p] == '[') {
+            size_t long_end = bor_lua_skip_long_bracket(source, size, p);
+            if (long_end != p)
+                return long_end;
+        }
+        while (p < size && source[p] != '\n' && source[p] != '\r')
+            p++;
+        return p;
+    }
+
+    return start;
+}
+
+static size_t bor_lua_skip_source_trivia(const char *source,
+                                         size_t size,
+                                         size_t position)
+{
+    size_t next;
+
+    while (position < size) {
+        if (bor_lua_source_space(source[position])) {
+            position++;
+            continue;
+        }
+        next = bor_lua_skip_lexical_item(source, size, position);
+        if (next != position) {
+            position = next;
+            continue;
+        }
+        break;
+    }
+    return position;
+}
+
+static int bor_lua_find_matching_source_delimiter(const char *source,
+                                                  size_t size,
+                                                  size_t open_position,
+                                                  char open_char,
+                                                  char close_char,
+                                                  size_t *close_position)
+{
+    size_t p;
+    size_t depth = 1;
+
+    if (open_position >= size || source[open_position] != open_char)
+        return 0;
+
+    p = open_position + 1;
+    while (p < size) {
+        size_t next = bor_lua_skip_lexical_item(source, size, p);
+        if (next != p) {
+            p = next;
+            continue;
+        }
+
+        if (source[p] == open_char) {
+            depth++;
+        } else if (source[p] == close_char) {
+            depth--;
+            if (depth == 0) {
+                *close_position = p;
+                return 1;
+            }
+        }
+        p++;
+    }
+
+    return 0;
+}
+
+/*
+ * Remove a C-style type prefix from each simple function parameter.
+ * A parameter containing more than one identifier before its comma is
+ * treated as a typed declaration only when its tokens are identifiers,
+ * pointer/reference markers, and whitespace. Ordinary Lua parameters
+ * are a single identifier and are therefore preserved.
+ */
+static int bor_lua_add_typed_parameter_edits(const char *source,
+                                             size_t start,
+                                             size_t end,
+                                             bor_lua_source_edit **edits,
+                                             size_t *edit_count,
+                                             size_t *edit_capacity)
+{
+    size_t segment = start;
+    size_t p = start;
+    size_t last_identifier = 0;
+    size_t first_identifier = 0;
+    size_t identifier_count = 0;
+    int valid_prefix = 1;
+
+    while (p <= end) {
+        int at_separator = (p == end);
+        size_t next;
+
+        if (!at_separator) {
+            next = bor_lua_skip_lexical_item(source, end, p);
+            if (next != p) {
+                p = next;
+                continue;
+            }
+            if (source[p] == '(') {
+                size_t close;
+                if (bor_lua_find_matching_source_delimiter(
+                        source, end, p, '(', ')', &close)) {
+                    p = close + 1;
+                    continue;
+                }
+            }
+            if (source[p] != ',') {
+                p++;
+                continue;
+            }
+        }
+
+        {
+            size_t q = segment;
+            size_t name_start = 0;
+            size_t names = 0;
+            int simple_declaration = 1;
+
+            while (q < p) {
+                if (bor_lua_source_space(source[q])) {
+                    q++;
+                } else if (bor_lua_source_ident_start(source[q])) {
+                    size_t token_start = q++;
+                    while (q < p && bor_lua_source_ident_part(source[q]))
+                        q++;
+                    if (names == 0)
+                        first_identifier = token_start;
+                    last_identifier = token_start;
+                    name_start = token_start;
+                    names++;
+                } else if (source[q] == '*' || source[q] == '&') {
+                    q++;
+                } else {
+                    simple_declaration = 0;
+                    break;
+                }
+            }
+
+            if (simple_declaration && names >= 2) {
+                if (!bor_lua_add_source_edit(edits, edit_count,
+                                             edit_capacity,
+                                             first_identifier,
+                                             name_start, "", 0))
+                    return 0;
+            } else if (simple_declaration && names == 1) {
+                size_t token_end = name_start;
+                while (token_end < p &&
+                       bor_lua_source_ident_part(source[token_end]))
+                    token_end++;
+                if (token_end - name_start == 4 &&
+                    memcmp(source + name_start, "void", 4) == 0) {
+                    if (!bor_lua_add_source_edit(edits, edit_count,
+                                                 edit_capacity,
+                                                 name_start, token_end, "", 0))
+                        return 0;
+                }
+            }
+        }
+
+        if (at_separator)
+            break;
+        segment = p + 1;
+        p++;
+    }
+
+    (void)last_identifier;
+    (void)identifier_count;
+    (void)valid_prefix;
+    return 1;
+}
+
+/*
+ * Build a temporary Lua-compatible source buffer. Return 1 when a new
+ * buffer was produced, 0 when the input is already standard Lua, and -1
+ * on allocation failure.
+ */
+static int bor_lua_preprocess_function_syntax(const char *source,
+                                               size_t size,
+                                               char **output,
+                                               size_t *output_size)
+{
+    bor_lua_source_edit *edits = NULL;
+    size_t edit_count = 0;
+    size_t edit_capacity = 0;
+    size_t p = 0;
+    size_t i;
+    size_t cursor;
+    size_t capacity;
+    char *converted;
+
+    *output = NULL;
+    *output_size = size;
+
+    while (p < size) {
+        size_t next = bor_lua_skip_lexical_item(source, size, p);
+        if (next != p) {
+            p = next;
+            continue;
+        }
+
+        if (bor_lua_source_ident_start(source[p])) {
+            size_t word_start = p;
+            size_t word_end = p + 1;
+            while (word_end < size &&
+                   bor_lua_source_ident_part(source[word_end]))
+                word_end++;
+
+            if (word_end - word_start == 8 &&
+                memcmp(source + word_start, "function", 8) == 0) {
+                size_t open_paren;
+                size_t close_paren;
+                size_t body_open;
+                size_t body_close;
+                size_t name_pos;
+
+                name_pos = bor_lua_skip_source_trivia(source, size, word_end);
+                if (name_pos < size && bor_lua_source_ident_start(source[name_pos])) {
+                    name_pos++;
+                    while (name_pos < size) {
+                        size_t after = bor_lua_skip_source_trivia(source, size, name_pos);
+                        if (after < size &&
+                            (source[after] == '.' || source[after] == ':')) {
+                            after++;
+                            after = bor_lua_skip_source_trivia(source, size, after);
+                            if (after < size && bor_lua_source_ident_start(source[after])) {
+                                name_pos = after + 1;
+                                continue;
+                            }
+                        }
+                        name_pos = after;
+                        break;
+                    }
+                }
+
+                open_paren = bor_lua_skip_source_trivia(source, size, name_pos);
+                if (open_paren < size && source[open_paren] == '(' &&
+                    bor_lua_find_matching_source_delimiter(
+                        source, size, open_paren, '(', ')', &close_paren)) {
+                    body_open = bor_lua_skip_source_trivia(
+                        source, size, close_paren + 1);
+                    if (body_open < size && source[body_open] == '{' &&
+                        bor_lua_find_matching_source_delimiter(
+                            source, size, body_open, '{', '}', &body_close)) {
+                        if (!bor_lua_add_typed_parameter_edits(
+                                source, open_paren + 1, close_paren,
+                                &edits, &edit_count, &edit_capacity) ||
+                            !bor_lua_add_source_edit(
+                                &edits, &edit_count, &edit_capacity,
+                                body_open, body_open + 1, "", 0) ||
+                            !bor_lua_add_source_edit(
+                                &edits, &edit_count, &edit_capacity,
+                                body_close, body_close + 1, "end", 3)) {
+                            free(edits);
+                            return -1;
+                        }
+                    }
+                }
+            }
+
+            p = word_end;
+        } else {
+            p++;
+        }
+    }
+
+    if (edit_count == 0) {
+        free(edits);
+        return 0;
+    }
+
+    qsort(edits, edit_count, sizeof(bor_lua_source_edit),
+          bor_lua_source_edit_compare);
+
+    if (size > ((size_t)-1) - (edit_count * 3) - 1) {
+        free(edits);
+        return -1;
+    }
+    capacity = size + edit_count * 3 + 1;
+    converted = (char *)malloc(capacity);
+    if (!converted) {
+        free(edits);
+        return -1;
+    }
+
+    cursor = 0;
+    i = 0;
+    {
+        size_t used = 0;
+        for (i = 0; i < edit_count; i++) {
+            size_t unchanged;
+
+            if (edits[i].start < cursor || edits[i].end < edits[i].start ||
+                edits[i].end > size) {
+                free(converted);
+                free(edits);
+                return -1;
+            }
+
+            unchanged = edits[i].start - cursor;
+            memcpy(converted + used, source + cursor, unchanged);
+            used += unchanged;
+            if (edits[i].replacement_length) {
+                memcpy(converted + used, edits[i].replacement,
+                       edits[i].replacement_length);
+                used += edits[i].replacement_length;
+            }
+            cursor = edits[i].end;
+        }
+
+        memcpy(converted + used, source + cursor, size - cursor);
+        used += size - cursor;
+        converted[used] = '\0';
+        *output = converted;
+        *output_size = used;
+    }
+
+    free(edits);
+    return 1;
+}
+
+
 /*
  * Common Lua -> C execution boundary.
  *
@@ -56,13 +529,28 @@ int bor_lua_runbuffer(lua_State *L, const char *buffer, size_t size,
                       const char *source)
 {
     int status;
+    char *converted = NULL;
+    size_t converted_size = size;
+    const char *lua_source = buffer;
+    int preprocess_status;
 
     if (!L || !buffer)
         return LUA_ERRRUN;
 
-    status = luaL_loadbufferx(L, buffer, size,
+    preprocess_status = bor_lua_preprocess_function_syntax(
+        buffer, size, &converted, &converted_size);
+    if (preprocess_status < 0) {
+        lua_pushliteral(L, "out of memory while preprocessing OpenBOR function syntax");
+        bor_lua_log_error(L, source ? source : "Lua preprocess");
+        return LUA_ERRMEM;
+    }
+    if (preprocess_status > 0)
+        lua_source = converted;
+
+    status = luaL_loadbufferx(L, lua_source, converted_size,
                              source ? source : "OpenBOR Lua buffer",
                              NULL);
+    free(converted);
 
     if (status != LUA_OK)
     {
