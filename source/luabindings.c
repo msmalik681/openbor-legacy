@@ -331,6 +331,122 @@ static int bor_lua_add_typed_parameter_edits(const char *source,
 }
 
 /*
+ * Convert simple C-style local declarations at the start of a statement
+ * into Lua locals. Only the type keyword is replaced, so initializers and
+ * Lua expressions remain byte-for-byte unchanged.
+ *
+ * Supported scalar type keywords are intentionally conservative. Arrays,
+ * structs, pointers, and declarations embedded in for-loop headers are not
+ * rewritten by this pass.
+ */
+static int bor_lua_add_typed_local_edits(const char *source,
+                                         size_t start,
+                                         size_t end,
+                                         bor_lua_source_edit **edits,
+                                         size_t *edit_count,
+                                         size_t *edit_capacity)
+{
+    static const char *const types[] = {
+        "int", "float", "double", "char", "long", "short",
+        "unsigned", "signed", "bool"
+    };
+    size_t p = start;
+    int line_start = 1;
+
+    while (p < end) {
+        size_t next = bor_lua_skip_lexical_item(source, end, p);
+        if (next != p) {
+            /* A newline inside a long string/comment still ends the line. */
+            size_t q;
+            for (q = p; q < next; q++) {
+                if (source[q] == '\n' || source[q] == '\r')
+                    line_start = 1;
+            }
+            p = next;
+            continue;
+        }
+
+        if (source[p] == '\n' || source[p] == '\r') {
+            line_start = 1;
+            p++;
+            continue;
+        }
+
+        if (line_start && (source[p] == ' ' || source[p] == '\t')) {
+            p++;
+            continue;
+        }
+
+        if (line_start && bor_lua_source_ident_start(source[p])) {
+            size_t word_end = p + 1;
+            size_t q;
+            size_t type_index;
+            int is_type = 0;
+
+            while (word_end < end &&
+                   bor_lua_source_ident_part(source[word_end]))
+                word_end++;
+
+            for (type_index = 0;
+                 type_index < sizeof(types) / sizeof(types[0]);
+                 type_index++) {
+                size_t type_length = strlen(types[type_index]);
+                if (word_end - p == type_length &&
+                    memcmp(source + p, types[type_index], type_length) == 0) {
+                    is_type = 1;
+                    break;
+                }
+            }
+
+            if (is_type) {
+                q = word_end;
+                if (q < end && bor_lua_source_space(source[q])) {
+                    while (q < end && bor_lua_source_space(source[q]) &&
+                           source[q] != '\n' && source[q] != '\r')
+                        q++;
+
+                    if (q < end && bor_lua_source_ident_start(source[q])) {
+                        size_t name_end = q + 1;
+                        size_t after_name;
+
+                        while (name_end < end &&
+                               bor_lua_source_ident_part(source[name_end]))
+                            name_end++;
+                        after_name = name_end;
+
+                        while (after_name < end &&
+                               (source[after_name] == ' ' ||
+                                source[after_name] == '\t'))
+                            after_name++;
+
+                        if (after_name < end &&
+                            (source[after_name] == '=' ||
+                             source[after_name] == ';' ||
+                             source[after_name] == ',')) {
+                            if (!bor_lua_add_source_edit(
+                                    edits, edit_count, edit_capacity,
+                                    p, word_end, "local",
+                                    sizeof("local") - 1))
+                                return 0;
+                        }
+                    }
+                }
+            }
+
+            line_start = 0;
+            p = word_end;
+            continue;
+        }
+
+        if (!bor_lua_source_space(source[p]))
+            line_start = 0;
+        p++;
+    }
+
+    return 1;
+}
+
+/*
  * Build a temporary Lua-compatible source buffer. Return 1 when a new
  * buffer was produced, 0 when the input is already standard Lua, and -1
  * on allocation failure.
@@ -412,6 +528,9 @@ static int bor_lua_preprocess_function_syntax(const char *source,
                             source, size, body_open, '{', '}', &body_close)) {
                         if (!bor_lua_add_typed_parameter_edits(
                                 source, open_paren + 1, close_paren,
+                                &edits, &edit_count, &edit_capacity) ||
+                            !bor_lua_add_typed_local_edits(
+                                source, body_open + 1, body_close,
                                 &edits, &edit_count, &edit_capacity) ||
                             !bor_lua_add_source_edit(
                                 &edits, &edit_count, &edit_capacity,
