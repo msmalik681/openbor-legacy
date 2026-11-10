@@ -376,7 +376,12 @@ static int bor_lua_preprocess_function_syntax(const char *source,
 
                 name_pos = bor_lua_skip_source_trivia(source, size, word_end);
                 if (name_pos < size && bor_lua_source_ident_start(source[name_pos])) {
-                    name_pos++;
+                    /* Consume the complete function name, not just its first character. */
+                    while (name_pos < size &&
+                           bor_lua_source_ident_part(source[name_pos]))
+                        name_pos++;
+
+                    /* Also accept dotted or method-style function names. */
                     while (name_pos < size) {
                         size_t after = bor_lua_skip_source_trivia(source, size, name_pos);
                         if (after < size &&
@@ -385,6 +390,9 @@ static int bor_lua_preprocess_function_syntax(const char *source,
                             after = bor_lua_skip_source_trivia(source, size, after);
                             if (after < size && bor_lua_source_ident_start(source[after])) {
                                 name_pos = after + 1;
+                                while (name_pos < size &&
+                                       bor_lua_source_ident_part(source[name_pos]))
+                                    name_pos++;
                                 continue;
                             }
                         }
