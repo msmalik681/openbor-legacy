@@ -59,6 +59,9 @@ static int bor_lua_add_source_edit(bor_lua_source_edit **edits,
 
     if (*count == *capacity) {
         size_t new_capacity = *capacity ? *capacity * 2 : 16;
+        if (new_capacity < *capacity ||
+            new_capacity > ((size_t)-1) / sizeof(bor_lua_source_edit))
+            return 0;
         grown = (bor_lua_source_edit *)realloc(
             *edits, new_capacity * sizeof(bor_lua_source_edit));
         if (!grown)
@@ -246,10 +249,7 @@ static int bor_lua_add_typed_parameter_edits(const char *source,
 {
     size_t segment = start;
     size_t p = start;
-    size_t last_identifier = 0;
     size_t first_identifier = 0;
-    size_t identifier_count = 0;
-    int valid_prefix = 1;
 
     while (p <= end) {
         int at_separator = (p == end);
@@ -290,7 +290,6 @@ static int bor_lua_add_typed_parameter_edits(const char *source,
                         q++;
                     if (names == 0)
                         first_identifier = token_start;
-                    last_identifier = token_start;
                     name_start = token_start;
                     names++;
                 } else if (source[q] == '*' || source[q] == '&') {
@@ -328,9 +327,6 @@ static int bor_lua_add_typed_parameter_edits(const char *source,
         p++;
     }
 
-    (void)last_identifier;
-    (void)identifier_count;
-    (void)valid_prefix;
     return 1;
 }
 
@@ -436,7 +432,7 @@ static int bor_lua_preprocess_function_syntax(const char *source,
     qsort(edits, edit_count, sizeof(bor_lua_source_edit),
           bor_lua_source_edit_compare);
 
-    if (size > ((size_t)-1) - (edit_count * 3) - 1) {
+    if (edit_count > (((size_t)-1) - size - 1) / 3) {
         free(edits);
         return -1;
     }
