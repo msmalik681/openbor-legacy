@@ -1,0 +1,22 @@
+name: OpenBOR Smart C Port
+
+on:
+  push:
+    branches: [full-lua-support]
+    paths:
+      - "tools/openbor-smart/c/**"
+      - ".github/workflows/openbor-smart-c.yml"
+  pull_request:
+    paths:
+      - "tools/openbor-smart/c/**"
+      - ".github/workflows/openbor-smart-c.yml"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build C converter
+        run: make -C tools/openbor-smart/c
+      - name: Run C converter regression tests
+        run: make -C tools/openbor-smart/c test
