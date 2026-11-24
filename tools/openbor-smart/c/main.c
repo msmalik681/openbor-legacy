@@ -28,7 +28,7 @@ static char *join_path(const char*a,const char*b){
  memcpy(p+na,b,nb+1);return p;
 }
 static char *replace_extension(const char*path){
- const char*dot=strrchr(path,'.');const char*slash1=strrchr(path,'/');const char*slash2=strrchr(path,'\\\\');
+ const char*dot=strrchr(path,'.');const char*slash1=strrchr(path,'/');const char*slash2=strrchr(path,'\\');
  size_t base_len,total;char*out;
  if(slash1&&(!slash2||slash1>slash2)){}else if(slash2)slash1=slash2;
  if(!dot||(slash1&&dot<slash1))dot=path+strlen(path);
