@@ -106,7 +106,7 @@ static Statement *parse_statement(Parser *p);
 static Statement *parse_block(Parser *p) {
     Statement *s=new_stmt(ST_BLOCK);
     if(!s)return NULL;
-    while(!at_end(p) && strcmp(cur(p),"}")) {
+    while(!at_end(p) && strcmp(cur(p),"}") && (!p->error || !p->error[0])) {
         Statement *child=parse_statement(p);
         if(!child || !add_stmt(&s->as.block.items,&s->as.block.count,child)) return s;
     }
@@ -194,13 +194,13 @@ static Statement *parse_statement(Parser *p) {
     if(accept(p,"switch")) {
         s=new_stmt(ST_SWITCH);s->as.switch_stmt.expression=parenthesized(p,"switch");
         if(!accept(p,"{")){fail(p,"expected '{' after switch");return s;}
-        while(!at_end(p)&&strcmp(cur(p),"}")) {
+        while(!at_end(p)&&strcmp(cur(p),"}")&&(!p->error||!p->error[0])) {
             SwitchCase item;memset(&item,0,sizeof(item));
             if(accept(p,"case"))item.value=collect_until(p,":",NULL);
             else if(accept(p,"default"))item.is_default=1;
             else {fail(p,"expected case or default label");break;}
             if(!accept(p,":")){fail(p,"expected ':' after switch label");break;}
-            while(!at_end(p)&&strcmp(cur(p),"}")&&strcmp(cur(p),"case")&&strcmp(cur(p),"default")) {
+            while(!at_end(p)&&strcmp(cur(p),"}")&&strcmp(cur(p),"case")&&strcmp(cur(p),"default")&&(!p->error||!p->error[0])) {
                 Statement *child=parse_statement(p);
                 Statement **q=(Statement **)realloc(item.statements,(item.count+1)*sizeof(*q));
                 if(!q)break;item.statements=q;item.statements[item.count++]=child;
@@ -223,7 +223,7 @@ int parse_c_source(const char *source,FunctionList *out,char *error,size_t error
     TokenList all; Parser p; size_t i; memset(out,0,sizeof(*out));
     if(error&&error_size)error[0]='\0';
     if(!lex_source(source,&all,error,error_size))return 0;
-    p.source=source;p.tokens=(Token *)malloc(all.count*sizeof(Token));p.count=0;p.pos=0;p.n=0;p.error=error;p.error_size=error_size;
+    p.source=source;p.tokens=(Token *)malloc(all.count*sizeof(Token));p.count=0;p.pos=0;p.error=error;p.error_size=error_size;
     if(all.count&&!p.tokens){free_tokens(&all);return 0;}
     for(i=0;i<all.count;i++)if(all.items[i].kind!=TOK_WHITESPACE&&all.items[i].kind!=TOK_COMMENT)p.tokens[p.count++]=all.items[i];
     for(i=0;i<all.count;i++)if(all.items[i].kind==TOK_WHITESPACE||all.items[i].kind==TOK_COMMENT)free(all.items[i].text);
