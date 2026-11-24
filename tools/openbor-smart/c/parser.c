@@ -208,7 +208,9 @@ static Statement *parse_statement(Parser *p) {
             {SwitchCase *q=(SwitchCase *)realloc(s->as.switch_stmt.cases,(s->as.switch_stmt.count+1)*sizeof(*q));
              if(!q)break;s->as.switch_stmt.cases=q;q[s->as.switch_stmt.count++]=item;}
         }
-        if(!accept(p,"}"))fail(p,"expected '}' after switch");\n        if(!s->as.switch_stmt.count)fail(p,"switch requires at least one case");\n        return s;
+        if(!accept(p,"}"))fail(p,"expected '}' after switch");
+        if(!s->as.switch_stmt.count)fail(p,"switch requires at least one case");
+        return s;
     }
     if(type_word(cur(p)))return parse_declaration(p);
     expr=collect_until(p,";",NULL);
