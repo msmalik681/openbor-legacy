@@ -207,7 +207,7 @@ static char *lvalue(const Expr*e,char*error,size_t es){
 char *statement_expression_to_lua(const char*source,char*error,size_t error_size){
  Expr*e=parse_c_expression(source,error,error_size);char*out=NULL,*a=NULL,*b=NULL;Buffer x={0};const char*op=NULL;
  if(!e)return NULL;
- if(e->kind==EXPR_UNARY&&(!strcmp(e->text,"++")||!strcmp(e->text,"--"))&&!e->flag){
+ if(e->kind==EXPR_UNARY&&(!strcmp(e->text,"++")||!strcmp(e->text,"--"))){
   a=lvalue(e->left,error,error_size);if(a){putsb(&x,a);putsb(&x," = ");putsb(&x,a);putsb(&x,!strcmp(e->text,"++")?" + 1":" - 1");out=finish(&x);}free(a);
  }else if(e->kind==EXPR_BINARY&&e->text&&strchr(e->text,'=')&&strcmp(e->text,"==")&&strcmp(e->text,"!=")&&strcmp(e->text,"<=")&&strcmp(e->text,">=")){
   a=lvalue(e->left,error,error_size);b=emit(e->right,error,error_size);
