@@ -14,7 +14,8 @@ static int append_n(Writer*w,const char*s,size_t n){
 }
 static int append(Writer*w,const char*s){return append_n(w,s,strlen(s));}
 static int line(Writer*w,const char*s){int i;for(i=0;i<w->indent;i++)if(!append(w,"\t"))return 0;return append(w,s)&&append(w,"\n");}
-static void seterr(char*e,size_t n,const char*s){if(e&&n&&!e[0])snprintf(e,n,"%s",s);}\nstatic char *copy_string(const char*s){size_t n=strlen(s);char*p=(char*)malloc(n+1);if(p)memcpy(p,s,n+1);return p;}
+static void seterr(char*e,size_t n,const char*s){if(e&&n&&!e[0])snprintf(e,n,"%s",s);}
+static char *copy_string(const char*s){size_t n=strlen(s);char*p=(char*)malloc(n+1);if(p)memcpy(p,s,n+1);return p;}
 static char *expr_lua(const char*s,char*error,size_t es){
  Expr*e=parse_c_expression(s,error,es);char*out;if(!e)return NULL;out=expression_to_lua(e,error,es);free_expression(e);return out;
 }
