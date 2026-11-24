@@ -255,8 +255,10 @@ int parse_c_source(const char *source,FunctionList *out,char *error,size_t error
         fn.body=parse_block(&p);
         if(!fn.body||!add_function(out,fn)){fail(&p,"out of memory");break;}
     }
+    for(i=0;i<p.count;i++)free(p.tokens[i].text);
     free(p.tokens);
-    return !error||!error[0];
+    if(error&&error_size&&error[0]){free_function_list(out);return 0;}
+    return 1;
 }
 static void free_statement(Statement *s) {
     size_t i,j;if(!s)return;
