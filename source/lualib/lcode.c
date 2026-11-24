@@ -1141,8 +1141,13 @@ void luaK_goiftrue (FuncState *fs, expdesc *e) {
       pc = e->u.info;  /* save jump position */
       break;
     }
-    case VK: case VKFLT: case VKINT: case VKSTR: case VTRUE: {
+    case VK: case VKSTR: case VTRUE: {
       pc = NO_JUMP;  /* always true; do nothing */
+      break;
+    }
+    /* Numeric constants must be tested at runtime: OpenBOR treats zero as false. */
+    case VKFLT: case VKINT: {
+      pc = jumponcond(fs, e, 0);  /* jump when false */
       break;
     }
     default: {
@@ -1191,8 +1196,16 @@ static void codenot (FuncState *fs, expdesc *e) {
       e->k = VTRUE;  /* true == not nil == not false */
       break;
     }
-    case VK: case VKFLT: case VKINT: case VKSTR: case VTRUE: {
-      e->k = VFALSE;  /* false == not "x" == not 0.5 == not 1 == not true */
+    case VK: case VKSTR: case VTRUE: {
+      e->k = VFALSE;  /* false == not "x" == not true */
+      break;
+    }
+    /* Numeric constants need OP_NOT so zero follows OpenBOR truthiness. */
+    case VKFLT: case VKINT: {
+      discharge2anyreg(fs, e);
+      freeexp(fs, e);
+      e->u.info = luaK_codeABC(fs, OP_NOT, 0, e->u.info, 0);
+      e->k = VRELOC;
       break;
     }
     case VJMP: {
