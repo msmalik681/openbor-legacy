@@ -14,7 +14,7 @@ static int append_n(Writer*w,const char*s,size_t n){
 }
 static int append(Writer*w,const char*s){return append_n(w,s,strlen(s));}
 static int line(Writer*w,const char*s){int i;for(i=0;i<w->indent;i++)if(!append(w,"\t"))return 0;return append(w,s)&&append(w,"\n");}
-static void seterr(char*e,size_t n,const char*s){if(e&&n&&!e[0])snprintf(e,n,"%s",s);}
+static void seterr(char*e,size_t n,const char*s){if(e&&n&&!e[0])snprintf(e,n,"%s",s);}\nstatic char *copy_string(const char*s){size_t n=strlen(s);char*p=(char*)malloc(n+1);if(p)memcpy(p,s,n+1);return p;}
 static char *expr_lua(const char*s,char*error,size_t es){
  Expr*e=parse_c_expression(s,error,es);char*out;if(!e)return NULL;out=expression_to_lua(e,error,es);free_expression(e);return out;
 }
@@ -86,7 +86,7 @@ static int emit_statement(Writer*w,const Statement*s,char*error,size_t es){
   if(s->as.for_stmt.initializer&&!emit_statement(w,s->as.for_stmt.initializer,error,es))return 0;
   a=s->as.for_stmt.condition&&*s->as.for_stmt.condition?expr_lua(s->as.for_stmt.condition,error,es):NULL;
   if(s->as.for_stmt.condition&&*s->as.for_stmt.condition&&!a)return 0;
-  if(!a)a=strdup("true");
+  if(!a)a=copy_string("true");
   {Writer q={0};append(&q,"while ");append(&q,a);append(&q," do");free(a);if(!line(w,q.data)){free(q.data);return 0;}free(q.data);}
   ++w->indent;if(!emit_statement(w,s->as.for_stmt.body,error,es))return 0;
   if(s->as.for_stmt.post&&*s->as.for_stmt.post){a=statement_expression_to_lua(s->as.for_stmt.post,error,es);if(!a)return 0;i=line(w,a);free(a);if(!i)return 0;}
