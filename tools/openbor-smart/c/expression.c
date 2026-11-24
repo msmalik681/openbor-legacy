@@ -137,13 +137,19 @@ static char *emit2(const char*a,const char*op,const char*b){Buffer x={0};putsb(&
 static void set_error(char*e,size_t n,const char*s){if(e&&n&&!e[0])snprintf(e,n,"%s",s);}
 static int is_string(const Expr*e){return e&&e->kind==EXPR_LITERAL&&e->flag==TOK_STRING;}
 static char *number_text(const char*s){
- Buffer b={0};size_t n=strlen(s),i;char*lower=dup_n(s,n);
+ size_t n=strlen(s),i;char*lower=dup_n(s,n);int hex;
  for(i=0;i<n;i++)lower[i]=(char)tolower((unsigned char)lower[i]);
- n=strlen(lower);while(n&&strchr("ulf",lower[n-1]))lower[--n]=0;
- if(n>1&&lower[0]=='0'&&lower[1]>='0'&&lower[1]<='7'&&!strpbrk(lower,".eppx")){
+ hex=n>1&&lower[0]=='0'&&lower[1]=='x';
+ if(hex){
+  if(strchr(lower,'p')&&n&&lower[n-1]=='f')lower[--n]=0;
+  while(n&& (lower[n-1]=='u'||lower[n-1]=='l'))lower[--n]=0;
+ }else{
+  while(n&&strchr("ulf",lower[n-1]))lower[--n]=0;
+ }
+ if(!hex&&n>1&&lower[0]=='0'&&lower[1]>='0'&&lower[1]<='7'&&!strpbrk(lower,".e")){
   char*end;long v=strtol(lower,&end,8);if(*end==0){char tmp[64];snprintf(tmp,sizeof(tmp),"%ld",v);free(lower);return dup_n(tmp,strlen(tmp));}
  }
- (void)b;return lower;
+ return lower;
 }
 static char *emit(const Expr*e,char*error,size_t es){
  char *a=NULL,*b=NULL,*c=NULL,*out=NULL;Buffer x={0};size_t i;
