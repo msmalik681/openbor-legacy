@@ -24,6 +24,7 @@ int main(void){
  check(lua!=NULL,"source converter handles functions and control flow");
  if(lua){
   check(strstr(lua,"function test(player)")!=NULL,"function signature emitted");
+  check(strstr(lua,"function test(player)\\n\\tdo\\n")==NULL,"function body does not add an unnecessary scope");
   check(strstr(lua,"local health = 100")!=NULL,"local declaration emitted");
   check(strstr(lua,"if ((health > 0) and (player ~= 0)) then")!=NULL,"logical expression translated");
   check(strstr(lua,"health = health - (10)")!=NULL,"compound assignment translated");
