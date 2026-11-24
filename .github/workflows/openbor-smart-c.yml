@@ -4,11 +4,11 @@ on:
   push:
     branches: [full-lua-support]
     paths:
-      - "tools/openbor-smart/c/**"
+      - "tools/openbor-smart/**"
       - ".github/workflows/openbor-smart-c.yml"
   pull_request:
     paths:
-      - "tools/openbor-smart/c/**"
+      - "tools/openbor-smart/**"
       - ".github/workflows/openbor-smart-c.yml"
 
 jobs:
@@ -17,6 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build C converter
-        run: make -C tools/openbor-smart/c
+        run: make -C tools/openbor-smart
       - name: Run C converter regression tests
-        run: make -C tools/openbor-smart/c test
+        run: make -C tools/openbor-smart test
