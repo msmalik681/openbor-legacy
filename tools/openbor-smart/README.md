@@ -2,15 +2,15 @@
 
 **System, Media, Automated Rewrite Technology**
 
-OpenBOR-SMART converts legacy C-style OpenBOR script functions into Lua. The maintained implementation is written in **C99** and uses only the standard C library.
+OpenBOR-SMART converts legacy C-style OpenBOR script functions into Lua. The maintained implementation is written in **C99** and uses only the standard C library. All C source files, the Makefile, and regression tests are located directly in this directory.
 
 ## Build
 
-From this directory:
+From `tools/openbor-smart/`:
 
 ```sh
-make -C c
-make -C c test
+make
+make test
 ```
 
 This builds `c/openbor-smart-c` and runs the C converter regression tests.
@@ -18,7 +18,7 @@ This builds `c/openbor-smart-c` and runs the C converter regression tests.
 ## Convert one script
 
 ```sh
-./c/openbor-smart-c -in data/scripts/boss.c
+./openbor-smart-c -in data/scripts/boss.c
 ```
 
 This creates `data/scripts/boss.lua` and leaves the original file untouched.
@@ -28,13 +28,13 @@ This creates `data/scripts/boss.lua` and leaves the original file untouched.
 Convert every `.c` file in a folder and its subfolders:
 
 ```sh
-./c/openbor-smart-c -in /path/to/game/data/scripts -recursive
+./openbor-smart-c -in /path/to/game/data/scripts -recursive
 ```
 
 By default, each `.lua` file is written beside its source `.c` file. To write into a separate directory while preserving the folder structure:
 
 ```sh
-./c/openbor-smart-c -in /path/to/game/data/scripts -recursive -out /path/to/converted-scripts
+./openbor-smart-c -in /path/to/game/data/scripts -recursive -out /path/to/converted-scripts
 ```
 
 Existing output files are never overwritten unless `-force` is supplied. Batch conversion reports each failed file and exits with an error if any file could not be converted.
