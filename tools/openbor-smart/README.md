@@ -13,7 +13,7 @@ make
 make test
 ```
 
-This builds `c/openbor-smart-c` and runs the C converter regression tests.
+This builds `openbor-smart-c` and runs the C converter regression tests.
 
 ## Convert one script
 
