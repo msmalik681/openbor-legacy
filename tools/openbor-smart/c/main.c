@@ -28,10 +28,13 @@ static char *join_path(const char*a,const char*b){
  memcpy(p+na,b,nb+1);return p;
 }
 static char *replace_extension(const char*path){
- const char*dot=strrchr(path,'.');const char*slash1=strrchr(path,'/');const char*slash2=strrchr(path,'\\');
+ const char*dot=strrchr(path,'.');const char*slash1=strrchr(path,'/');const char*slash2=strrchr(path,'\\\\');
+ size_t base_len,total;char*out;
  if(slash1&&(!slash2||slash1>slash2)){}else if(slash2)slash1=slash2;
- if(!dot||(slash1&&dot<slash1))return join_path(path,".lua");
- return join_path(copy_n(path,(size_t)(dot-path)),".lua");
+ if(!dot||(slash1&&dot<slash1))dot=path+strlen(path);
+ base_len=(size_t)(dot-path);total=base_len+5;
+ out=(char*)malloc(total);if(!out)return NULL;
+ memcpy(out,path,base_len);memcpy(out+base_len,".lua",5);return out;
 }
 static char *base_name(const char*path){const char*a=strrchr(path,'/'),*b=strrchr(path,'\\'),*p=a;if(b&&(!p||b>p))p=b;return copy_s(p?p+1:path);}
 static int mkdirs(const char*path){
