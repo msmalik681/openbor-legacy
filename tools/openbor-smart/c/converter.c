@@ -124,7 +124,11 @@ char *convert_c_source(const char*source,char*error,size_t error_size){
   append(&q,"function ");append(&q,f->name);append(&q,"(");
   for(j=0;j<f->parameter_count;j++){if(j)append(&q,", ");append(&q,f->parameters[j]);}
   append(&q,")");if(!line(&w,q.data)){free(q.data);goto fail;}free(q.data);
-  ++w.indent;if(!emit_statement(&w,f->body,error,error_size))goto fail;--w.indent;
+  ++w.indent;
+  if(f->body && f->body->kind == ST_BLOCK) {
+   if(!emit_block(&w,f->body,error,error_size))goto fail;
+  } else if(!emit_statement(&w,f->body,error,error_size))goto fail;
+  --w.indent;
   if(!line(&w,"end"))goto fail;
  }
  free_function_list(&functions);return w.data;
