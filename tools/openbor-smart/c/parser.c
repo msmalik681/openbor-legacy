@@ -223,7 +223,7 @@ int parse_c_source(const char *source,FunctionList *out,char *error,size_t error
     TokenList all; Parser p; size_t i; memset(out,0,sizeof(*out));
     if(error&&error_size)error[0]='\0';
     if(!lex_source(source,&all,error,error_size))return 0;
-    p.source=source;p.tokens=(Token *)malloc(all.count*sizeof(Token));p.count=0;p.pos=0;p.error=error;p.error_size=error_size;
+    p.source=source;p.tokens=(Token *)malloc(all.count*sizeof(Token));p.count=0;p.pos=0;p.n=0;p.error=error;p.error_size=error_size;
     if(all.count&&!p.tokens){free_tokens(&all);return 0;}
     for(i=0;i<all.count;i++)if(all.items[i].kind!=TOK_WHITESPACE&&all.items[i].kind!=TOK_COMMENT)p.tokens[p.count++]=all.items[i];
     for(i=0;i<all.count;i++)if(all.items[i].kind==TOK_WHITESPACE||all.items[i].kind==TOK_COMMENT)free(all.items[i].text);
