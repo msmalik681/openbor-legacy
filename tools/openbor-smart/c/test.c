@@ -37,6 +37,21 @@ int main(void){
  if(lua){check(strstr(lua,"values[(0) + 1] = 10")!=NULL,"C array indexes shifted to Lua");free(lua);}
  lua=convert_c_source("void test() { int value = sizeof(int); }",error,sizeof(error));
  check(lua==NULL,"unsupported sizeof reports an error");free(lua);
+
+ lua=convert_c_source("int choose(int value) { do { value--; } while (value > 10); return value > 0 ? value : 0; }",error,sizeof(error));
+ check(lua!=NULL,"do-while and ternary expressions convert");
+ if(lua){check(strstr(lua,"until not ((value > 10))")!=NULL,"do-while condition preserved");
+  check(strstr(lua,"if (value > 0) then return value else return 0 end")!=NULL,"ternary expression emitted");free(lua);}
+ lua=convert_c_source("void test(int state) { switch (state) { case 1: activate(); break; case 2: return; default: reset(); break; } }",error,sizeof(error));
+ check(lua!=NULL,"switch statements convert");
+ if(lua){check(strstr(lua,"elseif state == 2 then")!=NULL,"switch cases emitted");check(strstr(lua,"until true")!=NULL,"switch exit emitted");free(lua);}
+ lua=convert_c_source("void update() { int rush = 4; void self = getplayerproperty(0, \"entity\"); drawstring(21, 80, 1, \"Bonus_\"+25*rush); if (self == NULL()) { drawstring(1, 1, 1, \"none\"); } }",error,sizeof(error));
+ check(lua!=NULL,"legacy string concatenation and NULL convert");
+ if(lua){check(strstr(lua,"\"Bonus_\" .. tostring((25 * rush))")!=NULL,"legacy string concatenation translated");check(strstr(lua,"self == nil")!=NULL,"NULL() translated to nil");free(lua);}
+ lua=convert_c_source("void test() { int *pointer; }",error,sizeof(error));
+ check(lua==NULL,"unsupported pointer declarations are rejected");
+ lua=convert_c_source("void test(int state) { switch (state) { case 1: activate(); case 2: reset(); break; } }",error,sizeof(error));
+ check(lua==NULL,"switch fallthrough is rejected");
  if(failures){fprintf(stderr,"%d test(s) failed\n",failures);return 1;}
  puts("All C converter tests passed.");return 0;
 }
