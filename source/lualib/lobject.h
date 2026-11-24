@@ -244,7 +244,12 @@ typedef union {
 #define ttistrue(o)		checktag((o), LUA_VTRUE)
 
 
-#define l_isfalse(o)	(ttisfalse(o) || ttisnil(o))
+/*
+** Legacy OpenBOR scripts use C-style truthiness: numeric zero is false.
+** Keep Lua's existing false/nil handling and also treat integer and float
+** zero as false throughout the VM (if, while, not, and/or, and lua_toboolean).
+*/
+#define l_isfalse(o)	(ttisfalse(o) || ttisnil(o) || (ttisnumber(o) && nvalue(o) == 0))
 
 
 #define setbfvalue(obj)		settt_(obj, LUA_VFALSE)
