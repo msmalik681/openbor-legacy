@@ -133,7 +133,7 @@ func (w *luaWriter) statement(stmt cStatement) error {
 			condition, err = luaExpression(s.Condition)
 			if err != nil { return fmt.Errorf("for condition: %w", err) }
 		}
-		w.line("while __openbor_smart_truth(" + condition + ") do")
+		w.line("while " + condition + " do")
 		w.indent++
 		if err := w.statement(s.Body); err != nil { return err }
 		if strings.TrimSpace(s.Post) != "" {
