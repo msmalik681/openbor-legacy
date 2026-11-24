@@ -233,7 +233,7 @@ int parse_c_source(const char *source,FunctionList *out,char *error,size_t error
         Token *start=current(&p);fn.line=start?start->line:1;
         fn.return_type=parse_type(&p);
         if(!fn.return_type)break;
-        while(accept(&p,"*")){} /* pointer return types are retained as type spelling later */
+        while(accept(&p,"*")){} /* Pointer return types do not affect Lua function syntax. */
         if(!current(&p)||current(&p)->kind!=TOK_IDENTIFIER){fail(&p,"expected function name");break;}
         fn.name=copy_text(cur(&p),strlen(cur(&p)));++p.pos;
         if(!accept(&p,"(")){fail(&p,"expected '(' after function name");break;}
