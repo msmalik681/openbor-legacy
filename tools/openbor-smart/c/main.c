@@ -47,7 +47,7 @@ static char *read_file(const char*path,size_t*size){
  data[n]=0;fclose(f);if(size)*size=(size_t)n;return data;
 }
 static int write_file(const char*path,const char*data){
- FILE*f=fopen(path,"wb");size_t n=strlen(data);int ok;if(!f)return 0;ok=fwrite(data,1,n,f)==n&&fclose(f)==0;return ok;
+ FILE*f=fopen(path,"wb");size_t n=strlen(data);int ok;if(!f)return 0;ok=fwrite(data,1,n,f)==n;if(fclose(f)!=0)ok=0;return ok;
 }
 static int add_path(Paths*p,const char*path){
  char**q=(char**)realloc(p->items,(p->count+1)*sizeof(*q));if(!q)return 0;p->items=q;p->items[p->count++]=copy_s(path);return 1;
