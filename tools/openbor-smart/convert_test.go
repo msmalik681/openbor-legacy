@@ -22,13 +22,14 @@ func TestConvertCSourceFunctionsAndControlFlow(t *testing.T) {
 }`
 	got, err := ConvertCSource(source)
 	if err != nil { t.Fatalf("ConvertCSource failed: %v", err) }
+	if strings.Contains(got, "__openbor_smart_truth") { t.Fatalf("converter should rely on engine truthiness, got:\n%s", got) }
 	for _, want := range []string{
 		"function test(player)",
 		"local health = 100",
-		"if __openbor_smart_truth(((health > 0) and (player ~= 0))) then",
+		"if ((health > 0) and (player ~= 0)) then",
 		"health = health - (10)",
 		"local i = 0",
-		"while __openbor_smart_truth((i < 3)) do",
+		"while (i < 3) do",
 		"i = i + 1",
 		"return",
 	} {
@@ -56,8 +57,8 @@ func TestConvertCSourceTernaryAndDoWhile(t *testing.T) {
 }`
 	got, err := ConvertCSource(source)
 	if err != nil { t.Fatalf("ConvertCSource failed: %v", err) }
-	if !strings.Contains(got, "until not __openbor_smart_truth((value > 10))") { t.Errorf("do-while conversion missing:\n%s", got) }
-	if !strings.Contains(got, "if __openbor_smart_truth((value > 0)) then return value else return 0 end") { t.Errorf("ternary conversion missing:\n%s", got) }
+	if !strings.Contains(got, "until not ((value > 10))") { t.Errorf("do-while conversion missing:\n%s", got) }
+	if !strings.Contains(got, "if (value > 0) then return value else return 0 end") { t.Errorf("ternary conversion missing:\n%s", got) }
 }
 
 func TestConvertCSourceRejectsUnsupportedPointerOperations(t *testing.T) {
@@ -124,7 +125,7 @@ func TestConvertCSourceLegacyStringConcatenationAndNull(t *testing.T) {
 	if err != nil { t.Fatalf("ConvertCSource failed: %v", err) }
 	for _, want := range []string{
 		`("Bonus_" .. tostring((25 * rush)))`,
-			"if __openbor_smart_truth((self == nil)) then",
+			"if (self == nil) then",
 	} {
 		if !strings.Contains(got, want) { t.Errorf("converted Lua missing %q:\\n%s", want, got) }
 	}
