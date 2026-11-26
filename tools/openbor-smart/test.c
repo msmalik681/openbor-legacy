@@ -45,6 +45,10 @@ int main(void){
  if(lua){check(strstr(lua,"-- OPENBOR_SMART_LUA")!=NULL,"converted script marker emitted");
   check(strstr(lua,"function") == NULL,"embedded body is emitted without a nested function");
   check(strstr(lua,"frame data/test")!=NULL,"animation text outside script is preserved");free(lua);}
+ lua=convert_animation_text("anim idle\n@script\nint a = 1;\n@end_script\nanim walk\n@script\nint b = 2;\n@end_script\n",error,sizeof(error));
+ check(lua!=NULL,"multiple embedded script blocks convert");
+ if(lua){const char *first=strstr(lua,"local a = 1"),*second=strstr(lua,"local b = 2");
+  check(first && second && first < second,"multiple script blocks retain order");free(lua);}
  lua=convert_c_source("void test() { int value = sizeof(int); }",error,sizeof(error));
  check(lua==NULL,"unsupported sizeof reports an error");free(lua);
 

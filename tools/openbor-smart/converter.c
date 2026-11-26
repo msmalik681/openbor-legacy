@@ -202,7 +202,7 @@ char *convert_animation_text(const char *source, char *error, size_t error_size)
 
     while ((script_tag = find_line_tag(cursor, "@script")) != NULL) {
         const char *script_line = script_tag;
-        const char *body_start, *end_tag, *end_line;
+        const char *body_start, *end_tag, *end_line, *after_end_line;
         const char *marker;
         char *body, *lua_body;
         size_t body_length;
@@ -221,18 +221,15 @@ char *convert_animation_text(const char *source, char *error, size_t error_size)
         }
         end_line = end_tag;
         while (end_line > body_start && end_line[-1] != '\n') --end_line;
+        after_end_line = strchr(end_tag, '\n');
+        if (after_end_line) ++after_end_line;
+        else after_end_line = end_tag + strlen("@end_script");
 
         marker = body_start;
         while (marker < end_line && (*marker == ' ' || *marker == '\t' || *marker == '\r' || *marker == '\n')) ++marker;
         if (strncmp(marker, "-- OPENBOR_SMART_LUA", 20) == 0) {
-            if (!append_text(&output, cursor, (size_t)(end_line - cursor))) goto oom;
-            cursor = end_line;
-            script_tag = find_line_tag(cursor, "@end_script");
-            if (!script_tag) {
-                seterr(error, error_size, "unterminated converted @script block");
-                goto fail;
-            }
-            cursor = script_tag;
+            if (!append_text(&output, cursor, (size_t)(after_end_line - cursor))) goto oom;
+            cursor = after_end_line;
             continue;
         }
 
@@ -248,12 +245,13 @@ char *convert_animation_text(const char *source, char *error, size_t error_size)
         if (!append_text(&output, cursor, (size_t)(body_start - cursor)) ||
             !append(&output, "-- OPENBOR_SMART_LUA\n") ||
             !append(&output, lua_body) ||
-            !append(&output, "\n")) {
+            !append(&output, "\n") ||
+            !append_text(&output, end_line, (size_t)(after_end_line - end_line))) {
             free(lua_body);
             goto oom;
         }
         free(lua_body);
-        cursor = end_line;
+        cursor = after_end_line;
     }
 
     if (!append(&output, cursor ? cursor : "")) goto oom;
