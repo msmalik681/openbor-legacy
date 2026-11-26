@@ -5594,17 +5594,72 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				case CMD_MODEL_UNSUMMONFRAME:
 					newanim->unsummonframe = GET_INT_ARG(1);
 					break;
-				case CMD_MODEL_AT_SCRIPT:
-				    if(ani_id < 0) {
-				        shutdown(1, "command '@script' must follow an animation!");
+					case CMD_MODEL_AT_SCRIPT:
+				    {
+				        char *script_start = buf + pos;
+				        char *script_end = NULL;
+				        char *lua_body = NULL;
+				        size_t script_length = 0;
+				        size_t script_used = strlen(scriptbuf);
+				        size_t header_length = 0;
+				        size_t suffix_length = 0;
+				        char *marker;
+				        size_t k;
+
+				        if(ani_id < 0 || !newanim) {
+				            shutdown(1, "command '@script' must follow an animation!");
+				        }
+
+				        script_end = strstr(script_start, "@end_script");
+				        if(!script_end) {
+				            shutdown(1, "unterminated '@script' block in '%s', line %u", filename, line);
+				        }
+
+				        /* Only execute blocks explicitly converted to Lua. Unconverted
+				           legacy C blocks retain the old skip behaviour. */
+				        marker = script_start;
+				        while(marker < script_end && (*marker == ' ' || *marker == '\t' ||
+				              *marker == '\r' || *marker == '\n')) marker++;
+
+				        if(strncmp(marker, "-- OPENBOR_SMART_LUA", 20) == 0) {
+				            lua_body = strchr(marker, '\n');
+				            if(lua_body) {
+				                ++lua_body;
+				                while(lua_body < script_end &&
+				                      (*lua_body == ' ' || *lua_body == '\t' ||
+				                       *lua_body == '\r' || *lua_body == '\n')) lua_body++;
+				            } else {
+				                lua_body = script_end;
+				            }
+
+				            script_length = (size_t)(script_end - lua_body);
+				            header_length = (size_t)snprintf(lua_frame_scratch,
+				                sizeof(lua_frame_scratch),
+				                "char_%s_anim_%d_frame_%d = function()\n"
+				                "    local frame = getlocalvar(\"frame\")\n",
+				                newchar->name, ani_id, newanim->numframes);
+				            suffix_length = strlen("\nend\n");
+
+				            if(header_length >= sizeof(lua_frame_scratch) ||
+				               script_used + header_length + script_length + suffix_length >= 1024 * 1024) {
+				                shutdown(1, "Lua @script block too large in '%s', line %u", filename, line);
+				            }
+
+				            memcpy(scriptbuf + script_used, lua_frame_scratch, header_length);
+				            script_used += header_length;
+				            memcpy(scriptbuf + script_used, lua_body, script_length);
+				            script_used += script_length;
+				            memcpy(scriptbuf + script_used, "\nend\n", suffix_length);
+				            script_used += suffix_length;
+				            scriptbuf[script_used] = '\0';
+				        }
+
+				        for(k = 0; script_start + k < script_end; ++k) {
+				            if(script_start[k] == '\n') line++;
+				        }
+				        pos = (ptrdiff_t)(script_end - buf) + 11;
+				        break;
 				    }
-				    // Skip processing text content inside the legacy phrase evaluator entirely.
-				    // Instead, skip forward directly to the dismount tag:
-				    while(pos < size && strncmp(buf + pos, "@end_script", 11)) {
-				        pos++;
-				    }
-				    pos += 11; // Safely bypass uncompiled C blocks
-				    break;
 				
 				case CMD_MODEL_AT_CMD:
 				    if(ani_id < 0) {
