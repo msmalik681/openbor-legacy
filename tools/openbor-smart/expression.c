@@ -210,6 +210,21 @@ static char *lvalue(const Expr*e,char*error,size_t es){
  if(e->kind==EXPR_INDEX){a=emit(e->left,error,es);b=emit(e->right,error,es);if(!a||!b){free(a);free(b);return NULL;}putsb(&x,a);putsb(&x,"[(");putsb(&x,b);putsb(&x,") + 1]");free(a);free(b);return finish(&x);}
  set_error(error,es,"assignment target is not a supported variable");return NULL;
 }
+static int expression_has_side_effect(const Expr *e){
+ size_t i;
+ if(!e)return 0;
+ if(e->kind==EXPR_CALL)return 1;
+ if(e->kind==EXPR_UNARY&&e->text&&(!strcmp(e->text,"++")||!strcmp(e->text,"--")))return 1;
+ if(e->kind==EXPR_BINARY&&e->text&&
+    (!strcmp(e->text,"=")||!strcmp(e->text,"+=")||!strcmp(e->text,"-=")||
+     !strcmp(e->text,"*=")||!strcmp(e->text,"/=")||!strcmp(e->text,"%=")||
+     !strcmp(e->text,"<<=")||!strcmp(e->text,">>=")||!strcmp(e->text,"&=")||
+     !strcmp(e->text,"^=")||!strcmp(e->text,"|=")))return 1;
+ if(expression_has_side_effect(e->left)||expression_has_side_effect(e->right)||
+    expression_has_side_effect(e->third))return 1;
+ for(i=0;i<e->count;i++)if(expression_has_side_effect(e->items[i]))return 1;
+ return 0;
+}
 char *statement_expression_to_lua(const char*source,char*error,size_t error_size){
  Expr*e=parse_c_expression(source,error,error_size);char*out=NULL,*a=NULL,*b=NULL;Buffer x={0};const char*op=NULL;
  if(!e)return NULL;
@@ -219,6 +234,15 @@ char *statement_expression_to_lua(const char*source,char*error,size_t error_size
   a=lvalue(e->left,error,error_size);b=emit(e->right,error,error_size);
   if(a&&b){op=e->text;if(!strcmp(op,"=")){putsb(&x,a);putsb(&x," = ");putsb(&x,b);}else{size_t n=strlen(op);char oper[4];if(n>1){memcpy(oper,op,n-1);oper[n-1]=0;}else oper[0]=0;putsb(&x,a);putsb(&x," = ");putsb(&x,a);putsb(&x," ");putsb(&x,oper);putsb(&x," (");putsb(&x,b);putsb(&x,")");}out=finish(&x);}
   free(a);free(b);
- }else out=emit(e,error,error_size);
+ }else if(!expression_has_side_effect(e)){
+  out=dup_n("",0);
+ }else{
+  out=emit(e,error,error_size);
+  if(out&&e->kind!=EXPR_CALL){
+   Buffer wrapped={0};
+   putsb(&wrapped,"do local _ = ");putsb(&wrapped,out);putsb(&wrapped," end");
+   free(out);out=finish(&wrapped);
+  }
+ }
  free_expression(e);return out;
 }
