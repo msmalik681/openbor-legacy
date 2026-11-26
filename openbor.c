@@ -9451,15 +9451,9 @@ void update_frame(entity * ent, int f) {
 
 			lua_getglobal(g_lua_engine_state, lookup_func);
 			if (lua_isfunction(g_lua_engine_state, -1)) {
-				printf("[LUA TIMELINE] Calling %s (model=%s anim=%d frame=%d)\n",
-				       lookup_func, self->modeldata.name, self->animnum, self->animpos);
-				fflush(stdout);
 				if (bor_lua_pcall(g_lua_engine_state, 0, 0, "animation frame") != LUA_OK) {
 					printf("[LUA CONSOLE RUNTIME ERROR] %s\n", lua_tostring(g_lua_engine_state, -1));
 					lua_pop(g_lua_engine_state, 1);
-				} else {
-					printf("[LUA TIMELINE] Returned from %s\n", lookup_func);
-					fflush(stdout);
 				}
 			} else {
 				lua_pop(g_lua_engine_state, 1); // Clears lookup nil cleanly
