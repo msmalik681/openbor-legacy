@@ -1,8 +1,10 @@
+#include <lua.h>
+#include <lauxlib.h>
+
 #include "openbor.h"
 #include "data.h"
 #include "models.h"
 #include "luabindings.h"
-#include <lauxlib.h>
 #include <string.h>
 #include <stdlib.h>
 
