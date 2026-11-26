@@ -5637,11 +5637,15 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				            shutdown(1, "unterminated '@script' block in '%s', line %u", filename, line);
 				        }
 
-				        marker = script_start;
-				        while(marker < script_end && (*marker == ' ' || *marker == '\t' ||
-				              *marker == '\r' || *marker == '\n')) marker++;
+				        marker = strchr(script_start, '\n');
+				        if(marker) {
+				            ++marker;
+				            while(marker < script_end && (*marker == ' ' || *marker == '\t' ||
+				                  *marker == '\r' || *marker == '\n')) marker++;
+				        }
 
-				        if(strncmp(marker, "-- OPENBOR_SMART_LUA", 20) == 0) {
+				        if(marker && marker < script_end &&
+				           strncmp(marker, "-- OPENBOR_SMART_LUA", 20) == 0) {
 				            lua_body = strchr(marker, '\n');
 				            if(lua_body) {
 				                ++lua_body;
