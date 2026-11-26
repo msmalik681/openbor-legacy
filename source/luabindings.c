@@ -3060,21 +3060,21 @@ static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_ke
 {
     lua_Debug frame;
 
-    printf("[LUA SCOPE] enter L=%p top=%d key_ptr=%p self=%p\\n",
+    printf("[LUA SCOPE] enter L=%p top=%d key_ptr=%p self=%p\n",
            (void *)L, lua_gettop(L), (const void *)registry_key, (void *)self);
     fflush(stdout);
 
     if (!lua_getstack(L, 1, &frame) || !lua_getinfo(L, "S", &frame) || !frame.source)
         return luaL_error(L, "script variable access requires a Lua script caller");
 
-    printf("[LUA SCOPE] caller source_ptr=%p top=%d\\n",
+    printf("[LUA SCOPE] caller source_ptr=%p top=%d\n",
            (const void *)frame.source, lua_gettop(L));
     fflush(stdout);
 
-    printf("[LUA SCOPE] registry lookup\\n");
+    printf("[LUA SCOPE] registry lookup\n");
     fflush(stdout);
     lua_getfield(L, LUA_REGISTRYINDEX, registry_key);
-    printf("[LUA SCOPE] registry lookup returned type=%d top=%d\\n",
+    printf("[LUA SCOPE] registry lookup returned type=%d top=%d\n",
            lua_type(L, -1), lua_gettop(L));
     fflush(stdout);
     if (!lua_istable(L, -1))
@@ -3090,11 +3090,11 @@ static int bor_lua_push_script_scope_table(lua_State *L, const char *registry_ke
         lua_rawset(L, -4);
     }
 
-    printf("[LUA SCOPE] source lookup source_ptr=%p top=%d\\n",
+    printf("[LUA SCOPE] source lookup source_ptr=%p top=%d\n",
            (const void *)frame.source, lua_gettop(L));
     fflush(stdout);
     lua_getfield(L, -1, frame.source);
-    printf("[LUA SCOPE] source lookup returned type=%d top=%d\\n",
+    printf("[LUA SCOPE] source lookup returned type=%d top=%d\n",
            lua_type(L, -1), lua_gettop(L));
     fflush(stdout);
     if (!lua_istable(L, -1)) {
