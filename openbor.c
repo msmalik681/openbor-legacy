@@ -5624,7 +5624,6 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				        size_t script_used = strlen(scriptbuf);
 				        size_t header_length = 0;
 				        size_t suffix_length = 0;
-				        char *marker;
 				        size_t k;
 				        int block_index;
 
@@ -5637,25 +5636,14 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				            shutdown(1, "unterminated '@script' block in '%s', line %u", filename, line);
 				        }
 
-				        marker = strchr(script_start, '\n');
-				        if(marker) {
-				            ++marker;
-				            while(marker < script_end && (*marker == ' ' || *marker == '\t' ||
-				                  *marker == '\r' || *marker == '\n')) marker++;
+				        lua_body = strchr(script_start, '\n');
+				        if(lua_body && lua_body < script_end) {
+				            ++lua_body;
+				        } else {
+				            lua_body = script_end;
 				        }
 
-				        if(marker && marker < script_end &&
-				           strncmp(marker, "-- OPENBOR_SMART_LUA", 20) == 0) {
-				            lua_body = strchr(marker, '\n');
-				            if(lua_body) {
-				                ++lua_body;
-				                while(lua_body < script_end &&
-				                      (*lua_body == ' ' || *lua_body == '\t' ||
-				                       *lua_body == '\r' || *lua_body == '\n')) lua_body++;
-				            } else {
-				                lua_body = script_end;
-				            }
-
+				        {
 				            block_index = newanim->lua_script_count++;
 				            script_length = (size_t)(script_end - lua_body);
 				            header_length = (size_t)snprintf(lua_frame_scratch,
