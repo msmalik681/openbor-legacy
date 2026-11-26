@@ -35,6 +35,7 @@ static char *lower_path(const char*s){char*p=copy_s(s);size_t i;if(p)for(i=0;p[i
 static char *mapped_relative(const char*s,int is_dir){char*p=lower_path(s);char*d;size_t n;if(!p)return NULL;if(!is_dir&&extension_is(p,".c")){d=strrchr(p,'.');n=(size_t)(d-p);p[n]=0;{char*q=(char*)realloc(p,n+5);if(!q){free(p);return NULL;}p=q;memcpy(p+n,".lua",5);}}return p;}
 static int mkdir_one(const char*p){if(MKDIR(p)==0||errno==EEXIST)return 1;return 0;}
 static int mkdirs(const char*path){char*p=copy_s(path);size_t i,n;int ok=1;if(!p)return 0;n=strlen(p);for(i=1;i<=n;i++)if(p[i]=='/'||p[i]=='\\'||p[i]==0){char c=p[i];p[i]=0;if(*p&&!mkdir_one(p)){ok=0;break;}p[i]=c;}free(p);return ok;}
+static char *trim_trailing_separators(const char*path){char*p=copy_s(path);size_t n;if(!p)return NULL;n=strlen(p);while(n>1&&(p[n-1]=='/'||p[n-1]=='\\'))p[--n]=0;return p;}
 static char *parent_dir(const char*path){char*p=copy_s(path),*a,*b,*q;if(!p)return NULL;a=strrchr(p,'/');b=strrchr(p,'\\');q=a;if(b&&(!q||b>q))q=b;if(!q){free(p);return copy_s(".");}if(q==p)q[1]=0;else *q=0;return p;}
 static char *read_file(const char*path,size_t*size){FILE*f=fopen(path,"rb");char*d;long n;if(!f)return NULL;if(fseek(f,0,SEEK_END)||((n=ftell(f))<0)||fseek(f,0,SEEK_SET)){fclose(f);return NULL;}d=(char*)malloc((size_t)n+1);if(!d){fclose(f);return NULL;}if(fread(d,1,(size_t)n,f)!=(size_t)n){free(d);fclose(f);return NULL;}d[n]=0;fclose(f);if(size)*size=(size_t)n;return d;}
 static int write_file(const char*path,const char*data,size_t n){FILE*f=fopen(path,"wb");int ok;if(!f)return 0;ok=fwrite(data,1,n,f)==n;if(fclose(f)!=0)ok=0;return ok;}
@@ -47,8 +48,8 @@ static int build_stage(const char*stage,Plan*p){size_t i;char*path;if(!mkdirs(st
 static int remove_tree(const char*path){DIR*d=opendir(path);struct dirent*de;if(!d)return remove(path)==0||errno==ENOENT;while((de=readdir(d))!=NULL){char*p;struct stat st;if(!strcmp(de->d_name,".")||!strcmp(de->d_name,".."))continue;p=join_path(path,de->d_name);if(!p){closedir(d);return 0;}if(stat(p,&st)==0&&S_ISDIR(st.st_mode)){if(!remove_tree(p)){free(p);closedir(d);return 0;}}else if(remove(p)!=0){free(p);closedir(d);return 0;}free(p);}closedir(d);return RMDIR(path)==0;}
 static int confirm_in_place(void){char answer[128];size_t i,n;printf("\nWARNING: In-place migration will rename paths to lowercase, convert .c files to .lua, rewrite .txt animation scripts, and remove the original .c files. A backup is kept only until the new tree is installed.\nType y/yes to continue: ");fflush(stdout);if(!fgets(answer,sizeof(answer),stdin))return 0;n=strlen(answer);while(n&&(answer[n-1]=='\n'||answer[n-1]=='\r'||isspace((unsigned char)answer[n-1])))answer[--n]=0;for(i=0;i<n;i++)answer[i]=(char)tolower((unsigned char)answer[i]);return !strcmp(answer,"y")||!strcmp(answer,"yes")||!strcmp(answer,"yeah")||!strcmp(answer,"yep")||!strcmp(answer,"yea");}
 static int path_exists(const char*p){struct stat st;return stat(p,&st)==0;}
-static int migrate_directory(const char*root,const char*outdir,int force){Plan plan={0};char*stage=NULL,*backup=NULL,*parent=NULL;int in_place=!outdir,ok=0;size_t n;if(!scan_tree(root,root,"",&plan)){fprintf(stderr,"Failed to scan project tree.\n");goto done;}if(!plan.count){fprintf(stderr,"No files or directories found in %s\n",root);goto done;}if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}if(!in_place&&path_exists(outdir)&&!force){fprintf(stderr,"Output directory exists: %s (use -force to replace it)\n",outdir);goto done;}parent=parent_dir(in_place?root:outdir);if(!parent)goto done;n=strlen(in_place?root:outdir)+64;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;snprintf(stage,n,"%s.openbor-smart-stage-%ld",in_place?root:outdir,(long)GETPID());snprintf(backup,n,"%s.openbor-smart-backup-%ld",in_place?root:outdir,(long)GETPID());if(path_exists(stage)||path_exists(backup)){fprintf(stderr,"Temporary migration path already exists; remove it before retrying.\n");goto done;}if(!build_stage(stage,&plan))goto done;if(path_exists(in_place?root:outdir)){if(rename(in_place?root:outdir,backup)!=0){fprintf(stderr,"Cannot move existing directory to backup: %s\n",strerror(errno));goto done;}}if(rename(stage,in_place?root:outdir)!=0){fprintf(stderr,"Cannot install staged project: %s\n",strerror(errno));if(path_exists(backup))rename(backup,in_place?root:outdir);goto done;}if(path_exists(backup)&&!remove_tree(backup))fprintf(stderr,"Warning: installed successfully but could not remove backup %s\n",backup);ok=1;printf("Project migration complete: %lu entries processed.\n",(unsigned long)plan.count);
-done:if(stage&&path_exists(stage))remove_tree(stage);free(stage);free(backup);free(parent);free_plan(&plan);return ok;}
+static int migrate_directory(const char*root,const char*outdir,int force){Plan plan={0};char*root_clean=NULL,*out_clean=NULL,*base=NULL,*stage=NULL,*backup=NULL;const char*active_root;int in_place=!outdir,ok=0;size_t n;root_clean=trim_trailing_separators(root);out_clean=outdir?trim_trailing_separators(outdir):NULL;if(!root_clean)goto done;active_root=in_place?root_clean:out_clean;if(!active_root)goto done;if(!scan_tree(active_root,active_root,"",&plan)){fprintf(stderr,"Failed to scan project tree.\n");goto done;}if(!plan.count){fprintf(stderr,"No files or directories found in %s\n",active_root);goto done;}if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}if(!in_place&&path_exists(active_root)&&!force){fprintf(stderr,"Output directory exists: %s (use -force to replace it)\n",active_root);goto done;}n=strlen(active_root)+64;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;snprintf(stage,n,"%s.openbor-smart-stage-%ld",active_root,(long)GETPID());snprintf(backup,n,"%s.openbor-smart-backup-%ld",active_root,(long)GETPID());if(path_exists(stage)||path_exists(backup)){fprintf(stderr,"Temporary migration path already exists; remove it before retrying.\n");goto done;}if(!build_stage(stage,&plan))goto done;if(path_exists(active_root)){if(rename(active_root,backup)!=0){fprintf(stderr,"Cannot move existing directory to backup: %s\n",strerror(errno));goto done;}}if(rename(stage,active_root)!=0){fprintf(stderr,"Cannot install staged project: %s\n",strerror(errno));if(path_exists(backup))rename(backup,active_root);goto done;}if(path_exists(backup)&&!remove_tree(backup))fprintf(stderr,"Warning: installed successfully but could not remove backup %s\n",backup);ok=1;printf("Project migration complete: %lu entries processed.\n",(unsigned long)plan.count);
+done:if(stage&&path_exists(stage))remove_tree(stage);free(root_clean);free(out_clean);free(stage);free(backup);free_plan(&plan);return ok;}
 static int migrate_single(const char*input,const char*outdir,int force){
  const char *a=strrchr(input,'/'),*b=strrchr(input,'\\'),*name=a;
  char *base=NULL,*lower=NULL,*target=NULL,*stage=NULL,*backup=NULL,*parent=NULL;
@@ -69,11 +70,25 @@ static int migrate_single(const char*input,const char*outdir,int force){
  if(path_exists(stage)||path_exists(backup)){fprintf(stderr,"Temporary file already exists; remove it before retrying.\n");goto done;}
  if(!convert_file_to(input,stage)){fprintf(stderr,"Conversion failed; original left untouched.\n");goto done;}
  if(path_exists(target)){
-  if((in_place&&strcmp(input,target)!=0&&!force)||(!in_place&&!force)){fprintf(stderr,"Refusing to overwrite %s (use -force)\n",target);goto done;}
+  int same_source;
+#ifdef _WIN32
+  same_source=equal_ci(base,lower);
+#else
+  same_source=!strcmp(base,lower);
+#endif
+  if((in_place&&!same_source&&!force)||(!in_place&&!force)){fprintf(stderr,"Refusing to overwrite %s (use -force)\n",target);goto done;}
   if(rename(target,backup)!=0)goto done;
  }
  if(rename(stage,target)!=0){if(path_exists(backup))rename(backup,target);goto done;}
- if(in_place&&strcmp(input,target)!=0&&remove(input)!=0)fprintf(stderr,"Warning: output installed but could not remove original %s\n",input);
+ {
+  int same_source;
+#ifdef _WIN32
+  same_source=equal_ci(base,lower);
+#else
+  same_source=!strcmp(base,lower);
+#endif
+  if(in_place&&!same_source&&remove(input)!=0)fprintf(stderr,"Warning: output installed but could not remove original %s\n",input);
+ }
  if(path_exists(backup))remove(backup);
  printf("Converted %s -> %s\n",input,target);ok=1;
 done:
