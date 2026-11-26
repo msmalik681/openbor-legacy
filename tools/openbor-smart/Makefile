@@ -18,7 +18,8 @@ clean:
 test-c: test.c lexer.c parser.c expression.c converter.c
 	$(CC) $(CFLAGS) -o $@ test.c lexer.c parser.c expression.c converter.c
 
-test: test-c
+test: test-c $(TARGET)
 	./test-c
+	sh ./test-migration.sh ./$(TARGET)
 
 .PHONY: all clean test
