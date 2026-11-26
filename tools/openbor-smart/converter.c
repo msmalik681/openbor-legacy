@@ -113,6 +113,59 @@ static int emit_statement(Writer*w,const Statement*s,char*error,size_t es){
  }
  (void)c;seterr(error,es,"unsupported statement");return 0;
 }
+
+char *convert_c_script_body(const char *source, char *error, size_t error_size) {
+    const char *body_start, *body_end;
+    char *wrapped, *converted, *body;
+    size_t source_length, wrapped_length, body_length;
+
+    if (error && error_size) error[0] = '\\0';
+    if (!source) {
+        seterr(error, error_size, "script body is null");
+        return NULL;
+    }
+
+    source_length = strlen(source);
+    wrapped_length = source_length + 40;
+    wrapped = (char *)malloc(wrapped_length);
+    if (!wrapped) {
+        seterr(error, error_size, "out of memory");
+        return NULL;
+    }
+    snprintf(wrapped, wrapped_length, "void __openbor_script_body__() {\\n%s\\n}", source);
+    converted = convert_c_source(wrapped, error, error_size);
+    free(wrapped);
+    if (!converted) return NULL;
+
+    body_start = strchr(converted, '\\n');
+    body_end = NULL;
+    {
+        const char *p = converted;
+        while ((p = strstr(p, "\\nend")) != NULL) {
+            body_end = p;
+            ++p;
+        }
+    }
+    if (!body_start || !body_end || body_end < body_start) {
+        free(converted);
+        seterr(error, error_size, "could not extract converted script body");
+        return NULL;
+    }
+
+    ++body_start;
+    body_length = (size_t)(body_end - body_start);
+    body = (char *)malloc(body_length + 1);
+    if (!body) {
+        free(converted);
+        seterr(error, error_size, "out of memory");
+        return NULL;
+    }
+    memcpy(body, body_start, body_length);
+    body[body_length] = '\\0';
+    free(converted);
+    return body;
+}
+
 char *convert_c_source(const char*source,char*error,size_t error_size){
  FunctionList functions;Writer w={0};size_t i,j;
  if(error&&error_size)error[0]=0;
