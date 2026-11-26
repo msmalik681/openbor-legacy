@@ -693,6 +693,7 @@ typedef struct {
 
 typedef struct {
 	int model_index;
+	int lua_script_count; /* Number of converted embedded @script blocks. */
 	short numframes:16;
 	int loop[3];		// Animation loop (0 = loop on/off, 1 = Loop to frame, 2 = Loop end frame).
 	short height:16;	// entity's height during animation

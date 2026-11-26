@@ -933,21 +933,42 @@ void execute_didhit_script(entity * ent, entity * other, int force, int drop, in
 }
 
 void execute_animation_script(entity * ent) {
+    char lookup_func[256];
+    int i, script_count = 0;
+
     if (!g_lua_engine_state || !ent || !ent->exists)
         return;
 
     bor_lua_begin_entity_localvars(ent);
     bor_lua_set_localvar_int("animnum", ent->animnum);
     bor_lua_set_localvar_int("frame", ent->animpos);
+
+    /* Keep the model-wide animationscript callback independent. */
     lua_getglobal(g_lua_engine_state, "animationscript");
-    if (!lua_isfunction(g_lua_engine_state, -1)) {
+    if (lua_isfunction(g_lua_engine_state, -1)) {
+        if (bor_lua_pcall(g_lua_engine_state, 0, 0, "animationscript") != LUA_OK)
+            lua_pop(g_lua_engine_state, 1);
+    } else {
         lua_pop(g_lua_engine_state, 1);
-        bor_lua_end_localvars();
-        return;
     }
 
-    if (bor_lua_pcall(g_lua_engine_state, 0, 0, "animationscript") != LUA_OK)
-        lua_pop(g_lua_engine_state, 1);
+    /* Embedded @script blocks run continuously for their owning animation. */
+    if (ent->animation && ent->animation->model_index == ent->modeldata.index)
+        script_count = ent->animation->lua_script_count;
+
+    for (i = 0; i < script_count; ++i) {
+        snprintf(lookup_func, sizeof(lookup_func),
+                 "char_%s_anim_%d_script_%d",
+                 ent->modeldata.name, ent->animnum, i);
+        lua_getglobal(g_lua_engine_state, lookup_func);
+        if (lua_isfunction(g_lua_engine_state, -1)) {
+            if (bor_lua_pcall(g_lua_engine_state, 0, 0, "embedded animation script") != LUA_OK)
+                lua_pop(g_lua_engine_state, 1);
+        } else {
+            lua_pop(g_lua_engine_state, 1);
+        }
+    }
+
     bor_lua_end_localvars();
 }
 
@@ -5594,7 +5615,7 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				case CMD_MODEL_UNSUMMONFRAME:
 					newanim->unsummonframe = GET_INT_ARG(1);
 					break;
-					case CMD_MODEL_AT_SCRIPT:
+				case CMD_MODEL_AT_SCRIPT:
 				    {
 				        char *script_start = buf + pos;
 				        char *script_end = NULL;
@@ -5605,6 +5626,7 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				        size_t suffix_length = 0;
 				        char *marker;
 				        size_t k;
+				        int block_index;
 
 				        if(ani_id < 0 || !newanim) {
 				            shutdown(1, "command '@script' must follow an animation!");
@@ -5615,8 +5637,6 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				            shutdown(1, "unterminated '@script' block in '%s', line %u", filename, line);
 				        }
 
-				        /* Only execute blocks explicitly converted to Lua. Unconverted
-				           legacy C blocks retain the old skip behaviour. */
 				        marker = script_start;
 				        while(marker < script_end && (*marker == ' ' || *marker == '\t' ||
 				              *marker == '\r' || *marker == '\n')) marker++;
@@ -5632,12 +5652,13 @@ s_model *load_cached_model(char *name, char *owner, char unload) {
 				                lua_body = script_end;
 				            }
 
+				            block_index = newanim->lua_script_count++;
 				            script_length = (size_t)(script_end - lua_body);
 				            header_length = (size_t)snprintf(lua_frame_scratch,
 				                sizeof(lua_frame_scratch),
-				                "char_%s_anim_%d_frame_%d = function()\n"
+				                "char_%s_anim_%d_script_%d = function()\n"
 				                "    local frame = getlocalvar(\"frame\")\n",
-				                newchar->name, ani_id, newanim->numframes);
+				                newchar->name, ani_id, block_index);
 				            suffix_length = strlen("\nend\n");
 
 				            if(header_length >= sizeof(lua_frame_scratch) ||
