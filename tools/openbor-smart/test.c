@@ -33,6 +33,12 @@ int main(void){
   check(strstr(lua,"__openbor_smart_truth")==NULL,"no generated truthiness helper");
   free(lua);
  }
+ lua=convert_c_source("void test(int map) { if (map < 0) { ((-map) == map); } }",error,sizeof(error));
+ check(lua!=NULL,"standalone comparison expression converts without invalid Lua");
+ if(lua){check(strstr(lua,"((-map) == map)")==NULL,"side-effect-free expression statements are omitted");free(lua);}
+ lua=convert_c_source("void test() { foo() + bar(); }",error,sizeof(error));
+ check(lua!=NULL,"standalone expressions containing calls convert");
+ if(lua){check(strstr(lua,"do local _ = (foo() + bar()) end")!=NULL,"nested call side effects are preserved in a valid Lua statement");free(lua);}
  lua=convert_c_source("void test() { int values[4]; values[0] = 10; values[2] = values[0] + 1; }",error,sizeof(error));
  check(lua!=NULL,"array source converts");
  if(lua){check(strstr(lua,"values[(0) + 1] = 10")!=NULL,"C array indexes shifted to Lua");free(lua);}
