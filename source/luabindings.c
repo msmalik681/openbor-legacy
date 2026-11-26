@@ -3375,18 +3375,19 @@ static void bor_lua_clear_table(lua_State *L, int index)
 
 static int lua_openbor_clearlocalvar(lua_State *L)
 {
-    /* Clear named variables owned by this script instance. */
+    /*
+     * Match legacy Script_Local_Clear(): clear only variables owned by the
+     * current script instance, including its indexed script-variable slots.
+     * Do not clear the engine callback context (self, damage, player, etc.).
+     */
     bor_lua_push_script_scope_table(L, BOR_LUA_SCRIPT_LOCAL_VARS);
     bor_lua_clear_table(L, -1);
     lua_pop(L, 1);
 
-    /* Script_Local_Clear() also clears this Script instance's indexed slots. */
     bor_lua_push_script_var_table(L);
     bor_lua_clear_table(L, -1);
     lua_pop(L, 1);
 
-    /* Callback context is the Lua bridge's representation of built-in locals. */
-    bor_lua_clear_localvars(L);
     return 0;
 }
 
