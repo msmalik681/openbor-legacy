@@ -9425,6 +9425,10 @@ void update_frame(entity * ent, int f) {
 		 */
 		if (g_lua_engine_state) {
 			bor_lua_clear_localvars(g_lua_engine_state);
+			/* Animation timeline scripts use the same legacy self localvar as @cmd scripts. */
+			bor_lua_push_entity(g_lua_engine_state, self);
+			bor_lua_set_localvar(g_lua_engine_state, "self", -1);
+			lua_pop(g_lua_engine_state, 1);
 			lua_pushinteger(g_lua_engine_state, self->animnum);
 			bor_lua_set_localvar(g_lua_engine_state, "animnum", -1);
 			lua_pop(g_lua_engine_state, 1);
