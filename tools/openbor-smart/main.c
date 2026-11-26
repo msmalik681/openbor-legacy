@@ -49,6 +49,35 @@ static int confirm_in_place(void){char answer[128];size_t i,n;printf("\nWARNING:
 static int path_exists(const char*p){struct stat st;return stat(p,&st)==0;}
 static int migrate_directory(const char*root,const char*outdir,int force){Plan plan={0};char*stage=NULL,*backup=NULL,*parent=NULL;int in_place=!outdir,ok=0;size_t n;if(!scan_tree(root,root,"",&plan)){fprintf(stderr,"Failed to scan project tree.\n");goto done;}if(!plan.count){fprintf(stderr,"No files or directories found in %s\n",root);goto done;}if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}if(!in_place&&path_exists(outdir)&&!force){fprintf(stderr,"Output directory exists: %s (use -force to replace it)\n",outdir);goto done;}parent=parent_dir(in_place?root:outdir);if(!parent)goto done;n=strlen(in_place?root:outdir)+64;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;snprintf(stage,n,"%s.openbor-smart-stage-%ld",in_place?root:outdir,(long)GETPID());snprintf(backup,n,"%s.openbor-smart-backup-%ld",in_place?root:outdir,(long)GETPID());if(path_exists(stage)||path_exists(backup)){fprintf(stderr,"Temporary migration path already exists; remove it before retrying.\n");goto done;}if(!build_stage(stage,&plan))goto done;if(path_exists(in_place?root:outdir)){if(rename(in_place?root:outdir,backup)!=0){fprintf(stderr,"Cannot move existing directory to backup: %s\n",strerror(errno));goto done;}}if(rename(stage,in_place?root:outdir)!=0){fprintf(stderr,"Cannot install staged project: %s\n",strerror(errno));if(path_exists(backup))rename(backup,in_place?root:outdir);goto done;}if(path_exists(backup)&&!remove_tree(backup))fprintf(stderr,"Warning: installed successfully but could not remove backup %s\n",backup);ok=1;printf("Project migration complete: %lu entries processed.\n",(unsigned long)plan.count);
 done:if(stage&&path_exists(stage))remove_tree(stage);free(stage);free(backup);free(parent);free_plan(&plan);return ok;}
-static int migrate_single(const char*input,const char*outdir,int force){char*base=copy_s(strrchr(input,'/')?strrchr(input,'/')+1:(strrchr(input,'\\')?strrchr(input,'\\')+1:input));char*lower=lower_path(base),*target_name=NULL,*target=NULL,*stage=NULL,*backup=NULL,*parent=NULL;int in_place=!outdir,ok=0;size_t n;if(!base||!lower)goto done;if(extension_is(lower,".c")){char*d=strrchr(lower,'.');*d=0;{char*q=(char*)realloc(lower,strlen(lower)+5);if(!q)goto done;lower=q;strcat(lower,".lua");}}target_name=lower;if(in_place)target=join_path(parent_dir(input),target_name);else target=join_path(outdir,target_name);if(!target)goto done;if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}if(!in_place){if(!mkdirs(outdir))goto done;if(path_exists(target)&&!force){fprintf(stderr,"Refusing to overwrite %s (use -force)\n",target);goto done;}}parent=parent_dir(target);if(!parent||!mkdirs(parent))goto done;n=strlen(target)+48;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;snprintf(stage,n,"%s.openbor-smart-tmp-%ld",target,(long)GETPID());snprintf(backup,n,"%s.openbor-smart-backup-%ld",target,(long)GETPID());if(!convert_file_to(input,stage)){fprintf(stderr,"Conversion failed; original left untouched.\n");goto done;}if(path_exists(target)){if(!in_place&&!force){fprintf(stderr,"Refusing to overwrite %s\n",target);goto done;}if(rename(target,backup)!=0)goto done;}if(rename(stage,target)!=0){if(path_exists(backup))rename(backup,target);goto done;}if(in_place&&strcmp(input,target)!=0&&remove(input)!=0)fprintf(stderr,"Warning: output installed but could not remove original %s\n",input);if(path_exists(backup))remove(backup);printf("Converted %s -> %s\n",input,target);ok=1;
-done:if(stage&&path_exists(stage))remove(stage);free(base);free(lower);free(target);free(target_name);free(stage);free(backup);free(parent);return ok;}
+static int migrate_single(const char*input,const char*outdir,int force){
+ const char *a=strrchr(input,'/'),*b=strrchr(input,'\\'),*name=a;
+ char *base=NULL,*lower=NULL,*target=NULL,*stage=NULL,*backup=NULL,*parent=NULL;
+ int in_place=!outdir,ok=0;size_t n;
+ if(b&&(!name||b>name))name=b;
+ base=copy_s(name?name+1:input);if(!base)goto done;
+ lower=lower_path(base);if(!lower)goto done;
+ if(extension_is(lower,".c")){char*d=strrchr(lower,'.');*d=0;{char*q=(char*)realloc(lower,strlen(lower)+5);if(!q)goto done;lower=q;strcat(lower,".lua");}}
+ if(in_place){parent=parent_dir(input);if(!parent)goto done;target=join_path(parent,lower);}
+ else target=join_path(outdir,lower);
+ if(!target)goto done;
+ if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}
+ if(!in_place&&!mkdirs(outdir))goto done;
+ free(parent);parent=parent_dir(target);if(!parent||!mkdirs(parent))goto done;
+ n=strlen(target)+64;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;
+ snprintf(stage,n,"%s.openbor-smart-tmp-%ld",target,(long)GETPID());
+ snprintf(backup,n,"%s.openbor-smart-backup-%ld",target,(long)GETPID());
+ if(path_exists(stage)||path_exists(backup)){fprintf(stderr,"Temporary file already exists; remove it before retrying.\n");goto done;}
+ if(!convert_file_to(input,stage)){fprintf(stderr,"Conversion failed; original left untouched.\n");goto done;}
+ if(path_exists(target)){
+  if((in_place&&strcmp(input,target)!=0&&!force)||(!in_place&&!force)){fprintf(stderr,"Refusing to overwrite %s (use -force)\n",target);goto done;}
+  if(rename(target,backup)!=0)goto done;
+ }
+ if(rename(stage,target)!=0){if(path_exists(backup))rename(backup,target);goto done;}
+ if(in_place&&strcmp(input,target)!=0&&remove(input)!=0)fprintf(stderr,"Warning: output installed but could not remove original %s\n",input);
+ if(path_exists(backup))remove(backup);
+ printf("Converted %s -> %s\n",input,target);ok=1;
+done:
+ if(stage&&path_exists(stage))remove(stage);
+ free(base);free(lower);free(target);free(stage);free(backup);free(parent);return ok;
+}
 int main(int argc,char**argv){const char*input=NULL,*outdir=NULL;int force=0,i;struct stat st;for(i=1;i<argc;i++){if(!strcmp(argv[i],"-in")&&i+1<argc)input=argv[++i];else if(!strcmp(argv[i],"-out")&&i+1<argc)outdir=argv[++i];else if(!strcmp(argv[i],"-force"))force=1;else{fprintf(stderr,"Unknown or incomplete option: %s\n",argv[i]);return 2;}}if(!input){fprintf(stderr,"Usage: openbor-smart-c -in file.c|file.txt|project-directory [-out directory] [-force]\n");return 2;}if(stat(input,&st)!=0){fprintf(stderr,"Cannot access input: %s\n",input);return 1;}if(S_ISDIR(st.st_mode))return migrate_directory(input,outdir,force)?0:1;if(!extension_is(input,".c")&&!extension_is(input,".txt")){fprintf(stderr,"Input must be a .c file, .txt file, or project directory.\n");return 1;}return migrate_single(input,outdir,force)?0:1;}
