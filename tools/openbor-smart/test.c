@@ -49,6 +49,9 @@ int main(void){
  check(lua!=NULL,"multiple embedded script blocks convert");
  if(lua){const char *first=strstr(lua,"local a = 1"),*second=strstr(lua,"local b = 2");
   check(first && second && first < second,"multiple script blocks retain order");free(lua);}
+ lua=convert_animation_text("anim idle\n@cmd clearL\n@script\nint a = 1;\n@end_script\n",error,sizeof(error));
+ check(lua!=NULL,"animation conversion preserves legacy @cmd directives");
+ if(lua){check(strstr(lua,"@cmd clearL")!=NULL,"@cmd line is retained verbatim");free(lua);}
  lua=convert_c_source("void test() { int value = sizeof(int); }",error,sizeof(error));
  check(lua==NULL,"unsupported sizeof reports an error");free(lua);
 
