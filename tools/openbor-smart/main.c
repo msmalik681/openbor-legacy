@@ -9,114 +9,46 @@
 #include <dirent.h>
 #ifdef _WIN32
 #include <direct.h>
+#include <process.h>
 #define MKDIR(path) _mkdir(path)
+#define RMDIR(path) _rmdir(path)
+#define GETPID() _getpid()
 #define PATH_SEP '\\'
 #else
 #include <unistd.h>
 #define MKDIR(path) mkdir(path,0755)
+#define RMDIR(path) rmdir(path)
+#define GETPID() getpid()
 #define PATH_SEP '/'
 #endif
 
 typedef struct { char **items; size_t count; } Paths;
+typedef struct { char *source, *relative, *target; int is_dir; } Entry;
+typedef struct { Entry *items; size_t count; } Plan;
+
 static char *copy_n(const char*s,size_t n){char*p=(char*)malloc(n+1);if(p){memcpy(p,s,n);p[n]=0;}return p;}
 static char *copy_s(const char*s){return copy_n(s,strlen(s));}
 static int equal_ci(const char*a,const char*b){while(*a&&*b){if(tolower((unsigned char)*a)!=tolower((unsigned char)*b))return 0;++a;++b;}return *a==*b;}
-static int has_c_extension(const char*path){const char*dot=strrchr(path,'.');return dot&&equal_ci(dot,".c");}
-static char *join_path(const char*a,const char*b){
- size_t na=strlen(a),nb=strlen(b);char*p=(char*)malloc(na+nb+2);if(!p)return NULL;
- memcpy(p,a,na);if(na&&a[na-1]!= '/'&&a[na-1]!='\\')p[na++]=PATH_SEP;
- memcpy(p+na,b,nb+1);return p;
-}
-static char *replace_extension(const char*path){
- const char*dot=strrchr(path,'.');const char*slash1=strrchr(path,'/');const char*slash2=strrchr(path,'\\');
- size_t base_len,total;char*out;
- if(slash1&&(!slash2||slash1>slash2)){}else if(slash2)slash1=slash2;
- if(!dot||(slash1&&dot<slash1))dot=path+strlen(path);
- base_len=(size_t)(dot-path);total=base_len+5;
- out=(char*)malloc(total);if(!out)return NULL;
- memcpy(out,path,base_len);memcpy(out+base_len,".lua",5);return out;
-}
-static char *base_name(const char*path){const char*a=strrchr(path,'/'),*b=strrchr(path,'\\'),*p=a;if(b&&(!p||b>p))p=b;return copy_s(p?p+1:path);}
-static int mkdirs(const char*path){
- char *copy=copy_s(path);size_t i,n=strlen(copy);int ok=1;
- for(i=1;i<=n;i++)if(copy[i]=='/'||copy[i]=='\\'||copy[i]==0){char old=copy[i];copy[i]=0;if(*copy&&MKDIR(copy)!=0&&errno!=EEXIST)ok=0;copy[i]=old;}
- free(copy);return ok;
-}
-static char *read_file(const char*path,size_t*size){
- FILE*f=fopen(path,"rb");char*data;long n;if(!f)return NULL;
- if(fseek(f,0,SEEK_END)||((n=ftell(f))<0)||fseek(f,0,SEEK_SET)){fclose(f);return NULL;}
- data=(char*)malloc((size_t)n+1);if(!data){fclose(f);return NULL;}
- if(fread(data,1,(size_t)n,f)!=(size_t)n){free(data);fclose(f);return NULL;}
- data[n]=0;fclose(f);if(size)*size=(size_t)n;return data;
-}
-static int write_file(const char*path,const char*data){
- FILE*f=fopen(path,"wb");size_t n=strlen(data);int ok;if(!f)return 0;ok=fwrite(data,1,n,f)==n;if(fclose(f)!=0)ok=0;return ok;
-}
-static int add_path(Paths*p,const char*path){
- char**q=(char**)realloc(p->items,(p->count+1)*sizeof(*q));if(!q)return 0;p->items=q;p->items[p->count++]=copy_s(path);return 1;
-}
-static void free_paths(Paths*p){size_t i;for(i=0;i<p->count;i++)free(p->items[i]);free(p->items);}
-static int scan_dir(const char*root,const char*dir,int recursive,Paths*out){
- DIR*d=opendir(dir);struct dirent*entry;if(!d)return 0;
- while((entry=readdir(d))!=NULL){
-  char*path;struct stat st;
-  if(!strcmp(entry->d_name,".")||!strcmp(entry->d_name,".."))continue;
-  path=join_path(dir,entry->d_name);if(!path){closedir(d);return 0;}
-  if(stat(path,&st)==0&&S_ISDIR(st.st_mode)){
-   if(recursive&&!scan_dir(root,path,recursive,out)){free(path);closedir(d);return 0;}
-  }else if(has_c_extension(entry->d_name)){if(!add_path(out,path)){free(path);closedir(d);return 0;}}
-  free(path);
- }
- closedir(d);(void)root;return 1;
-}
-static char *output_for(const char*input,const char*outdir,const char*root){
- char*relative=NULL,*base=NULL,*changed=NULL,*out=NULL;
- if(!outdir||!*outdir)return replace_extension(input);
- if(root&&*root){
-  size_t n=strlen(root);
-  if(!strncmp(input,root,n)){const char*p=input+n;while(*p=='/'||*p=='\\')++p;relative=copy_s(p);}
- }
- if(!relative){base=base_name(input);relative=base;}
- changed=replace_extension(relative);out=join_path(outdir,changed);
- free(relative);free(changed);return out;
-}
-static int convert_one(const char*input,const char*output,int force){
- size_t size;char*source=read_file(input,&size),*lua,error[512];(void)size;
- if(!source){fprintf(stderr,"FAILED: cannot read %s\n",input);return 0;}
- if(!force){FILE*f=fopen(output,"rb");if(f){fclose(f);fprintf(stderr,"FAILED: refusing to overwrite %s (use -force)\n",output);free(source);return 0;}}
- lua=convert_c_source(source,error,sizeof(error));free(source);
- if(!lua){fprintf(stderr,"FAILED: convert %s: %s\n",input,error[0]?error:"conversion failed");return 0;}
- {
-  char*slash=copy_s(output);char*p=strrchr(slash,'/');char*q=strrchr(slash,'\\');if(q&&(!p||q>p))p=q;
-  if(p){*p=0;if(!mkdirs(slash)){fprintf(stderr,"FAILED: create output directory %s\n",slash);free(slash);free(lua);return 0;}}
-  free(slash);
- }
- if(!write_file(output,lua)){fprintf(stderr,"FAILED: write %s\n",output);free(lua);return 0;}
- printf("Converted %s -> %s\n",input,output);free(lua);return 1;
-}
-int main(int argc,char**argv){
- const char*input=NULL,*outdir=NULL;int recursive=0,force=0,i,failed=0,converted=0;struct stat st;
- for(i=1;i<argc;i++){
-  if(!strcmp(argv[i],"-in")&&i+1<argc)input=argv[++i];
-  else if(!strcmp(argv[i],"-out")&&i+1<argc)outdir=argv[++i];
-  else if(!strcmp(argv[i],"-recursive"))recursive=1;
-  else if(!strcmp(argv[i],"-force"))force=1;
-  else {fprintf(stderr,"unknown or incomplete option: %s\n",argv[i]);return 2;}
- }
- if(!input){fprintf(stderr,"usage: openbor-smart-c -in path/to/script.c | -in path/to/scripts [-recursive] [-out directory] [-force]\n");return 2;}
- if(stat(input,&st)!=0){fprintf(stderr,"cannot access input: %s\n",input);return 1;}
- if(S_ISDIR(st.st_mode)){
-  Paths files={0};size_t j;
-  if(!scan_dir(input,input,recursive,&files)){fprintf(stderr,"cannot scan input directory: %s\n",input);free_paths(&files);return 1;}
-  if(!files.count){fprintf(stderr,"no .c files found in %s\n",input);free_paths(&files);return 1;}
-  for(j=0;j<files.count;j++){char*out=output_for(files.items[j],outdir,input);if(!out||!convert_one(files.items[j],out,force))++failed;else ++converted;free(out);}
-  printf("Batch complete: %d converted, %d failed\n",converted,failed);free_paths(&files);return failed?1:0;
- }
- if(!has_c_extension(input)){fprintf(stderr,"input must be a .c file or a directory containing .c files\n");return 1;}
- {
-  char*out;if(outdir){char*base=base_name(input);char*lua=replace_extension(base);out=join_path(outdir,lua);free(base);free(lua);}
-  else out=replace_extension(input);
-  if(!out){fprintf(stderr,"out of memory\n");return 1;}
-  i=convert_one(input,out,force);free(out);return i?0:1;
- }
-}
+static int extension_is(const char*p,const char*ext){const char*d=strrchr(p,'.'),*s1=strrchr(p,'/'),*s2=strrchr(p,'\\'),*s=s1;if(s2&&(!s||s2>s))s=s2;return d&&(!s||d>s)&&equal_ci(d,ext);}
+static char *join_path(const char*a,const char*b){size_t na=strlen(a),nb=strlen(b);char*p=(char*)malloc(na+nb+2);if(!p)return NULL;memcpy(p,a,na);if(na&&a[na-1]!='/'&&a[na-1]!='\\')p[na++]=PATH_SEP;memcpy(p+na,b,nb+1);return p;}
+static char *lower_path(const char*s){char*p=copy_s(s);size_t i;if(p)for(i=0;p[i];i++){if(p[i]=='\\')p[i]='/';else p[i]=(char)tolower((unsigned char)p[i]);}return p;}
+static char *mapped_relative(const char*s,int is_dir){char*p=lower_path(s);char*d;size_t n;if(!p)return NULL;if(!is_dir&&extension_is(p,".c")){d=strrchr(p,'.');n=(size_t)(d-p);p[n]=0;{char*q=(char*)realloc(p,n+5);if(!q){free(p);return NULL;}p=q;memcpy(p+n,".lua",5);}}return p;}
+static int mkdir_one(const char*p){if(MKDIR(p)==0||errno==EEXIST)return 1;return 0;}
+static int mkdirs(const char*path){char*p=copy_s(path);size_t i,n;int ok=1;if(!p)return 0;n=strlen(p);for(i=1;i<=n;i++)if(p[i]=='/'||p[i]=='\\'||p[i]==0){char c=p[i];p[i]=0;if(*p&&!mkdir_one(p)){ok=0;break;}p[i]=c;}free(p);return ok;}
+static char *parent_dir(const char*path){char*p=copy_s(path),*a,*b,*q;if(!p)return NULL;a=strrchr(p,'/');b=strrchr(p,'\\');q=a;if(b&&(!q||b>q))q=b;if(!q){free(p);return copy_s(".");}if(q==p)q[1]=0;else *q=0;return p;}
+static char *read_file(const char*path,size_t*size){FILE*f=fopen(path,"rb");char*d;long n;if(!f)return NULL;if(fseek(f,0,SEEK_END)||((n=ftell(f))<0)||fseek(f,0,SEEK_SET)){fclose(f);return NULL;}d=(char*)malloc((size_t)n+1);if(!d){fclose(f);return NULL;}if(fread(d,1,(size_t)n,f)!=(size_t)n){free(d);fclose(f);return NULL;}d[n]=0;fclose(f);if(size)*size=(size_t)n;return d;}
+static int write_file(const char*path,const char*data,size_t n){FILE*f=fopen(path,"wb");int ok;if(!f)return 0;ok=fwrite(data,1,n,f)==n;if(fclose(f)!=0)ok=0;return ok;}
+static int copy_file(const char*src,const char*dst){FILE*a=fopen(src,"rb"),*b;char buf[16384];size_t n;int ok=1;if(!a)return 0;b=fopen(dst,"wb");if(!b){fclose(a);return 0;}while((n=fread(buf,1,sizeof(buf),a))>0)if(fwrite(buf,1,n,b)!=n){ok=0;break;}if(ferror(a))ok=0;if(fclose(a)!=0)ok=0;if(fclose(b)!=0)ok=0;return ok;}
+static int add_entry(Plan*p,const char*src,const char*rel,int is_dir){Entry*e;char*t=mapped_relative(rel,is_dir);size_t i;if(!t)return 0;for(i=0;i<p->count;i++)if(!strcmp(p->items[i].target,t)){fprintf(stderr,"PATH COLLISION: '%s' and '%s' both map to '%s'\n",p->items[i].relative,rel,t);free(t);return -1;}e=(Entry*)realloc(p->items,(p->count+1)*sizeof(*e));if(!e){free(t);return 0;}p->items=e;e=&p->items[p->count++];e->source=copy_s(src);e->relative=copy_s(rel);e->target=t;e->is_dir=is_dir;return e->source&&e->relative;}
+static void free_plan(Plan*p){size_t i;for(i=0;i<p->count;i++){free(p->items[i].source);free(p->items[i].relative);free(p->items[i].target);}free(p->items);memset(p,0,sizeof(*p));}
+static int scan_tree(const char*root,const char*dir,const char*rel,Plan*p){DIR*d=opendir(dir);struct dirent*de;if(!d)return 0;while((de=readdir(d))!=NULL){char*src,*r;struct stat st;int added;if(!strcmp(de->d_name,".")||!strcmp(de->d_name,".."))continue;src=join_path(dir,de->d_name);r=rel&&*rel?join_path(rel,de->d_name):copy_s(de->d_name);if(!src||!r){free(src);free(r);closedir(d);return 0;}if(stat(src,&st)!=0){fprintf(stderr,"Cannot inspect %s\n",src);free(src);free(r);closedir(d);return 0;}if(S_ISDIR(st.st_mode)){added=add_entry(p,src,r,1);if(added<=0||!scan_tree(root,src,r,p)){free(src);free(r);closedir(d);return 0;}}else{added=add_entry(p,src,r,0);if(added<=0){free(src);free(r);closedir(d);return 0;}}free(src);free(r);}closedir(d);(void)root;return 1;}
+static int convert_file_to(const char*src,const char*dst){char*data,*converted=NULL,error[512]={0};size_t n;int ok;if(extension_is(src,".c")){data=read_file(src,&n);if(!data){fprintf(stderr,"Cannot read %s\n",src);return 0;}converted=convert_c_source(data,error,sizeof(error));free(data);if(!converted){fprintf(stderr,"Conversion failed for %s: %s\n",src,error[0]?error:"unknown error");return 0;}ok=write_file(dst,converted,strlen(converted));free(converted);return ok;}if(extension_is(src,".txt")){data=read_file(src,&n);if(!data){fprintf(stderr,"Cannot read %s\n",src);return 0;}converted=convert_animation_text(data,error,sizeof(error));free(data);if(!converted){fprintf(stderr,"Conversion failed for %s: %s\n",src,error[0]?error:"unknown error");return 0;}ok=write_file(dst,converted,strlen(converted));free(converted);return ok;}return copy_file(src,dst);}
+static int build_stage(const char*stage,Plan*p){size_t i;char*path;if(!mkdirs(stage)){fprintf(stderr,"Cannot create staging directory %s\n",stage);return 0;}for(i=0;i<p->count;i++)if(p->items[i].is_dir){path=join_path(stage,p->items[i].target);if(!path||!mkdirs(path)){fprintf(stderr,"Cannot create directory for %s\n",p->items[i].relative);free(path);return 0;}free(path);}for(i=0;i<p->count;i++)if(!p->items[i].is_dir){path=join_path(stage,p->items[i].target);if(!path){return 0;}{char*parent=parent_dir(path);if(!parent||!mkdirs(parent)){fprintf(stderr,"Cannot create parent directory for %s\n",path);free(parent);free(path);return 0;}free(parent);}if(!convert_file_to(p->items[i].source,path)){fprintf(stderr,"Failed writing staged output %s\n",path);free(path);return 0;}printf("Prepared %s -> %s\n",p->items[i].source,path);free(path);}return 1;}
+static int remove_tree(const char*path){DIR*d=opendir(path);struct dirent*de;if(!d)return remove(path)==0||errno==ENOENT;while((de=readdir(d))!=NULL){char*p;struct stat st;if(!strcmp(de->d_name,".")||!strcmp(de->d_name,".."))continue;p=join_path(path,de->d_name);if(!p){closedir(d);return 0;}if(stat(p,&st)==0&&S_ISDIR(st.st_mode)){if(!remove_tree(p)){free(p);closedir(d);return 0;}}else if(remove(p)!=0){free(p);closedir(d);return 0;}free(p);}closedir(d);return RMDIR(path)==0;}
+static int confirm_in_place(void){char answer[128];size_t i,n;printf("\nWARNING: In-place migration will rename paths to lowercase, convert .c files to .lua, rewrite .txt animation scripts, and remove the original .c files. A backup is kept only until the new tree is installed.\nType y/yes to continue: ");fflush(stdout);if(!fgets(answer,sizeof(answer),stdin))return 0;n=strlen(answer);while(n&&(answer[n-1]=='\n'||answer[n-1]=='\r'||isspace((unsigned char)answer[n-1])))answer[--n]=0;for(i=0;i<n;i++)answer[i]=(char)tolower((unsigned char)answer[i]);return !strcmp(answer,"y")||!strcmp(answer,"yes")||!strcmp(answer,"yeah")||!strcmp(answer,"yep")||!strcmp(answer,"yea");}
+static int path_exists(const char*p){struct stat st;return stat(p,&st)==0;}
+static int migrate_directory(const char*root,const char*outdir,int force){Plan plan={0};char*stage=NULL,*backup=NULL,*parent=NULL;int in_place=!outdir,ok=0;size_t n;if(!scan_tree(root,root,"",&plan)){fprintf(stderr,"Failed to scan project tree.\n");goto done;}if(!plan.count){fprintf(stderr,"No files or directories found in %s\n",root);goto done;}if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}if(!in_place&&path_exists(outdir)&&!force){fprintf(stderr,"Output directory exists: %s (use -force to replace it)\n",outdir);goto done;}parent=parent_dir(in_place?root:outdir);if(!parent)goto done;n=strlen(in_place?root:outdir)+64;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;snprintf(stage,n,"%s.openbor-smart-stage-%ld",in_place?root:outdir,(long)GETPID());snprintf(backup,n,"%s.openbor-smart-backup-%ld",in_place?root:outdir,(long)GETPID());if(path_exists(stage)||path_exists(backup)){fprintf(stderr,"Temporary migration path already exists; remove it before retrying.\n");goto done;}if(!build_stage(stage,&plan))goto done;if(path_exists(in_place?root:outdir)){if(rename(in_place?root:outdir,backup)!=0){fprintf(stderr,"Cannot move existing directory to backup: %s\n",strerror(errno));goto done;}}if(rename(stage,in_place?root:outdir)!=0){fprintf(stderr,"Cannot install staged project: %s\n",strerror(errno));if(path_exists(backup))rename(backup,in_place?root:outdir);goto done;}if(path_exists(backup)&&!remove_tree(backup))fprintf(stderr,"Warning: installed successfully but could not remove backup %s\n",backup);ok=1;printf("Project migration complete: %lu entries processed.\n",(unsigned long)plan.count);
+done:if(stage&&path_exists(stage))remove_tree(stage);free(stage);free(backup);free(parent);free_plan(&plan);return ok;}
+static int migrate_single(const char*input,const char*outdir,int force){char*base=copy_s(strrchr(input,'/')?strrchr(input,'/')+1:(strrchr(input,'\\')?strrchr(input,'\\')+1:input));char*lower=lower_path(base),*target_name=NULL,*target=NULL,*stage=NULL,*backup=NULL,*parent=NULL;int in_place=!outdir,ok=0;size_t n;if(!base||!lower)goto done;if(extension_is(lower,".c")){char*d=strrchr(lower,'.');*d=0;{char*q=(char*)realloc(lower,strlen(lower)+5);if(!q)goto done;lower=q;strcat(lower,".lua");}}target_name=lower;if(in_place)target=join_path(parent_dir(input),target_name);else target=join_path(outdir,target_name);if(!target)goto done;if(in_place&&!confirm_in_place()){puts("Migration cancelled; no files changed.");goto done;}if(!in_place){if(!mkdirs(outdir))goto done;if(path_exists(target)&&!force){fprintf(stderr,"Refusing to overwrite %s (use -force)\n",target);goto done;}}parent=parent_dir(target);if(!parent||!mkdirs(parent))goto done;n=strlen(target)+48;stage=(char*)malloc(n);backup=(char*)malloc(n);if(!stage||!backup)goto done;snprintf(stage,n,"%s.openbor-smart-tmp-%ld",target,(long)GETPID());snprintf(backup,n,"%s.openbor-smart-backup-%ld",target,(long)GETPID());if(!convert_file_to(input,stage)){fprintf(stderr,"Conversion failed; original left untouched.\n");goto done;}if(path_exists(target)){if(!in_place&&!force){fprintf(stderr,"Refusing to overwrite %s\n",target);goto done;}if(rename(target,backup)!=0)goto done;}if(rename(stage,target)!=0){if(path_exists(backup))rename(backup,target);goto done;}if(in_place&&strcmp(input,target)!=0&&remove(input)!=0)fprintf(stderr,"Warning: output installed but could not remove original %s\n",input);if(path_exists(backup))remove(backup);printf("Converted %s -> %s\n",input,target);ok=1;
+done:if(stage&&path_exists(stage))remove(stage);free(base);free(lower);free(target);free(target_name);free(stage);free(backup);free(parent);return ok;}
+int main(int argc,char**argv){const char*input=NULL,*outdir=NULL;int force=0,i;struct stat st;for(i=1;i<argc;i++){if(!strcmp(argv[i],"-in")&&i+1<argc)input=argv[++i];else if(!strcmp(argv[i],"-out")&&i+1<argc)outdir=argv[++i];else if(!strcmp(argv[i],"-force"))force=1;else{fprintf(stderr,"Unknown or incomplete option: %s\n",argv[i]);return 2;}}if(!input){fprintf(stderr,"Usage: openbor-smart-c -in file.c|file.txt|project-directory [-out directory] [-force]\n");return 2;}if(stat(input,&st)!=0){fprintf(stderr,"Cannot access input: %s\n",input);return 1;}if(S_ISDIR(st.st_mode))return migrate_directory(input,outdir,force)?0:1;if(!extension_is(input,".c")&&!extension_is(input,".txt")){fprintf(stderr,"Input must be a .c file, .txt file, or project directory.\n");return 1;}return migrate_single(input,outdir,force)?0:1;}
