@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-BIN=\${1:-./openbor-smart-c}
+if [ "$#" -ge 1 ]; then BIN=$1; else BIN=./openbor-smart-c; fi
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 
