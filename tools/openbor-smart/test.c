@@ -36,7 +36,7 @@ int main(void){
  lua=convert_c_source("void test() { int values[4]; values[0] = 10; values[2] = values[0] + 1; }",error,sizeof(error));
  check(lua!=NULL,"array source converts");
  if(lua){check(strstr(lua,"values[(0) + 1] = 10")!=NULL,"C array indexes shifted to Lua");free(lua);}
- lua=convert_c_script_body("void self = getlocalvar(\\"self\\");\\nif (frame == 0) {\\n    changeentityproperty(self, \\"animation\\", openborconstant(\\"ANI_IDLE\\"));\\n}",error,sizeof(error));
+ lua=convert_c_script_body("void self = getlocalvar(\\"self\\");\nif (frame == 0) {\n    changeentityproperty(self, \\"animation\\", openborconstant(\\"ANI_IDLE\\"));\n}",error,sizeof(error));
  check(lua!=NULL,"embedded animation script body converts");
  if(lua){check(strstr(lua,"local self = getlocalvar(\\"self\\")")!=NULL,"embedded script declarations become Lua locals");
   check(strstr(lua,"if (frame == 0) then")!=NULL,"embedded script frame condition is preserved");free(lua);}

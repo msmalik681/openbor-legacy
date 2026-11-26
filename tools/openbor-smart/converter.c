@@ -119,7 +119,7 @@ char *convert_c_script_body(const char *source, char *error, size_t error_size) 
     char *wrapped, *converted, *body;
     size_t source_length, wrapped_length, body_length;
 
-    if (error && error_size) error[0] = '\\0';
+    if (error && error_size) error[0] = '\0';
     if (!source) {
         seterr(error, error_size, "script body is null");
         return NULL;
@@ -132,16 +132,16 @@ char *convert_c_script_body(const char *source, char *error, size_t error_size) 
         seterr(error, error_size, "out of memory");
         return NULL;
     }
-    snprintf(wrapped, wrapped_length, "void __openbor_script_body__() {\\n%s\\n}", source);
+    snprintf(wrapped, wrapped_length, "void __openbor_script_body__() {\n%s\n}", source);
     converted = convert_c_source(wrapped, error, error_size);
     free(wrapped);
     if (!converted) return NULL;
 
-    body_start = strchr(converted, '\\n');
+    body_start = strchr(converted, '\n');
     body_end = NULL;
     {
         const char *p = converted;
-        while ((p = strstr(p, "\\nend")) != NULL) {
+        while ((p = strstr(p, "\nend")) != NULL) {
             body_end = p;
             ++p;
         }
@@ -161,7 +161,7 @@ char *convert_c_script_body(const char *source, char *error, size_t error_size) 
         return NULL;
     }
     memcpy(body, body_start, body_length);
-    body[body_length] = '\\0';
+    body[body_length] = '\0';
     free(converted);
     return body;
 }
