@@ -9444,6 +9444,10 @@ void update_frame(entity * ent, int f) {
 		if (g_lua_engine_state) {
 			char lookup_func[256];
 			bor_lua_clear_localvars(g_lua_engine_state);
+			/* Frame callbacks need the current entity as the legacy self localvar. */
+			bor_lua_push_entity(g_lua_engine_state, self);
+			bor_lua_set_localvar(g_lua_engine_state, "self", -1);
+			lua_pop(g_lua_engine_state, 1);
 			lua_pushinteger(g_lua_engine_state, self->animnum);
 			bor_lua_set_localvar(g_lua_engine_state, "animnum", -1);
 			lua_pop(g_lua_engine_state, 1);
