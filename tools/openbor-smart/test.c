@@ -40,6 +40,11 @@ int main(void){
  check(lua!=NULL,"embedded animation script body converts");
  if(lua){check(strstr(lua,"local self = getlocalvar(\"self\")")!=NULL,"embedded script declarations become Lua locals");
   check(strstr(lua,"if (frame == 0) then")!=NULL,"embedded script frame condition is preserved");free(lua);}
+ lua=convert_animation_text("anim idle\n\t@script\n\tint value = 2;\n\tif (frame == 0) { value++; }\n\t@end_script\n\tframe data/test\n",error,sizeof(error));
+ check(lua!=NULL,"animation text with embedded script converts");
+ if(lua){check(strstr(lua,"-- OPENBOR_SMART_LUA")!=NULL,"converted script marker emitted");
+  check(strstr(lua,"function") == NULL,"embedded body is emitted without a nested function");
+  check(strstr(lua,"frame data/test")!=NULL,"animation text outside script is preserved");free(lua);}
  lua=convert_c_source("void test() { int value = sizeof(int); }",error,sizeof(error));
  check(lua==NULL,"unsupported sizeof reports an error");free(lua);
 

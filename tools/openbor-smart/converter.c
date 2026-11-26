@@ -166,6 +166,106 @@ char *convert_c_script_body(const char *source, char *error, size_t error_size) 
     return body;
 }
 
+
+static int append_text(Writer *w, const char *text, size_t length) {
+    return append_n(w, text, length);
+}
+
+static const char *find_line_tag(const char *from, const char *tag) {
+    const char *p = from;
+    size_t tag_length = strlen(tag);
+    while ((p = strstr(p, tag)) != NULL) {
+        const char *line = p;
+        const char *q;
+        while (line > from && line[-1] != '\n') --line;
+        for (q = line; q < p; ++q) {
+            if (*q != ' ' && *q != '\t' && *q != '\r') break;
+        }
+        if (q == p && strncmp(p, tag, tag_length) == 0 &&
+            (p[tag_length] == '\r' || p[tag_length] == '\n' || p[tag_length] == '\0' || p[tag_length] == ' ' || p[tag_length] == '\t'))
+            return p;
+        p += tag_length;
+    }
+    return NULL;
+}
+
+char *convert_animation_text(const char *source, char *error, size_t error_size) {
+    Writer output = {0};
+    const char *cursor = source;
+    const char *script_tag;
+
+    if (error && error_size) error[0] = '\0';
+    if (!source) {
+        seterr(error, error_size, "animation text is null");
+        return NULL;
+    }
+
+    while ((script_tag = find_line_tag(cursor, "@script")) != NULL) {
+        const char *script_line = script_tag;
+        const char *body_start, *end_tag, *end_line;
+        const char *marker;
+        char *body, *lua_body;
+        size_t body_length;
+
+        while (script_line > cursor && script_line[-1] != '\n') --script_line;
+        body_start = strchr(script_tag, '\n');
+        if (!body_start) {
+            seterr(error, error_size, "unterminated @script directive line");
+            goto fail;
+        }
+        ++body_start;
+        end_tag = find_line_tag(body_start, "@end_script");
+        if (!end_tag) {
+            seterr(error, error_size, "unterminated @script block");
+            goto fail;
+        }
+        end_line = end_tag;
+        while (end_line > body_start && end_line[-1] != '\n') --end_line;
+
+        marker = body_start;
+        while (marker < end_line && (*marker == ' ' || *marker == '\t' || *marker == '\r' || *marker == '\n')) ++marker;
+        if (strncmp(marker, "-- OPENBOR_SMART_LUA", 20) == 0) {
+            if (!append_text(&output, cursor, (size_t)(end_line - cursor))) goto oom;
+            cursor = end_line;
+            script_tag = find_line_tag(cursor, "@end_script");
+            if (!script_tag) {
+                seterr(error, error_size, "unterminated converted @script block");
+                goto fail;
+            }
+            cursor = script_tag;
+            continue;
+        }
+
+        body_length = (size_t)(end_line - body_start);
+        body = (char *)malloc(body_length + 1);
+        if (!body) goto oom;
+        memcpy(body, body_start, body_length);
+        body[body_length] = '\0';
+        lua_body = convert_c_script_body(body, error, error_size);
+        free(body);
+        if (!lua_body) goto fail;
+
+        if (!append_text(&output, cursor, (size_t)(body_start - cursor)) ||
+            !append(&output, "-- OPENBOR_SMART_LUA\n") ||
+            !append(&output, lua_body) ||
+            !append(&output, "\n")) {
+            free(lua_body);
+            goto oom;
+        }
+        free(lua_body);
+        cursor = end_line;
+    }
+
+    if (!append(&output, cursor ? cursor : "")) goto oom;
+    return output.data;
+
+oom:
+    seterr(error, error_size, "out of memory while converting animation text");
+fail:
+    free(output.data);
+    return NULL;
+}
+
 char *convert_c_source(const char*source,char*error,size_t error_size){
  FunctionList functions;Writer w={0};size_t i,j;
  if(error&&error_size)error[0]=0;
